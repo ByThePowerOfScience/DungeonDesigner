@@ -1,5 +1,7 @@
 package btpos.mcmods.devutil.forge.datagen
 
+import btpos.mcmods.devutil.forge.datagen.BlockStateMacros.BaseVariantBuilder
+import btpos.mcmods.devutil.forge.datagen.BlockStateMacros.MultipartBuilder
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.state.properties.Property
 import net.minecraftforge.client.model.generators.BlockStateProvider
@@ -13,6 +15,118 @@ annotation class BlockStateDataGen
 @DslMarker
 annotation class MultiPartDataGenDsl
 
+
+
+//? TESTING
+/*		provider
+			.getVariantBuilder(Blocks.ACACIA_LEAVES)
+			.partialState()
+			.with(FACING, Direction.DOWN)
+				.modelForState()
+				.modelFile(null)
+				.rotationY(90)
+				.addModel()
+
+
+		provider.variantDsl(Blocks.ACACIA_LEAVES) {
+			AXIS {
+				Direction.Axis.Y {
+					model {
+						modelFile(null)
+						rotationY(90)
+					}
+					BlockStateProperties.AGE_1 {
+						1 {
+							model {
+
+							}
+							model {
+
+							}
+						}
+					}
+				}
+			}
+		}
+
+		provider.getMultipartBuilder(Blocks.ACACIA_LOG) // Get multipart builder
+			.part() // Create part
+			.modelFile(null) // Can show 'redstoneDot'
+			.nextModel()
+			.modelFile(null).weight(40)
+			.addModel() // 'redstoneDot' is displayed when...
+			.useOr() // At least one of these conditions are true
+			.nestedGroup() // true when all grouped conditions are true
+			.condition(FACING, Direction.UP) // true when WEST_REDSTONE is NONE
+			.condition(FACING, null) // true when EAST_REDSTONE is NONE
+			.condition(FACING, null) // true when SOUTH_REDSTONE is NONE
+			.condition(FACING, null) // true when NORTH_REDSTONE is NONE
+			.endNestedGroup() // End group
+			.nestedGroup() // true when all grouped conditions are true
+			.condition(FACING, null, null) // true when EAST_REDSTONE is SIDE or UP
+			.condition(FACING, null, null) // true when NORTH_REDSTONE is SIDE or UP
+			.endNestedGroup() // End group
+			.end() // End condition block
+			.end() // Finish part
+			.part() // Create part
+			.modelFile(redstoneSide0) // Can show 'redstoneSide0'
+			.addModel() // 'redstoneSide0' is displayed when...
+			.condition(NORTH_REDSTONE, SIDE, UP) // NORTH_REDSTONE is SIDE or UP
+			.end() // Finish part
+			.part() // Create part
+			.modelFile(redstoneSideAlt0) // Can show 'redstoneSideAlt0'
+			.addModel() // 'redstoneSideAlt0' is displayed when...
+			.condition(SOUTH_REDSTONE, SIDE, UP) // SOUTH_REDSTONE is SIDE or UP
+			.end() // Finish part
+			.part() // Create part
+			.modelFile(redstoneSideAlt1) // Can show 'redstoneSideAlt1'
+			.rotationY(270) // Rotates 'redstoneSideAlt1' 270 degrees on the Y axis
+			.addModel() // 'redstoneSideAlt1' is displayed when...
+			.condition(EAST_REDSTONE, SIDE, UP) // EAST_REDSTONE is SIDE or UP
+			.end() // Finish part
+			.part() // Create part
+			.modelFile(redstoneSide1) // Can show 'redstoneSide1'
+			.rotationY(270) // Rotates 'redstoneSide1' 270 degrees on the Y axis
+			.addModel() // 'redstoneSide1' is displayed when...
+			.condition(WEST_REDSTONE, SIDE, UP) // WEST_REDSTONE is SIDE or UP
+			.end() // Finish part
+			.part() // Create part
+			.modelFile(redstoneUp) // Can show 'redstoneUp'
+			.addModel() // 'redstoneUp' is displayed when...
+			.condition(NORTH_REDSTONE, UP) // NORTH_REDSTONE is UP
+			.end() // Finish part
+			.part() // Create part
+			.modelFile(redstoneUp) // Can show 'redstoneUp'
+			.rotationY(90) // Rotates 'redstoneUp' 90 degrees on the Y axis
+			.addModel() // 'redstoneUp' is displayed when...
+			.condition(EAST_REDSTONE, UP) // EAST_REDSTONE is UP
+			.end() // Finish part
+			.part() // Create part
+			.modelFile(redstoneUp) // Can show 'redstoneUp'
+			.rotationY(180) // Rotates 'redstoneUp' 180 degrees on the Y axis
+			.addModel() // 'redstoneUp' is displayed when...
+			.condition(SOUTH_REDSTONE, UP) // SOUTH_REDSTONE is UP
+			.end() // Finish part
+			.part() // Create part
+			.modelFile(redstoneUp) // Can show 'redstoneUp'
+			.rotationY(270) // Rotates 'redstoneUp' 270 degrees on the Y axis
+			.addModel() // 'redstoneUp' is displayed when...
+			.condition(WEST_REDSTONE, UP) // WEST_REDSTONE is UP
+			.end();
+
+		provider.multipartDsl(Blocks.ACACIA_LOG) {
+			part {
+				model {
+
+				}
+				model {
+
+				}
+				condition = or {
+
+				}
+			}
+		}*/
 
 object BlockStateMacros {
 	/**
@@ -50,7 +164,7 @@ object BlockStateMacros {
 		fun model(action: ConfiguredModel.Builder<*>.() -> Unit) {
 			currentModelBuilder?.nextModel() // if we've made a model before, call nextModel
 			
-			val modelBuilder = currentModelBuilder ?: stateRestorer().modelForState()
+			val modelBuilder = currentModelBuilder ?: stateRestorer().modelForState() // create our partialstate from scratch
 			modelBuilder.action()
 			
 			currentModelBuilder = modelBuilder // save it for the next model block
@@ -84,15 +198,7 @@ object BlockStateMacros {
 		}
 	}
 	
-	fun BlockStateProvider.variantDsl(block: Block, action: BaseVariantBuilder.() -> Unit) {
-		val builder = this.getVariantBuilder(block)
-		BaseVariantBuilder({ builder.partialState() }).action()
-	}
 	
-	fun BlockStateProvider.multipartDsl(block: Block, configuration: MultipartBuilder.() -> Unit) {
-		val dslBuilder = MultipartBuilder().apply(configuration)
-		this.getMultipartBuilder(block).apply(dslBuilder::build)
-	}
 	
 	@MultiPartDataGenDsl
 	class MultipartBuilder {
@@ -109,6 +215,7 @@ object BlockStateMacros {
 			}
 		}
 	}
+	
 	@MultiPartDataGenDsl
 	class MultipartPartBuilder {
 		private val modelConfigs = mutableListOf<ConfiguredModel.Builder<*>.() -> Unit>()
@@ -213,6 +320,16 @@ object BlockStateMacros {
 			}
 		}
 	}
+}
+
+fun BlockStateProvider.variantDsl(block: Block, action: BaseVariantBuilder.() -> Unit) {
+	val builder = this.getVariantBuilder(block)
+	BaseVariantBuilder({ builder.partialState() }).action()
+}
+
+fun BlockStateProvider.multipartDsl(block: Block, configuration: MultipartBuilder.() -> Unit) {
+	val dslBuilder = MultipartBuilder().apply(configuration)
+	this.getMultipartBuilder(block).apply(dslBuilder::build)
 }
 
 private typealias ForgeCondGroup = MultiPartBlockStateBuilder.PartBuilder.ConditionGroup

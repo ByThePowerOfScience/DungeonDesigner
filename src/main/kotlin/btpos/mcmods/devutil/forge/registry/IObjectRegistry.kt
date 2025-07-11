@@ -34,7 +34,7 @@ interface IObjectRegistry<T> {
 
 interface IBlockRegistry : IObjectRegistry<Block> {
 	override val REGISTRY: DeferredRegister<Block>
-		get() = BLOCKS
+		get() = BLOCKS // UNUSED
 	
 	val BLOCKS: DeferredRegister<Block>
 	val ITEMS: DeferredRegister<Item>
@@ -74,12 +74,11 @@ interface IBlockRegistry : IObjectRegistry<Block> {
 	
 	
 	
-	/*
+	/* // you can't destructure in fields ;_;
 	fun <B : Block, ITEM: BlockItem> registerBlock(name: String, blockSupplier: () -> B, itemSupplier: () -> ITEM): Pair<ObjectHolderDelegate<B>, ObjectHolderDelegate<ITEM>> {
 		return Pair(BLOCKS.registerObject(name, blockSupplier), ITEMS.registerObject(name, itemSupplier))
 	}
 	
-	// you can't destructure in fields ;_;
 	fun <B : Block, ENT : BlockEntity> registerBlock(name: String, blockSupplier: () -> B, entFactory: (BlockPos, BlockState) -> ENT, dataType: Type<*>? = null): Triple<ObjectHolderDelegate<B>, ObjectHolderDelegate<BlockItem>, ObjectHolderDelegate<BlockEntityType<ENT>>> {
 		val block = BLOCKS.registerObject(name, blockSupplier)
 		val entDelegate = ENTITIES.registerObject(name) {
