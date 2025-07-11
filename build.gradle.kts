@@ -18,19 +18,20 @@ apply(plugin = "kotlin")
 apply(plugin = "org.spongepowered.mixin")
 
 plugins {
-    eclipse
     idea
     `maven-publish`
     id("net.minecraftforge.gradle") version "[6.0,6.2)"
+    id("org.parchmentmc.librarian.forgegradle") version "1.+"
     id("org.jetbrains.kotlin.jvm") version "1.8.22"
     id("org.jetbrains.kotlin.plugin.serialization") version "1.8.22"
+//    id("org.jetbrains.kotlin.plugin.assignment") version "1.8.22"
 }
 
-group = "com.pleahmacaka"
+group = "btpos.mcmods"
 version = "1.20-0.1.0"
 
-val modid = "examplemod"
-val vendor = "pleahmacaka"
+val modid = "terminus"
+val vendor = "ByThePowerOfScience"
 
 val minecraftVersion = "1.20.2"
 val forgeVersion = "48.0.20"
@@ -46,7 +47,7 @@ println(
 )
 
 minecraft {
-    mappings("official", minecraftVersion)
+    mappings("parchment", "2023.10.08-1.20.2")
     accessTransformer(file("src/main/resources/META-INF/accesstransformer.cfg"))
 
     runs.all {
@@ -112,8 +113,8 @@ val Project.mixin: MixinExtension
     get() = extensions.getByType()
 
 mixin.run {
-    add(sourceSets.main.get(), "examplemod.mixins.refmap.json")
-    config("examplemod.mixins.json")
+    add(sourceSets.main.get(), "terminus.mixins.refmap.json")
+    config("terminus.mixins.json")
     val debug = this.debug as DynamicProperties
     debug.setProperty("verbose", true)
     debug.setProperty("export", true)
@@ -160,3 +161,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         jvmTarget = "17"
     }
 }
+//
+//assignment {
+//    annotation("btpos.mcmods.devutil.forge.datagen.HasAssignmentExtension")
+//}

@@ -5,8 +5,7 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [],
   "client": [
-    "ExampleMixin",
-    "bindings.ExampleBindingMixin"
+  
   ],
   "injectors": {
     "defaultRequire": 1
