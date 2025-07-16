@@ -153,7 +153,7 @@ object BlockStateMacros {
 		
 		/**
 		 * This function calls [ConfiguredModel.Builder.addModel]. Don't call it unless you want to register this twice.
-		 * Unlike the standard builder, this keeps you at the nested blockstate.
+		 * Unlike the standard builder, this keeps you at the nested blockstate after being invoked.
 		 *
 		 * model {
 		 *
@@ -255,6 +255,7 @@ object BlockStateMacros {
 				conditionBuilder = conditionBuilder.useOr()
 			
 			for (cond in condition.listOfConditions) {
+				@Suppress("UNCHECKED_CAST") // If I don't explicitly cast this, the _Kotlin compiler itself_ will freeze.
 				conditionBuilder = when (cond) {
 					is ConditionType.NestedCondBlock -> {
 						val block = cond.block
@@ -309,6 +310,7 @@ object BlockStateMacros {
 			}
 			
 			for (cond in listOfConditions) {
+				@Suppress("UNCHECKED_CAST")
 				group = when (cond) {
 					is ConditionType.CondPair<*> -> group.condition(cond.property as Property<Comparable<Any>>, *(cond.values as Array<Comparable<Any>>))
 					is ConditionType.NestedCondBlock -> {

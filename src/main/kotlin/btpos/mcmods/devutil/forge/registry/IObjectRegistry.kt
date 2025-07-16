@@ -14,6 +14,7 @@ import thedarkcolour.kotlinforforge.forge.MOD_BUS
 import thedarkcolour.kotlinforforge.forge.ObjectHolderDelegate
 import thedarkcolour.kotlinforforge.forge.registerObject
 import kotlin.reflect.KProperty0
+import kotlin.reflect.jvm.isAccessible
 
 interface IObjectRegistry<T> {
 	val REGISTRY: DeferredRegister<T>
@@ -23,6 +24,8 @@ interface IObjectRegistry<T> {
 	}
 	
 	fun getId(prop: KProperty0<*>): ResourceLocation {
+		prop.isAccessible = true
+		
 		return (prop.getDelegate() as? ObjectHolderDelegate<*>)?.registryObject?.id
 		       ?: throw IllegalStateException("Property $prop is not a registry delegate!")
 	}
@@ -47,18 +50,24 @@ interface IBlockRegistry : IObjectRegistry<Block> {
 		ENTITIES.register(MOD_BUS)
 	}
 	
-	fun <T : Block> block(name: String, supplier: () -> T): ObjectHolderDelegate<T> {
-		return BLOCKS.registerObject(name, supplier)
+	fun <T : Block> block(name: String,  withItem: Boolean = false, props: Item.Properties = Item.Properties(), supplier: () -> T): ObjectHolderDelegate<T> {
+		return BLOCKS.registerObject(name, supplier).also {
+			if (withItem)
+				item(name) { BlockItem(it.get(), props) }
+		}
 	}
 	
 	fun <T : Item> item(name: String, supplier: () -> T): ObjectHolderDelegate<T> {
 		return ITEMS.registerObject(name, supplier)
 	}
 	
-	fun <B : Block> item(bprop: KProperty0<B>, props: Item.Properties = Item.Properties()): ObjectHolderDelegate<BlockItem> {
+	fun <B : Block> blockItem(bprop: KProperty0<B>, props: Item.Properties = Item.Properties()): ObjectHolderDelegate<BlockItem> {
+		return item(bprop) { BlockItem(bprop.get(), props) }
+	}
+	fun <B : Block, I : Item> item(bprop: KProperty0<B>, itemGetter: () -> I): ObjectHolderDelegate<I> {
 		val name = getId(bprop).path
 		
-		return item(name) { BlockItem(bprop.get(), props) }
+		return item(name, itemGetter)
 	}
 	
 	fun <T : BlockEntity> ent(name: String, supplier: () -> BlockEntityType<T>): ObjectHolderDelegate<BlockEntityType<T>> {

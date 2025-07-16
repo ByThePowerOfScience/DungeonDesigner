@@ -1,21 +1,16 @@
 package btpos.mcmods.dungeondesignerlib.registry
 
 import btpos.mcmods.devutil.forge.registry.IBlockRegistry
-import btpos.mcmods.devutil.forge.registry.IObjectRegistry
 import btpos.mcmods.dungeondesignerlib.MODID
 import btpos.mcmods.dungeondesignerlib.blocks.BlockDungeonNexus
+import btpos.mcmods.dungeondesignerlib.blocks.actors.BlockTriggerHolder
 import btpos.mcmods.dungeondesignerlib.blocks.TileDungeonNexus
-import net.minecraft.world.item.BlockItem
-import net.minecraft.world.item.Item
-import net.minecraft.world.level.block.Block
-import net.minecraft.world.level.block.entity.BlockEntity
-import net.minecraft.world.level.block.entity.BlockEntityType
+import btpos.mcmods.dungeondesignerlib.blocks.actors.TileTriggerHolder
 import net.minecraft.world.level.block.state.BlockBehaviour
+import net.minecraft.world.level.material.MapColor
+import net.minecraft.world.level.material.PushReaction
 import net.minecraftforge.registries.DeferredRegister
 import net.minecraftforge.registries.ForgeRegistries
-import thedarkcolour.kotlinforforge.forge.ObjectHolderDelegate
-import thedarkcolour.kotlinforforge.forge.registerObject
-
 
 
 object ModBlocks : IBlockRegistry {
@@ -23,7 +18,18 @@ object ModBlocks : IBlockRegistry {
 	override val ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID)
 	override val ENTITIES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, MODID)
 	
-	val DUNGEON_NEXUS by block("dungeon_nexus") { BlockDungeonNexus(BlockBehaviour.Properties.of()) }
-	val DUNGEON_NEXUS_ITEM by item(::DUNGEON_NEXUS)
+	val dungeonLogicProperties = BlockBehaviour.Properties.of()
+		.pushReaction(PushReaction.IGNORE)
+		.mapColor(MapColor.COLOR_MAGENTA)
+		.strength(-1.0F, 3600000.0F)
+		.noLootTable()
+		.isValidSpawn { _, _, _, _ -> false }
+	
+	val DUNGEON_NEXUS by block(BlockDungeonNexus.id, withItem=true) { BlockDungeonNexus(dungeonLogicProperties) }
 	val DUNGEON_NEXUS_ENTITY by ent(::DUNGEON_NEXUS, ::TileDungeonNexus)
+	
+	val TRIGGER_BLOCK by block(BlockTriggerHolder.id, withItem=true) { BlockTriggerHolder(dungeonLogicProperties) }
+	val TRIGGER_BLOCK_ENTITY by ent(::TRIGGER_BLOCK, ::TileTriggerHolder)
+	
+	
 }

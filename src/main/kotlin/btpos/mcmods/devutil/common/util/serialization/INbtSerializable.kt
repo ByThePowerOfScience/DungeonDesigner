@@ -16,7 +16,7 @@ fun CompoundTag.putNbtSerializable(key: String, serializable: INbtSerializable) 
 /**
  * Reads the tag and populates an existing item with its state.
  */
-fun CompoundTag.readNbtSerializable(key: String, serializable: INbtSerializable) {
+fun CompoundTag.readNbtSerializableToExisting(key: String, serializable: INbtSerializable) {
 	serializable.populateFromNbt(this.getCompound(key))
 }
 

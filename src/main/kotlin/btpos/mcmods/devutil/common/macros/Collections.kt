@@ -13,6 +13,10 @@ inline fun <T : Any, U : Any> immutableMapOf(vararg pairs: Pair<T, U>): Immutabl
 	return builder.build()
 }
 
+inline fun <T, U> fastMapOf() : Object2ObjectOpenHashMap<T, U> {
+	return Object2ObjectOpenHashMap()
+}
+
 inline fun <T, U> fastMapOf(vararg pairs: Pair<T, U>) : Object2ObjectOpenHashMap<T, U> {
 	val map = if (pairs.isEmpty()) Object2ObjectOpenHashMap<T, U>() else Object2ObjectOpenHashMap(pairs.size)
 	for ((key, value) in pairs)

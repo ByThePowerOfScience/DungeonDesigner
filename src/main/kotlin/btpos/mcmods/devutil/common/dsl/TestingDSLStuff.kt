@@ -2,6 +2,7 @@
 
 package btpos.mcmods.devutil.common.dsl
 
+import btpos.mcmods.devutil.common.ext.java.asOptional
 import com.mojang.datafixers.kinds.App
 import com.mojang.serialization.Codec
 import com.mojang.serialization.MapCodec
@@ -173,6 +174,9 @@ object CodecBuilderMacros {
 	
 	inline infix fun <ENCL, T> MapCodec<T>.`for getter`(noinline getter: (ENCL) -> T): RecordCodecBuilder<ENCL, T> = this.forGetter(getter)
 	inline infix fun <ENCL, T> MapCodec<T>.gets(noinline getter: (ENCL) -> T): RecordCodecBuilder<ENCL, T> = this.forGetter(getter)
+	
+	// TODO make it so optional fields with nullable getters automatically make the default value null
+	
 	inline operator fun <ENCL, T> MapCodec<T>.minus(noinline getter: (ENCL) -> T) = this.forGetter(getter)
 }
 

@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.spongepowered.asm.gradle.plugins.MixinExtension
 import org.spongepowered.asm.gradle.plugins.struct.DynamicProperties
 import java.text.SimpleDateFormat
@@ -9,7 +10,6 @@ buildscript {
         maven("https://maven.fabricmc.net/")
     }
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0-Beta")
         classpath("org.spongepowered:mixingradle:0.7.+")
     }
 }
@@ -22,19 +22,18 @@ plugins {
     `maven-publish`
     id("net.minecraftforge.gradle") version "[6.0,6.2)"
     id("org.parchmentmc.librarian.forgegradle") version "1.+"
-    id("org.jetbrains.kotlin.jvm") version "1.8.22"
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.8.22"
-//    id("org.jetbrains.kotlin.plugin.assignment") version "1.8.22"
+    kotlin("jvm") version "2.0.0"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0"
 }
 
 group = "btpos.mcmods"
 version = "1.20-0.1.0"
 
-val modid = "terminus"
+val mod_id: String by properties
 val vendor = "ByThePowerOfScience"
 
-val minecraftVersion = "1.20.2"
-val forgeVersion = "48.0.20"
+val mc_version: String by properties
+val forge_version: String by properties
 
 java.toolchain.languageVersion.set(JavaLanguageVersion.of(17))
 
@@ -47,7 +46,7 @@ println(
 )
 
 minecraft {
-    mappings("parchment", "2023.10.08-1.20.2")
+    mappings("parchment", "2023.09.03-1.20.1")
     accessTransformer(file("src/main/resources/META-INF/accesstransformer.cfg"))
 
     runs.all {
@@ -55,10 +54,10 @@ minecraft {
             workingDirectory(project.file("run"))
             property("forge.logging.markers", "REGISTRIES")
             property("forge.logging.console.level", "debug")
-            property("forge.enabledGameTestNamespaces", modid)
+            property("forge.enabledGameTestNamespaces", mod_id)
             property("terminal.jline", "true")
             mods {
-                create(modid) {
+                create(mod_id) {
                     source(sourceSets.main.get())
                 }
             }
@@ -77,13 +76,13 @@ minecraft {
         create("data") {
             workingDirectory(project.file("run"))
             args(
-                "--mod",
-                modid,
-                "--all",
-                "--output",
-                file("src/generated/resources/"),
-                "--existing",
-                file("src/main/resources")
+                    "--mod",
+                    mod_id,
+                    "--all",
+                    "--output",
+                    file("src/generated/resources/"),
+                    "--existing",
+                    file("src/main/resources")
             )
         }
     }
@@ -97,6 +96,8 @@ repositories {
         name = "Kotlin for Forge"
         url = uri("https://thedarkcolour.github.io/KotlinForForge/")
     }
+    
+    maven(url="https://maven.blamejared.com")
 }
 
 fun getProperty(name: String): String {
@@ -104,17 +105,19 @@ fun getProperty(name: String): String {
 }
 
 dependencies {
-    minecraft("net.minecraftforge:forge:$minecraftVersion-$forgeVersion")
+    minecraft("net.minecraftforge:forge:$mc_version-$forge_version")
     annotationProcessor("org.spongepowered:mixin:0.8.5:processor")
-    implementation("thedarkcolour:kotlinforforge:4.3.0")
+    implementation("thedarkcolour:kotlinforforge:4.11.0")
+    
+    implementation(fg.deobf("net.darkhax.bookshelf:Bookshelf-Forge-1.20.1:20.2.12"))
 }
 
 val Project.mixin: MixinExtension
     get() = extensions.getByType()
 
 mixin.run {
-    add(sourceSets.main.get(), "terminus.mixins.refmap.json")
-    config("terminus.mixins.json")
+    add(sourceSets.main.get(), "dungeondesigner.mixins.refmap.json")
+    config("dungeondesigner.mixins.json")
     val debug = this.debug as DynamicProperties
     debug.setProperty("verbose", true)
     debug.setProperty("export", true)
@@ -122,21 +125,43 @@ mixin.run {
 }
 
 tasks.withType<Jar> {
-    archiveBaseName.set(modid)
+    archiveBaseName.set(mod_id)
     manifest {
         attributes(
             mapOf(
-                "Specification-Title" to modid,
-                "Specification-Vendor" to vendor,
-                "Specification-Version" to "1",
-                "Implementation-Title" to project.name,
-                "Implementation-Version" to project.version.toString(),
-                "Implementation-Vendor" to vendor,
-                "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(Date())
+                    "Specification-Title" to mod_id,
+                    "Specification-Vendor" to vendor,
+                    "Specification-Version" to "1",
+                    "Implementation-Title" to project.name,
+                    "Implementation-Version" to project.version.toString(),
+                    "Implementation-Vendor" to vendor,
+                    "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(Date())
             )
         )
     }
     finalizedBy("reobfJar")
+}
+
+
+tasks.processResources {
+    val replaceProperties = mapOf(
+            "minecraft_version" to mc_version,
+            "minecraft_version_range" to project.properties["minecraft_version_range"],
+            "forge_version" to forge_version,
+            "forge_version_range" to project.properties["forge_version_range"],
+            "mod_id" to mod_id,
+            "mod_name" to project.properties["mod_name"],
+            "mod_license" to project.properties["mod_license"],
+            "mod_version" to version,
+            "mod_authors" to project.properties["mod_authors"],
+            "mod_description" to project.properties["mod_description"]
+    )
+    
+    inputs.properties(replaceProperties)
+    
+    filesMatching(listOf("META-INF/mods.toml", "pack.mcmeta")) {
+        expand(replaceProperties)
+    }
 }
 
 publishing {
@@ -157,11 +182,7 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = "17"
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
-//
-//assignment {
-//    annotation("btpos.mcmods.devutil.forge.datagen.HasAssignmentExtension")
-//}
