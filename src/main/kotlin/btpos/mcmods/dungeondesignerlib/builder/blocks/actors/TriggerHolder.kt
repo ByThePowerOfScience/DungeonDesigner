@@ -1,6 +1,6 @@
 @file:Suppress("OVERRIDE_DEPRECATION")
 
-package btpos.mcmods.dungeondesignerlib.blocks.actors
+package btpos.mcmods.dungeondesignerlib.builder.blocks.actors
 
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
 import btpos.mcmods.devutil.common.ext.vanilla.blockEntity
@@ -18,12 +18,13 @@ import btpos.mcmods.devutil.common.util.serialization.putNbtSerializable
 import btpos.mcmods.devutil.common.util.serialization.readNbtSerializableToExisting
 import btpos.mcmods.devutil.forge.datagen.IBlockDataGen
 import btpos.mcmods.devutil.forge.datagen.variantDsl
-import btpos.mcmods.dungeondesignerlib.blocks.IMMUTABLE
-import btpos.mcmods.dungeondesignerlib.blocks.POWERED
-import btpos.mcmods.dungeondesignerlib.items.ItemTriggerVariable
+import btpos.mcmods.dungeondesignerlib.WorldUtils
+import btpos.mcmods.dungeondesignerlib.IMMUTABLE
+import btpos.mcmods.dungeondesignerlib.POWERED
+import btpos.mcmods.dungeondesignerlib.builder.items.ItemTriggerVariable
 import btpos.mcmods.dungeondesignerlib.registry.ModBlocks
 import btpos.mcmods.dungeondesignerlib.registry.ModItems
-import btpos.mcmods.dungeondesignerlib.saveddata.TriggerBoundsTag
+import btpos.mcmods.dungeondesignerlib.builder.saveddata.TriggerBoundsTag
 import com.mojang.serialization.codecs.RecordCodecBuilder
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
@@ -40,6 +41,8 @@ import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.EntityBlock
 import net.minecraft.world.level.block.entity.BlockEntity
+import net.minecraft.world.level.block.entity.BlockEntityTicker
+import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.block.state.StateDefinition
 import net.minecraft.world.phys.AABB
@@ -177,7 +180,29 @@ class BlockTriggerHolder(
 			
 		}
 		
+		
+		
 		return InteractionResult.PASS
+	}
+	
+	override fun <T : BlockEntity> getTicker(pLevel: Level, pState: BlockState, pBlockEntityType: BlockEntityType<T>): BlockEntityTicker<T>? {
+		return BlockEntityTicker { level, pos, state, ent ->
+			if (ent !is TileTriggerHolder || ent.state.trigger == null)
+				return@BlockEntityTicker
+			
+			when (state.getValue(POWERED)) {
+				false -> {
+					if (WorldUtils.isPlayerInBoundingBox(ent.state.trigger!!, level)) {
+						level.setBlockAndUpdate(pos, state.with(POWERED, true))
+					}
+				}
+				true -> {
+					if (!WorldUtils.isPlayerInBoundingBox(ent.state.trigger!!, level)) {
+						level.setBlockAndUpdate(pos, state.with(POWERED, false))
+					}
+				}
+			}
+		}
 	}
 	
 	/**
@@ -252,16 +277,18 @@ class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TR
 				}
 			}
 		}
-		set(stack) = with(state) {
-			if (stack.isEmpty) {
-				this.trigger = null
-				return
+		set(stack) {
+			with(state) {
+				if (stack.isEmpty) {
+					this.trigger = null
+					return
+				}
+				if (!stack.`is`(ModItems.TRIGGER_ITEM))
+					return;
+				
+				this.trigger = stack.getTagElement(ItemTriggerVariable.STATE)
+					               ?.let(::TriggerBoundsTag)
+					               ?.toAABB() ?: return
 			}
-			if (!stack.`is`(ModItems.TRIGGER_ITEM))
-				return;
-			
-			this.trigger = stack.getTagElement(ItemTriggerVariable.STATE)
-				               ?.let(::TriggerBoundsTag)
-				               ?.toAABB() ?: return
 		}
 }

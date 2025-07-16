@@ -1,4 +1,4 @@
-package btpos.mcmods.dungeondesignerlib.saveddata
+package btpos.mcmods.dungeondesignerlib.builder.saveddata
 
 import btpos.mcmods.devutil.common.ext.vanilla.getBlockPos
 import btpos.mcmods.devutil.common.ext.vanilla.getMaxCornerBlock

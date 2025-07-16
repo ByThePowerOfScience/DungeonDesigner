@@ -1,4 +1,4 @@
-package btpos.mcmods.dungeondesignerlib.blocks
+package btpos.mcmods.dungeondesignerlib
 
 import net.minecraft.world.level.block.state.properties.BlockStateProperties
 import net.minecraft.world.level.block.state.properties.BooleanProperty

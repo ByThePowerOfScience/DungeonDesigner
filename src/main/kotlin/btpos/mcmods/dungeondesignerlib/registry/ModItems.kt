@@ -2,7 +2,7 @@ package btpos.mcmods.dungeondesignerlib.registry
 
 import btpos.mcmods.devutil.forge.registry.IObjectRegistry
 import btpos.mcmods.dungeondesignerlib.MODID
-import btpos.mcmods.dungeondesignerlib.items.ItemTriggerVariable
+import btpos.mcmods.dungeondesignerlib.builder.items.ItemTriggerVariable
 import net.minecraft.world.item.Item
 import net.minecraftforge.registries.DeferredRegister
 import net.minecraftforge.registries.ForgeRegistries

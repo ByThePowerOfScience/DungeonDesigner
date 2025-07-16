@@ -1,15 +1,14 @@
 package btpos.mcmods.dungeondesignerlib.datagen
 
 import btpos.mcmods.dungeondesignerlib.MODID
-import btpos.mcmods.dungeondesignerlib.blocks.BlockDungeonNexus
-import btpos.mcmods.dungeondesignerlib.blocks.actors.BlockTriggerHolder
-import btpos.mcmods.dungeondesignerlib.items.ItemTriggerVariable
+import btpos.mcmods.dungeondesignerlib.builder.blocks.BlockDungeonNexus
+import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.BlockTriggerHolder
+import btpos.mcmods.dungeondesignerlib.builder.items.ItemTriggerVariable
 import net.minecraft.data.PackOutput
 import net.minecraftforge.client.model.generators.BlockStateProvider
 import net.minecraftforge.client.model.generators.ItemModelProvider
 import net.minecraftforge.common.data.ExistingFileHelper
 import net.minecraftforge.data.event.GatherDataEvent
-import kotlin.io.path.Path
 
 object DataGenConstants {
 	fun gatherDataEvent(evt: GatherDataEvent) {

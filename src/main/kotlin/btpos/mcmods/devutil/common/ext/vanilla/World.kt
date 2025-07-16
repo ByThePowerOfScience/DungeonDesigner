@@ -5,12 +5,12 @@ package btpos.mcmods.devutil.common.ext.vanilla
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NbtUtils
-import net.minecraft.nbt.TagTypes
 import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.ChunkPos
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.LevelAccessor
+import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.chunk.ChunkAccess
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
@@ -58,6 +58,9 @@ fun AABB.getMaxCornerBlock(): BlockPos {
 	return BlockPos(maxX.toInt(), maxY.toInt(), maxZ.toInt())
 }
 
+/**
+ * Macro to drop an itemstack in the world at the given position.
+ */
 fun Level.dropItem(item: ItemStack, pos: Vec3, velocity: Vec3? = null) {
 	val ent = if (velocity != null) {
 		ItemEntity(this, pos.x, pos.y, pos.z, item, velocity.x, velocity.y, velocity.z)
@@ -67,3 +70,25 @@ fun Level.dropItem(item: ItemStack, pos: Vec3, velocity: Vec3? = null) {
 	
 	this.addFreshEntity(ent)
 }
+
+/**
+ * Apply a transformation to the blockstate at the given position.
+ * Updates the block on both the client and server.
+ *
+ * A macro for `level.setBlockAndUpdate(pos, level.getBlock(pos).something())`.
+ *
+ * @param updater An inlined function that accepts the old state and returns the new.
+ */
+inline fun Level.changeBlockAndUpdate(pos: BlockPos, updater: (BlockState) -> BlockState): Boolean {
+	return this.setBlockAndUpdate(pos, updater(this.getBlockState(pos)))
+}
+
+/**
+ * Apply a transformation to the blockstate at the given position.
+ *
+ * A macro for `level.setBlock(pos, level.getBlock(pos).something(), flags)`.
+ *
+ * @param updater Function that accepts the old state and returns the new.
+ */
+inline fun Level.changeBlock(pos: BlockPos, flags: Int, updater: (BlockState) -> BlockState) = this.setBlock(pos, this.getBlockState(pos).let(updater), flags)
+

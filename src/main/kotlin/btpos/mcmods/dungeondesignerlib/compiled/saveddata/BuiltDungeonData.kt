@@ -1,17 +1,17 @@
-package btpos.mcmods.dungeondesignerlib.saveddata
+package btpos.mcmods.dungeondesignerlib.compiled.saveddata
 
 import btpos.mcmods.devutil.common.dsl.CodecBuilderMacros
 import btpos.mcmods.devutil.common.ext.vanilla.destructuring.component1
 import btpos.mcmods.devutil.common.ext.vanilla.destructuring.component2
+import btpos.mcmods.devutil.common.ext.vanilla.changeBlockAndUpdate
 import btpos.mcmods.devutil.common.ext.vanilla.with
 import btpos.mcmods.devutil.common.macros.fastMapOf
 import btpos.mcmods.devutil.common.util.serialization.Serialization
-import btpos.mcmods.dungeondesignerlib.blocks.POWERED
+import btpos.mcmods.dungeondesignerlib.POWERED
 import btpos.mcmods.dungeondesignerlib.registry.ModBlocks
 import com.google.common.collect.ImmutableMap
 import com.mojang.datafixers.util.Pair
 import com.mojang.serialization.Codec
-import com.mojang.serialization.MapCodec
 import com.mojang.serialization.codecs.RecordCodecBuilder
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap
@@ -28,16 +28,16 @@ import java.util.UUID
  * All positions, including bounding boxes, are stored as an offset from the Dungeon Nexus's position.
  */
 data class DungeonTemplateNbt(
-		val dungeonBoundingBox: AABB,
-		val rooms: List<AABB>,
-		/**
+	val dungeonBoundingBox: AABB,
+	val rooms: List<AABB>,
+	/**
 		 * List of all triggers in the dungeon.
 		 *
 		 * Key: Bounding box of the trigger.
 		 * Value: Positions of the TriggerBlocks that will be powered if a player enters the bounding box.
 		 */
 		val triggers: List<Pair<AABB, List<BlockPos>>>,
-		/**
+	/**
 		 * List of all flags in the dungeon.
 		 *
 		 * Key: Name of the flag.
@@ -113,10 +113,9 @@ class DeserializedDungeonNbt private constructor(
 		}
 	}
 	
-	
 	fun tick(level: ServerLevel) {
 		// Find players in the dungeon dimension
-		val players = level.getPlayers { p -> p.level().dimension() == level.dimension() && p.position() in dungeonBoundingBox }
+		val players = level.getPlayers { p -> p.position() in dungeonBoundingBox }
 		
 		checkForActiveTriggers(players, level)
 		checkForInactiveTriggers(level)
@@ -145,12 +144,10 @@ class DeserializedDungeonNbt private constructor(
 	private fun checkForInactiveTriggers(level: ServerLevel) {
 		activeTriggers.mapNotNull { (trigger, activators) ->
 			activators.removeAll { uuid ->
-				level.getPlayerByUUID(uuid).let {
-					it == null || it.position() !in trigger.boundingBox
-				}
+				level.getPlayerByUUID(uuid).let { it == null || it.position() !in trigger.boundingBox }
 			}
 			
-			trigger.takeIf { activators.isEmpty() }
+			return@mapNotNull if (activators.isEmpty()) trigger else null
 		}.forEach {
 			activeTriggers.remove(it)
 			it.unpowerListeners(level)
@@ -160,7 +157,9 @@ class DeserializedDungeonNbt private constructor(
 	fun setFlag(level: ServerLevel, flag: FlagName, value: Boolean) {
 		val oldValue = this.flagValues.put(flag, value)
 		if (oldValue != value)
-			flagsToBlocks[flag]?.forEach { pos -> level.setBlockAndUpdate(pos, level.getBlockState(pos).with(POWERED, value)) }
+			flagsToBlocks[flag]?.forEach { pos ->
+				level.changeBlockAndUpdate(pos) { it.with(POWERED, value) }
+			}
 	}
 }
 

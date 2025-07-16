@@ -1,12 +1,9 @@
-package btpos.mcmods.dungeondesignerlib.items
+package btpos.mcmods.dungeondesignerlib.builder.items
 
 import btpos.mcmods.devutil.common.util.ChatUtils
 import btpos.mcmods.devutil.forge.datagen.IItemDataGen
-import btpos.mcmods.dungeondesignerlib.saveddata.TriggerBoundsTag
-import net.minecraft.ChatFormatting
-import net.minecraft.core.BlockPos
+import btpos.mcmods.dungeondesignerlib.builder.saveddata.TriggerBoundsTag
 import net.minecraft.network.chat.Component
-import net.minecraft.network.chat.ComponentUtils
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
