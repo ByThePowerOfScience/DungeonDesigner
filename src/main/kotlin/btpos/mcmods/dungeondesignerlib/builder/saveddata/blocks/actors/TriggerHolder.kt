@@ -1,6 +1,6 @@
 @file:Suppress("OVERRIDE_DEPRECATION")
 
-package btpos.mcmods.dungeondesignerlib.builder.blocks.actors
+package btpos.mcmods.dungeondesignerlib.builder.saveddata.blocks.actors
 
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
 import btpos.mcmods.devutil.common.ext.vanilla.blockEntity
@@ -218,9 +218,8 @@ class BlockTriggerHolder(
 	}
 }
 
-private const val TAGKEY_TRIGGER = "trigger"
-
 class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TRIGGER_BLOCK_ENTITY, p0, p1) {
+	
 	class TriggerHolderState(
 		trigger: AABB? = null,
 		placer: UUID? = null,
@@ -240,14 +239,20 @@ class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TR
 		var placer: UUID? by notify(placer)
 		
 		companion object {
+			const val TAGKEY_BOUNDS = "trigger"
+			const val TAGKEY_PLACER = "placer"
 			val CODEC = RecordCodecBuilder.create<TriggerHolderState> {
 				it.group(
-						Serialization.CODEC_AABB.optionalFieldOf("trigger", null)
+						TriggerBoundsTag.CODEC.optionalFieldOf(TAGKEY_BOUNDS, null)
 							.forGetter(TriggerHolderState::trigger),
-						UUIDUtil.CODEC.optionalFieldOf("placer", null).forGetter(TriggerHolderState::placer)
+						UUIDUtil.CODEC.optionalFieldOf(TAGKEY_PLACER, null).forGetter(TriggerHolderState::placer)
 				).apply(it, ::TriggerHolderState)
 			}
 		}
+	}
+	
+	companion object {
+		const val TAGKEY_TRIGGER = "trigger"
 	}
 	
 	val state = TriggerHolderState(onChange=this::setChanged)

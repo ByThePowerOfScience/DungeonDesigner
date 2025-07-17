@@ -49,9 +49,9 @@ data class DungeonTemplateNbt(
 		val CODEC = with (CodecBuilderMacros) {
 			RecordCodecBuilder.create {
 				it.group(
-						"bbox" - Serialization.CODEC_AABB gets DungeonTemplateNbt::dungeonBoundingBox,
-						"rooms" - Codec.list(Serialization.CODEC_AABB) gets DungeonTemplateNbt::rooms,
-						"triggers" - Codec.compoundList(Serialization.CODEC_AABB, BlockPos.CODEC.listOf()) gets DungeonTemplateNbt::triggers,
+						"bbox" - Serialization.CODEC_AABB_BLOCK gets DungeonTemplateNbt::dungeonBoundingBox,
+						"rooms" - Codec.list(Serialization.CODEC_AABB_BLOCK) gets DungeonTemplateNbt::rooms,
+						"triggers" - Codec.compoundList(Serialization.CODEC_AABB_BLOCK, BlockPos.CODEC.listOf()) gets DungeonTemplateNbt::triggers,
 						"flags" - Codec.compoundList(Codec.STRING, BlockPos.CODEC.listOf()) gets DungeonTemplateNbt::flags,
 				).apply(it, ::DungeonTemplateNbt)
 			}

@@ -2,10 +2,10 @@ package btpos.mcmods.dungeondesignerlib.registry
 
 import btpos.mcmods.devutil.forge.registry.IBlockRegistry
 import btpos.mcmods.dungeondesignerlib.MODID
-import btpos.mcmods.dungeondesignerlib.builder.blocks.BlockDungeonNexus
-import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.BlockTriggerHolder
-import btpos.mcmods.dungeondesignerlib.builder.blocks.TileDungeonNexus
-import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.TileTriggerHolder
+import btpos.mcmods.dungeondesignerlib.builder.saveddata.blocks.BlockDungeonNexus
+import btpos.mcmods.dungeondesignerlib.builder.saveddata.blocks.actors.BlockTriggerHolder
+import btpos.mcmods.dungeondesignerlib.builder.saveddata.blocks.TileDungeonNexus
+import btpos.mcmods.dungeondesignerlib.builder.saveddata.blocks.actors.TileTriggerHolder
 import net.minecraft.world.level.block.state.BlockBehaviour
 import net.minecraft.world.level.material.MapColor
 import net.minecraft.world.level.material.PushReaction

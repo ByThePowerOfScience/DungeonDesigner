@@ -110,6 +110,8 @@ dependencies {
     implementation("thedarkcolour:kotlinforforge:4.11.0")
     
     implementation(fg.deobf("net.darkhax.bookshelf:Bookshelf-Forge-1.20.1:20.2.12"))
+    
+    testImplementation(kotlin("test"))
 }
 
 val Project.mixin: MixinExtension
@@ -185,4 +187,8 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

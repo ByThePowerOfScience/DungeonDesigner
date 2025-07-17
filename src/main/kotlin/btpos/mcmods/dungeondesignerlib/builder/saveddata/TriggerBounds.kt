@@ -4,6 +4,8 @@ import btpos.mcmods.devutil.common.ext.vanilla.getBlockPos
 import btpos.mcmods.devutil.common.ext.vanilla.getMaxCornerBlock
 import btpos.mcmods.devutil.common.ext.vanilla.getMinCornerBlock
 import btpos.mcmods.devutil.common.ext.vanilla.toCompoundTag
+import btpos.mcmods.devutil.common.util.serialization.Serialization
+import btpos.mcmods.devutil.common.util.serialization.Serialization.encodeToTag
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.phys.AABB
@@ -14,10 +16,10 @@ import net.minecraft.world.phys.AABB
  */
 @JvmInline
 value class TriggerBoundsTag(val tag: CompoundTag) {
-	constructor(aabb: AABB) : this(CompoundTag().apply {
-		put("first", aabb.getMinCornerBlock().toCompoundTag())
-		put("second", aabb.getMaxCornerBlock().toCompoundTag())
-	})
+	companion object {
+		val CODEC = Serialization.CODEC_AABB_BLOCK
+	}
+	constructor(aabb: AABB) : this(CODEC.encodeToTag(aabb) as CompoundTag)
 	
 	var first: BlockPos?
 		get() = tag.getBlockPos("first")
