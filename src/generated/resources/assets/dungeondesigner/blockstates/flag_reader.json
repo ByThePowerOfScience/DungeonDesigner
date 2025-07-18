@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "powered=false": {
+      "model": "dungeondesigner:block/flag_reader"
+    },
+    "powered=true": {
+      "model": "dungeondesigner:block/flag_reader_on"
+    }
+  }
+}

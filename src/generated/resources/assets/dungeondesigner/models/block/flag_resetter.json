@@ -1,0 +1,11 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "dungeondesigner:block/logic_programmer_top_resetter",
+    "east": "dungeondesigner:block/logic_programmer_side",
+    "north": "dungeondesigner:block/logic_programmer_side_input",
+    "south": "dungeondesigner:block/logic_programmer_side",
+    "up": "dungeondesigner:block/logic_programmer_top_resetter",
+    "west": "dungeondesigner:block/logic_programmer_side"
+  }
+}
