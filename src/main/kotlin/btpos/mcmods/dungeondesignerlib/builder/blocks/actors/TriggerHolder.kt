@@ -1,30 +1,31 @@
 @file:Suppress("OVERRIDE_DEPRECATION")
 
-package btpos.mcmods.dungeondesignerlib.builder.saveddata.blocks.actors
+package btpos.mcmods.dungeondesignerlib.builder.blocks.actors
 
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
-import btpos.mcmods.devutil.common.ext.vanilla.blockEntity
-import btpos.mcmods.devutil.common.ext.vanilla.dropItem
-import btpos.mcmods.devutil.common.ext.vanilla.getMaxCornerBlock
-import btpos.mcmods.devutil.common.ext.vanilla.getMinCornerBlock
+import btpos.mcmods.devutil.common.ext.vanilla.data.getCompoundOrNull
+import btpos.mcmods.devutil.common.ext.vanilla.world.blockEntity
+import btpos.mcmods.devutil.common.ext.vanilla.world.dropItem
+import btpos.mcmods.devutil.common.ext.vanilla.world.getMaxCornerBlock
+import btpos.mcmods.devutil.common.ext.vanilla.world.getMinCornerBlock
 import btpos.mcmods.devutil.common.ext.vanilla.stack
-import btpos.mcmods.devutil.common.ext.vanilla.with
+import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.structure.ITileState
 import btpos.mcmods.devutil.common.util.ChatUtils
-import btpos.mcmods.devutil.common.util.plus
+import btpos.mcmods.devutil.common.ext.vanilla.plus
 import btpos.mcmods.devutil.common.util.serialization.ICodecSerializable
-import btpos.mcmods.devutil.common.util.serialization.Serialization
 import btpos.mcmods.devutil.common.util.serialization.putNbtSerializable
 import btpos.mcmods.devutil.common.util.serialization.readNbtSerializableToExisting
 import btpos.mcmods.devutil.forge.datagen.IBlockDataGen
 import btpos.mcmods.devutil.forge.datagen.variantDsl
+import btpos.mcmods.devutil.parts.IItemRepresentable
+import btpos.mcmods.devutil.parts.dropItemInWorld
 import btpos.mcmods.dungeondesignerlib.WorldUtils
-import btpos.mcmods.dungeondesignerlib.IMMUTABLE
 import btpos.mcmods.dungeondesignerlib.POWERED
 import btpos.mcmods.dungeondesignerlib.builder.items.ItemTriggerVariable
 import btpos.mcmods.dungeondesignerlib.registry.ModBlocks
 import btpos.mcmods.dungeondesignerlib.registry.ModItems
-import btpos.mcmods.dungeondesignerlib.builder.saveddata.TriggerBoundsTag
+import btpos.mcmods.dungeondesignerlib.builder.nbt.TriggerBoundsTag
 import com.mojang.serialization.codecs.RecordCodecBuilder
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
@@ -35,6 +36,7 @@ import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
+import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.Level
@@ -56,7 +58,7 @@ class BlockTriggerHolder(
 	props: Properties
 ) : Block(props), EntityBlock {
 	init {
-		registerDefaultState(stateDefinition.any().with(POWERED, false).with(IMMUTABLE, false))
+		registerDefaultState(stateDefinition.any().with(POWERED, false))
 	}
 	
 	companion object : IBlockDataGen {
@@ -68,6 +70,7 @@ class BlockTriggerHolder(
 		const val TEXTURE_ON_TOP_BOTTOM = "logic_programmer_top_on"
 		const val TEXTURE_ON_SIDES = "logic_programmer_side_on"
 		
+		@Suppress("DuplicatedCode")
 		override fun BlockStateProvider.buildModelsAndStates() {
 			val off = blockLoc(TEXTURE_SIDES).let { side ->
 				blockLoc(TEXTURE_TOP_BOTTOM).let { updown ->
@@ -115,7 +118,7 @@ class BlockTriggerHolder(
 	//region Configuration
 	override fun createBlockStateDefinition(pBuilder: StateDefinition.Builder<Block, BlockState>) {
 		super.createBlockStateDefinition(pBuilder)
-		pBuilder.add(POWERED, IMMUTABLE)
+		pBuilder.add(POWERED)
 	}
 	
 	override fun newBlockEntity(pos: BlockPos, state: BlockState): BlockEntity? = ModBlocks.TRIGGER_BLOCK_ENTITY.create(pos, state)
@@ -137,6 +140,7 @@ class BlockTriggerHolder(
 		}
 	}
 	
+	
 	override fun use(pState: BlockState, pLevel: Level,
 	                 pPos: BlockPos, pPlayer: Player,
 	                 pHand: InteractionHand, pHit: BlockHitResult
@@ -147,22 +151,18 @@ class BlockTriggerHolder(
 			return InteractionResult.SUCCESS
 		}
 		
-		
 		val ourEnt = pLevel.blockEntity(pPos, ModBlocks.TRIGGER_BLOCK_ENTITY) ?: return InteractionResult.PASS
 		
 		// Pop out trigger item into world if it exists
 		if (pPlayer.isShiftKeyDown) {
-			dropTriggerItem(ourEnt, pLevel, pPos)
+			ourEnt.state.triggerDelegate.dropItemInWorld(pLevel, pPos)
 			return InteractionResult.SUCCESS
 		}
 		
 		// Else add it to the block
-		if (itemInHand.`is`(ModItems.TRIGGER_ITEM)) {
-			dropTriggerItem(ourEnt, pLevel, pPos)
-			
-			ourEnt.triggerItem = itemInHand
-			if (ourEnt.state.trigger != null)
-				itemInHand.shrink(1)
+		if (itemInHand.`is`(ModItems.TRIGGER_ITEM) && ourEnt.state.trigger == null) {
+			ourEnt.state.triggerDelegate.asItem = itemInHand
+			itemInHand.shrink(1)
 			
 			return InteractionResult.CONSUME
 		}
@@ -177,12 +177,9 @@ class BlockTriggerHolder(
 					+ " to "
 					+ ChatUtils.toComponent(ourEnt.state.trigger!!.getMaxCornerBlock())
 			)
-			
 		}
 		
-		
-		
-		return InteractionResult.PASS
+		return InteractionResult.CONSUME
 	}
 	
 	override fun <T : BlockEntity> getTicker(pLevel: Level, pState: BlockState, pBlockEntityType: BlockEntityType<T>): BlockEntityTicker<T>? {
@@ -204,25 +201,12 @@ class BlockTriggerHolder(
 			}
 		}
 	}
-	
-	/**
-	 * Drops the current trigger as an item in the world
-	 */
-	private fun dropTriggerItem(ourEnt: TileTriggerHolder, pLevel: Level, pPos: BlockPos) {
-		ourEnt.triggerItem.let {
-			if (!it.isEmpty) {
-				pLevel.dropItem(it, pPos.above().toVec3(), Vec3(0.0, 0.1, 0.0))
-				ourEnt.state.trigger = null
-			}
-		}
-	}
 }
 
 class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TRIGGER_BLOCK_ENTITY, p0, p1) {
-	
 	class TriggerHolderState(
-		trigger: AABB? = null,
-		placer: UUID? = null,
+		pTrigger: AABB? = null,
+		pPlacer: UUID? = null,
 		override val onChange: () -> Unit = {}
 	)
 		: ITileState, ICodecSerializable<TriggerHolderState>
@@ -235,18 +219,34 @@ class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TR
 		}
 		//endregion
 		
-		var trigger: AABB? by notify(trigger)
-		var placer: UUID? by notify(placer)
+		var triggerDelegate = object : IItemRepresentable<AABB> {
+			override val acceptedItem: Item
+				get() = ModItems.TRIGGER_ITEM
+			
+			override var value: AABB? by notify(pTrigger)
+			
+			override fun CompoundTag.readFromTag(): AABB? {
+				return this.getCompoundOrNull(ItemTriggerVariable.TAGKEY_STATE)?.let(::TriggerBoundsTag)?.toAABB()
+			}
+			
+			override fun CompoundTag.writeToTag(value: AABB) {
+				this.put(ItemTriggerVariable.TAGKEY_STATE, TriggerBoundsTag(value).tag)
+			}
+		}
+		
+		var trigger: AABB? by triggerDelegate::value
+		var placer: UUID? by notify(pPlacer)
 		
 		companion object {
 			const val TAGKEY_BOUNDS = "trigger"
 			const val TAGKEY_PLACER = "placer"
-			val CODEC = RecordCodecBuilder.create<TriggerHolderState> {
-				it.group(
+			
+			val CODEC = RecordCodecBuilder.create<TriggerHolderState> { inst ->
+				inst.group(
 						TriggerBoundsTag.CODEC.optionalFieldOf(TAGKEY_BOUNDS, null)
 							.forGetter(TriggerHolderState::trigger),
 						UUIDUtil.CODEC.optionalFieldOf(TAGKEY_PLACER, null).forGetter(TriggerHolderState::placer)
-				).apply(it, ::TriggerHolderState)
+				).apply(inst, ::TriggerHolderState)
 			}
 		}
 	}
@@ -266,34 +266,4 @@ class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TR
 		super.load(tag)
 		tag.readNbtSerializableToExisting(TAGKEY_TRIGGER, state)
 	}
-	
-	/**
-	 * Helper property to set/get the trigger from/as an [ItemTriggerVariable].
-	 */
-	var triggerItem: ItemStack
-		get() {
-			with(state) {
-				if (trigger == null) {
-					return ItemStack.EMPTY
-				} else {
-					return ModItems.TRIGGER_ITEM.stack().apply {
-						getOrCreateTag().put(ItemTriggerVariable.STATE, TriggerBoundsTag(trigger!!).tag)
-					}
-				}
-			}
-		}
-		set(stack) {
-			with(state) {
-				if (stack.isEmpty) {
-					this.trigger = null
-					return
-				}
-				if (!stack.`is`(ModItems.TRIGGER_ITEM))
-					return;
-				
-				this.trigger = stack.getTagElement(ItemTriggerVariable.STATE)
-					               ?.let(::TriggerBoundsTag)
-					               ?.toAABB() ?: return
-			}
-		}
 }

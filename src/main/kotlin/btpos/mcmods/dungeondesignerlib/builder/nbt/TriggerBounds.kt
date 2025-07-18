@@ -1,9 +1,7 @@
-package btpos.mcmods.dungeondesignerlib.builder.saveddata
+package btpos.mcmods.dungeondesignerlib.builder.nbt
 
-import btpos.mcmods.devutil.common.ext.vanilla.getBlockPos
-import btpos.mcmods.devutil.common.ext.vanilla.getMaxCornerBlock
-import btpos.mcmods.devutil.common.ext.vanilla.getMinCornerBlock
-import btpos.mcmods.devutil.common.ext.vanilla.toCompoundTag
+import btpos.mcmods.devutil.common.ext.vanilla.data.getBlockPos
+import btpos.mcmods.devutil.common.ext.vanilla.data.toCompoundTag
 import btpos.mcmods.devutil.common.util.serialization.Serialization
 import btpos.mcmods.devutil.common.util.serialization.Serialization.encodeToTag
 import net.minecraft.core.BlockPos

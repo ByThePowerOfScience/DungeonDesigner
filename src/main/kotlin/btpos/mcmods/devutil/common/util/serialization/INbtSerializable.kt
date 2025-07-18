@@ -1,5 +1,7 @@
 package btpos.mcmods.devutil.common.util.serialization
 
+import btpos.mcmods.devutil.common.util.serialization.Serialization.decodeTag
+import com.mojang.serialization.Codec
 import net.minecraft.nbt.CompoundTag
 
 interface INbtSerializable {
@@ -23,6 +25,6 @@ fun CompoundTag.readNbtSerializableToExisting(key: String, serializable: INbtSer
 /**
  * Creates a new instance of the object the tag represents.
  */
-fun <T: ICodecSerializable<T>> CompoundTag.readNbtSerializable(key: String, codec: HasCodec<T>): T {
-	return codec.decodeCompoundTag(this.getCompound(key))
+fun <T: ICodecSerializable<T>> CompoundTag.readNbtSerializable(key: String, codec: Codec<T>): T {
+	return codec.decodeTag(this.getCompound(key))
 }

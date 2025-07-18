@@ -135,20 +135,20 @@ object BlockStateMacros {
 	@BlockStateDataGen
 	class BaseVariantBuilder(
 		/**
-		 * builds the partial state from scratch before each model, which is the same as the real builder does
-		 * adds on the properties we traversed to get here before
+		 * Get the partial state for this branch, made fresh from the base builder with all previous properties applied.
+		 *
+		 * Identical to tacking on every property yourself.
 		 */
-		private val stateRestorer: () -> VariantBlockStateBuilder.PartialBlockstate
+		val getPartialState: () -> VariantBlockStateBuilder.PartialBlockstate
 	) {
-		var currentModelBuilder: ConfiguredModel.Builder<*>? = null
-		
+		private var currentModelBuilder: ConfiguredModel.Builder<*>? = null
 		/**
 		 * AXIS {
 		 *  ...
 		 * }
 		 */
 		operator fun <U : Comparable<U>> Property<U>.invoke(action: VariantBuilderPropertySwitch<U>.() -> Unit) {
-			VariantBuilderPropertySwitch(this, stateRestorer).action()
+			VariantBuilderPropertySwitch(this, getPartialState).action()
 		}
 		
 		/**
@@ -164,7 +164,7 @@ object BlockStateMacros {
 		fun model(action: ConfiguredModel.Builder<*>.() -> Unit) {
 			currentModelBuilder?.nextModel() // if we've made a model before, call nextModel
 			
-			val modelBuilder = currentModelBuilder ?: stateRestorer().modelForState() // create our partialstate from scratch
+			val modelBuilder = currentModelBuilder ?: getPartialState().modelForState() // create our partialstate from scratch
 			modelBuilder.action()
 			
 			currentModelBuilder = modelBuilder // save it for the next model block

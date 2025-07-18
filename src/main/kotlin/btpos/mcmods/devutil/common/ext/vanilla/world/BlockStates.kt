@@ -1,7 +1,7 @@
 @file:Suppress("NOTHING_TO_INLINE")
 @file:OptIn(ExperimentalContracts::class)
 
-package btpos.mcmods.devutil.common.ext.vanilla
+package btpos.mcmods.devutil.common.ext.vanilla.world
 
 import net.minecraft.core.BlockPos
 import net.minecraft.world.level.BlockGetter

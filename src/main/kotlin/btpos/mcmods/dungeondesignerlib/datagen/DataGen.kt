@@ -1,8 +1,8 @@
 package btpos.mcmods.dungeondesignerlib.datagen
 
 import btpos.mcmods.dungeondesignerlib.MODID
-import btpos.mcmods.dungeondesignerlib.builder.saveddata.blocks.BlockDungeonNexus
-import btpos.mcmods.dungeondesignerlib.builder.saveddata.blocks.actors.BlockTriggerHolder
+import btpos.mcmods.dungeondesignerlib.builder.blocks.BlockDungeonNexus
+import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.BlockTriggerHolder
 import btpos.mcmods.dungeondesignerlib.builder.items.ItemTriggerVariable
 import net.minecraft.data.PackOutput
 import net.minecraftforge.client.model.generators.BlockStateProvider

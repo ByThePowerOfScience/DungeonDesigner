@@ -1,6 +1,6 @@
 package btpos.mcmods.devutil.common.util
 
-import btpos.mcmods.devutil.common.ext.vanilla.blockEntity
+import btpos.mcmods.devutil.common.ext.vanilla.world.blockEntity
 import net.minecraft.core.BlockPos
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.block.EntityBlock

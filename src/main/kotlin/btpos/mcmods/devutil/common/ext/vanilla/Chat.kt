@@ -3,5 +3,9 @@
 package btpos.mcmods.devutil.common.ext.vanilla
 
 import net.minecraft.network.chat.Component
+import net.minecraft.network.chat.MutableComponent
 
 inline fun String?.asComponent() = Component.literal(this ?: "null")
+
+inline operator fun MutableComponent.plus(next: Component): MutableComponent = this.append(next)
+inline operator fun MutableComponent.plus(next: String): MutableComponent = this.append(Component.literal(next))

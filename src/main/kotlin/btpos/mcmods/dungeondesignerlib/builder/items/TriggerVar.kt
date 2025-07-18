@@ -2,7 +2,7 @@ package btpos.mcmods.dungeondesignerlib.builder.items
 
 import btpos.mcmods.devutil.common.util.ChatUtils
 import btpos.mcmods.devutil.forge.datagen.IItemDataGen
-import btpos.mcmods.dungeondesignerlib.builder.saveddata.TriggerBoundsTag
+import btpos.mcmods.dungeondesignerlib.builder.nbt.TriggerBoundsTag
 import net.minecraft.network.chat.Component
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.item.Item
@@ -23,7 +23,7 @@ class ItemTriggerVariable(props: Properties) : Item(props) {
 			get() = "trigger_variable"
 		
 		// NBT Tag Keys
-		const val STATE = "trigger_brush"
+		const val TAGKEY_STATE = "trigger_brush"
 		
 		override fun ItemModelProvider.buildModels() {
 			this.basicItem()
@@ -44,7 +44,6 @@ class ItemTriggerVariable(props: Properties) : Item(props) {
 			player.sendSystemMessage(Component.literal("Set first corner to ").append(ChatUtils.toComponent(ctx.clickedPos)))
 		} else {
 			ctx.itemInHand.getTriggerBounds().second = ctx.clickedPos
-			
 			player.sendSystemMessage(Component.literal("Set second corner to ").append(ChatUtils.toComponent(ctx.clickedPos)))
 		}
 		
@@ -52,7 +51,7 @@ class ItemTriggerVariable(props: Properties) : Item(props) {
 	}
 	
 	fun ItemStack.getTriggerBounds(): TriggerBoundsTag {
-		return TriggerBoundsTag(this.getOrCreateTagElement(STATE))
+		return TriggerBoundsTag(this.getOrCreateTagElement(TAGKEY_STATE))
 	}
 }
 

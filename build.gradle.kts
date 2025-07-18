@@ -24,6 +24,7 @@ plugins {
     id("org.parchmentmc.librarian.forgegradle") version "1.+"
     kotlin("jvm") version "2.0.0"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0"
+    kotlin("plugin.assignment") version "2.0.0"
 }
 
 group = "btpos.mcmods"
@@ -97,7 +98,8 @@ repositories {
         url = uri("https://thedarkcolour.github.io/KotlinForForge/")
     }
     
-    maven(url="https://maven.blamejared.com")
+    maven(url="https://maven.blamejared.com") // For Bookshelf
+    maven(url="https://maven.createmod.net") // For Catnip renderer
 }
 
 fun getProperty(name: String): String {
@@ -110,6 +112,12 @@ dependencies {
     implementation("thedarkcolour:kotlinforforge:4.11.0")
     
     implementation(fg.deobf("net.darkhax.bookshelf:Bookshelf-Forge-1.20.1:20.2.12"))
+    
+    implementation("net.createmod.catnip:Catnip-Forge-1.20.1:0.8.44") { //
+        jarJar(this)
+        setTransitive(false)
+    }
+    implementation("dev.engine-room.flywheel:flywheel-forge-1.20.1:1.0+")
     
     testImplementation(kotlin("test"))
 }
@@ -191,4 +199,14 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+idea {
+    module {
+        isDownloadJavadoc = true
+    }
+}
+
+assignment {
+    annotation("btpos.mcmods.devutil.misc.KotlinAssignmentOverloadTarget")
 }

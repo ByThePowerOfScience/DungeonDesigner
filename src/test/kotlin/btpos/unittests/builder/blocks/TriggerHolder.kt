@@ -1,8 +1,8 @@
 package btpos.unittests.builder.blocks
 
 import btpos.mcmods.devutil.common.util.serialization.Serialization.encodeToTag
-import btpos.mcmods.dungeondesignerlib.builder.saveddata.TriggerBoundsTag
-import btpos.mcmods.dungeondesignerlib.builder.saveddata.blocks.actors.TileTriggerHolder.TriggerHolderState
+import btpos.mcmods.dungeondesignerlib.builder.nbt.TriggerBoundsTag
+import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.TileTriggerHolder.TriggerHolderState
 import net.minecraft.core.UUIDUtil
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.phys.AABB

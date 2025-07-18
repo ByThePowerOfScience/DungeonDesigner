@@ -1,4 +1,4 @@
-package btpos.mcmods.dungeondesignerlib.builder.saveddata.blocks
+package btpos.mcmods.dungeondesignerlib.builder.blocks
 
 import btpos.mcmods.devutil.forge.datagen.IBlockDataGen
 import btpos.mcmods.dungeondesignerlib.registry.ModBlocks

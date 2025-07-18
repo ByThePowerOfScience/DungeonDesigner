@@ -2,10 +2,14 @@ package btpos.mcmods.dungeondesignerlib.registry
 
 import btpos.mcmods.devutil.forge.registry.IBlockRegistry
 import btpos.mcmods.dungeondesignerlib.MODID
-import btpos.mcmods.dungeondesignerlib.builder.saveddata.blocks.BlockDungeonNexus
-import btpos.mcmods.dungeondesignerlib.builder.saveddata.blocks.actors.BlockTriggerHolder
-import btpos.mcmods.dungeondesignerlib.builder.saveddata.blocks.TileDungeonNexus
-import btpos.mcmods.dungeondesignerlib.builder.saveddata.blocks.actors.TileTriggerHolder
+import btpos.mcmods.dungeondesignerlib.builder.blocks.BlockDungeonNexus
+import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.BlockTriggerHolder
+import btpos.mcmods.dungeondesignerlib.builder.blocks.TileDungeonNexus
+import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.BlockFlagReader
+import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.BlockFlagWriter
+import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.TileFlagHolder
+import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.TileTriggerHolder
+import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockBehaviour
 import net.minecraft.world.level.material.MapColor
 import net.minecraft.world.level.material.PushReaction
@@ -31,5 +35,16 @@ object ModBlocks : IBlockRegistry {
 	val TRIGGER_BLOCK by block(BlockTriggerHolder.id, withItem=true) { BlockTriggerHolder(dungeonLogicProperties) }
 	val TRIGGER_BLOCK_ENTITY by ent(::TRIGGER_BLOCK, ::TileTriggerHolder)
 	
+	val FLAG_READER by block("flag_reader", withItem=true) { BlockFlagReader(dungeonLogicProperties) }
 	
+	/**
+	 * Turns the flag ON
+	 */
+	val FLAG_SETTER by block("flag_setter", withItem=true) { BlockFlagWriter(dungeonLogicProperties, true) }
+	
+	/**
+	 * Turns the flag OFF
+	 */
+	val FLAG_RESETTER by block("flag_setter", withItem=true) { BlockFlagWriter(dungeonLogicProperties, false) }
+	val FLAG_BLOCK_ENTITY by ent("flag_block") { BlockEntityType.Builder.of(::TileFlagHolder).build(null) }
 }

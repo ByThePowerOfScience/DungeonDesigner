@@ -1,11 +1,11 @@
 @file:Suppress("NOTHING_TO_INLINE")
 
-package btpos.mcmods.devutil.common.ext.vanilla
+package btpos.mcmods.devutil.common.ext.vanilla.world
 
 import net.minecraft.core.BlockPos
-import net.minecraft.nbt.CompoundTag
-import net.minecraft.nbt.NbtUtils
+import net.minecraft.resources.ResourceKey
 import net.minecraft.world.entity.item.ItemEntity
+import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.ChunkPos
 import net.minecraft.world.level.Level
@@ -17,33 +17,6 @@ import net.minecraft.world.phys.Vec3
 
 inline fun LevelAccessor.getChunk(pos: ChunkPos): ChunkAccess = this.getChunk(pos.x, pos.z)
 
-
-inline fun BlockPos.toCompoundTag() = NbtUtils.writeBlockPos(this)
-
-fun CompoundTag.asBlockPos(): BlockPos? {
-	if (this.contains("X", CompoundTag.TAG_INT.toInt())
-	    && this.contains("Y", CompoundTag.TAG_INT.toInt())
-	    && this.contains("Z", CompoundTag.TAG_INT.toInt()))
-	{
-		return NbtUtils.readBlockPos(this)
-	} else {
-		return null
-	}
-}
-
-fun CompoundTag.getBlockPos(key: String): BlockPos? {
-	return getCompoundOrNull(key)?.asBlockPos()
-}
-
-/**
- * Get a compound tag, *without* creating it if it doesn't exist.
- */
-fun CompoundTag.getCompoundOrNull(key: String): CompoundTag? {
-	if (!this.contains(key, CompoundTag.TAG_COMPOUND.toInt())) {
-		return null
-	}
-	return this.getCompound(key)
-}
 
 fun AABB.getMinCorner(): Vec3 {
 	return Vec3(minX, minY, minZ)
@@ -92,3 +65,6 @@ inline fun Level.changeBlockAndUpdate(pos: BlockPos, updater: (BlockState) -> Bl
  */
 inline fun Level.changeBlock(pos: BlockPos, flags: Int, updater: (BlockState) -> BlockState) = this.setBlock(pos, this.getBlockState(pos).let(updater), flags)
 
+operator fun ResourceKey<Level>.contains(player: Player): Boolean {
+	return player.level().dimension() == this
+}

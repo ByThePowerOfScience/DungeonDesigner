@@ -2,10 +2,8 @@ package btpos.mcmods.devutil.common.util.serialization
 
 import btpos.mcmods.devutil.common.ext.vanilla.destructuring.component1
 import btpos.mcmods.devutil.common.ext.vanilla.destructuring.component2
-import btpos.mcmods.devutil.common.ext.vanilla.set
+import btpos.mcmods.devutil.common.ext.vanilla.data.set
 import btpos.mcmods.devutil.common.util.IReverseCloneable
-import btpos.mcmods.devutil.common.util.serialization.Serialization.decodeTag
-import btpos.mcmods.devutil.common.util.serialization.Serialization.encodeToTag
 import btpos.mcmods.dungeondesignerlib.LOGGER
 import com.mojang.serialization.Codec
 import net.minecraft.nbt.CompoundTag
