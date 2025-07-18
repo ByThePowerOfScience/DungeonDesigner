@@ -100,6 +100,7 @@ repositories {
     
     maven(url="https://maven.blamejared.com") // For Bookshelf
     maven(url="https://maven.createmod.net") // For Catnip renderer
+    maven(url="https://modmaven.dev/") // For Catnip's flywheel dependency
 }
 
 fun getProperty(name: String): String {
@@ -113,11 +114,10 @@ dependencies {
     
     implementation(fg.deobf("net.darkhax.bookshelf:Bookshelf-Forge-1.20.1:20.2.12"))
     
-    implementation("net.createmod.catnip:Catnip-Forge-1.20.1:0.8.44") { //
+    implementation(fg.deobf("net.createmod.catnip:Catnip-Forge-1.20.1:0.8.44")) {
         jarJar(this)
-        setTransitive(false)
     }
-    implementation("dev.engine-room.flywheel:flywheel-forge-1.20.1:1.0+")
+    runtimeOnly(fg.deobf("dev.engine-room.flywheel:flywheel-forge-1.20.1:1.0+"))
     
     testImplementation(kotlin("test"))
 }

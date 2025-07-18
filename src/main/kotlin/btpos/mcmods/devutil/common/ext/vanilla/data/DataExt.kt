@@ -45,3 +45,12 @@ fun CompoundTag.getStringOrNull(key: String): String? {
 	}
 	return this.getString(key)
 }
+
+fun CompoundTag.getOrCreateCompound(key: String): CompoundTag {
+	if (!this.contains(key, CompoundTag.TAG_COMPOUND.toInt())) {
+		return CompoundTag().also {
+			this.put(key, it)
+		}
+	}
+	return this.get(key)!! as CompoundTag
+}

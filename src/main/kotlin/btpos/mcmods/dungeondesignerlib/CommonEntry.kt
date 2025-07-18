@@ -1,12 +1,15 @@
 package btpos.mcmods.dungeondesignerlib
 
 import btpos.mcmods.dungeondesignerlib.datagen.DataGenConstants
+import btpos.mcmods.dungeondesignerlib.debugging.DebugCommands
 import btpos.mcmods.dungeondesignerlib.registry.ModBlocks
 import btpos.mcmods.dungeondesignerlib.registry.ModItems
+import net.minecraftforge.event.RegisterCommandsEvent
 import net.minecraftforge.fml.common.Mod
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
+import thedarkcolour.kotlinforforge.forge.FORGE_BUS
 import thedarkcolour.kotlinforforge.forge.MOD_BUS
 
 const val MODID = "dungeondesigner"
@@ -20,7 +23,13 @@ object CommonEntry {
         MOD_BUS.addListener(ClientEntry::init)
         MOD_BUS.addListener(DataGenConstants::gatherDataEvent)
         
+        FORGE_BUS.addListener(::registerCommands)
+        
         ModBlocks.register()
         ModItems.register()
+    }
+    
+    fun registerCommands(evt: RegisterCommandsEvent) {
+        evt.dispatcher.register(DebugCommands.make())
     }
 }

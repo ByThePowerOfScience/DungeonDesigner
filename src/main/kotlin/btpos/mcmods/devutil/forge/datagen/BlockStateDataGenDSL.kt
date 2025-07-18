@@ -2,12 +2,15 @@ package btpos.mcmods.devutil.forge.datagen
 
 import btpos.mcmods.devutil.forge.datagen.BlockStateMacros.BaseVariantBuilder
 import btpos.mcmods.devutil.forge.datagen.BlockStateMacros.MultipartBuilder
+import net.minecraft.core.Direction
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.state.properties.Property
+import net.minecraftforge.client.model.generators.BlockModelBuilder
 import net.minecraftforge.client.model.generators.BlockStateProvider
 import net.minecraftforge.client.model.generators.ConfiguredModel
 import net.minecraftforge.client.model.generators.MultiPartBlockStateBuilder
 import net.minecraftforge.client.model.generators.VariantBlockStateBuilder
+import kotlin.collections.iterator
 
 
 @DslMarker
@@ -335,3 +338,16 @@ fun BlockStateProvider.multipartDsl(block: Block, configuration: MultipartBuilde
 }
 
 private typealias ForgeCondGroup = MultiPartBlockStateBuilder.PartBuilder.ConditionGroup
+
+fun BlockStateMacros.VariantBuilderPropertySwitch<Direction>.rotateForEachHorizontal(model: BlockModelBuilder, additionalAction:  ConfiguredModel.Builder<*>.(Int, Direction) -> Unit = { idx, dir ->}) {
+	for ((i, dir) in listOf(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST).iterator().withIndex()) {
+		dir {
+			model {
+				modelFile(model)
+				if (i != 0)
+					rotationY(i * 90)
+				additionalAction(i, dir)
+			}
+		}
+	}
+}

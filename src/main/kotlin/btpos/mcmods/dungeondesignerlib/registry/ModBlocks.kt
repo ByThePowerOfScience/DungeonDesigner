@@ -9,6 +9,7 @@ import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.BlockFlagReader
 import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.BlockFlagWriter
 import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.TileFlagHolder
 import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.TileTriggerHolder
+import com.mojang.datafixers.types.Type
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockBehaviour
 import net.minecraft.world.level.material.MapColor
@@ -45,6 +46,6 @@ object ModBlocks : IBlockRegistry {
 	/**
 	 * Turns the flag OFF
 	 */
-	val FLAG_RESETTER by block("flag_setter", withItem=true) { BlockFlagWriter(dungeonLogicProperties, false) }
-	val FLAG_BLOCK_ENTITY by ent("flag_block") { BlockEntityType.Builder.of(::TileFlagHolder).build(null) }
+	val FLAG_RESETTER by block("flag_resetter", withItem=true) { BlockFlagWriter(dungeonLogicProperties, false) }
+	val FLAG_BLOCK_ENTITY by ent("flag_block") { BlockEntityType.Builder.of(::TileFlagHolder, FLAG_READER, FLAG_SETTER, FLAG_RESETTER).build(null) }
 }

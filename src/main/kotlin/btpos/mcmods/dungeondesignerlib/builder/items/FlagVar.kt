@@ -1,10 +1,14 @@
 package btpos.mcmods.dungeondesignerlib.builder.items
 
 import btpos.mcmods.devutil.common.ext.vanilla.data.getCompoundOrNull
+import btpos.mcmods.devutil.common.ext.vanilla.data.getOrCreateCompound
 import btpos.mcmods.devutil.common.ext.vanilla.data.getStringOrNull
 import btpos.mcmods.devutil.forge.datagen.IItemDataGen
 import btpos.mcmods.dungeondesignerlib.registry.ModItems
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.network.chat.Component
+import net.minecraft.network.chat.ComponentContents
+import net.minecraft.network.chat.ComponentUtils
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraftforge.client.model.generators.ItemModelProvider
@@ -35,7 +39,7 @@ class ItemFlagVariable(props: Properties) : Item(props) {
 					return;
 				}
 				else {
-					tag.getCompound(ItemStack.TAG_DISPLAY).putString(ItemStack.TAG_DISPLAY_NAME, value)
+					tag.getOrCreateCompound(ItemStack.TAG_DISPLAY).putString(ItemStack.TAG_DISPLAY_NAME, value)
 				}
 			}
 	}

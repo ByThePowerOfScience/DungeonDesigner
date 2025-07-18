@@ -16,7 +16,7 @@ val DimensionDataStorage.dungeonBuilderData: DungeonBuilderWorldData
 	get() = computeIfAbsent(::DungeonBuilderWorldData, ::DungeonBuilderWorldData, "dungeon_designer_builder")
 
 class DungeonBuilderWorldData(
-	private val state: DungeonBuilderState = DungeonBuilderState()
+	internal val state: DungeonBuilderState = DungeonBuilderState()
 ) : SavedData() {
 	constructor(tag: CompoundTag) : this(tag.readNbtSerializable(TAGKEY_STATE, DungeonBuilderState.CODEC))
 	

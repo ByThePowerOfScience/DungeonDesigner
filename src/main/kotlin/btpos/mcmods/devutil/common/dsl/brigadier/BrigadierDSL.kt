@@ -43,6 +43,7 @@ object Command {
 		return LiteralBuilder(LiteralArgumentBuilder.literal<T>(name)).apply(then).internal
 	}
 	
+	
 	/**
 	 * Start an argument node.  You shouldn't be giving this to a dispatcher, instead using this to create reusable argument trees.
 	 */
@@ -90,6 +91,15 @@ value class ArgBuilder<S, T>(val internal: RequiredArgumentBuilder<S, T>) {
 		val it = ArgBuilder<S, U>(RequiredArgumentBuilder.argument(arg, type)).apply(then)
 		internal.then(it.internal)
 	}
+	
+	inline fun <T> arg(name: String, type: ArgumentType<T>, crossinline then: ArgBuilder<S, T>.() -> Unit) = argument(name, type, then)
+	
+	inline operator fun <T> ArgumentType<T>.invoke(name: String, crossinline then: ArgBuilder<S, T>.() -> Unit) = argument(name, this, then)
+	
+	
+	
+	inline operator fun String.invoke(crossinline then: LiteralBuilder<S>.() -> Unit) = literal(this, then)
+	
 	
 	/**
 	 * Start a new branch (or continue the only branch) with a literal word as the designator, e.g. a command "foo" with a subcommand "bar" would be "literal("foo") { literal("bar") { ... } }"
@@ -202,10 +212,18 @@ value class LiteralBuilder<S>(val internal: LiteralArgumentBuilder<S>) {
 	/**
 	 * Add an argument after this one.  See the subclasses of [ArgumentType] for more information.
 	 */
-	inline fun <T> argument(arg: String, type: ArgumentType<T>, crossinline then: ArgBuilder<S, T>.() -> Unit) {
-		val it = ArgBuilder<S, T>(RequiredArgumentBuilder.argument(arg, type)).apply(then)
+	inline fun <T> argument(name: String, type: ArgumentType<T>, crossinline then: ArgBuilder<S, T>.() -> Unit) {
+		val it = ArgBuilder<S, T>(RequiredArgumentBuilder.argument(name, type)).apply(then)
 		internal.then(it.internal)
 	}
+	
+	inline fun <T> arg(name: String, type: ArgumentType<T>, crossinline then: ArgBuilder<S, T>.() -> Unit) = argument(name, type, then)
+	
+	inline operator fun <T> ArgumentType<T>.invoke(name: String, crossinline then: ArgBuilder<S, T>.() -> Unit) = argument(name, this, then)
+	
+	
+	
+	inline operator fun String.invoke(crossinline then: LiteralBuilder<S>.() -> Unit) = literal(this, then)
 	
 	/**
 	 * Start a new branch (or continue the only branch) with a literal word as the designator, e.g. "/foo bar" - a command "foo" with a subcommand "bar" - would be "literal("foo") { literal("bar") { ... } }"

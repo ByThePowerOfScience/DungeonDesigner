@@ -1,5 +1,5 @@
 {
   "itemGroup.examplemod.exampletab": "Example Mod",
-  "item.examplemod.sad_obsidian_maker": "Sad Obsidian Maker",
-  "block.examplemod.example_block": "Example Block"
+  "item.dungeondesigner.trigger_variable": "Trigger Brush",
+  "item.dungeondesigner.flag_variable": "Flag"
 }

@@ -1,4 +1,4 @@
-@file:Suppress("OVERRIDE_DEPRECATION")
+@file:Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
 
 package btpos.mcmods.dungeondesignerlib.builder.blocks.actors
 
@@ -11,6 +11,7 @@ import btpos.mcmods.devutil.common.util.serialization.ICodecSerializable
 import btpos.mcmods.devutil.common.util.serialization.putNbtSerializable
 import btpos.mcmods.devutil.common.util.serialization.readNbtSerializableToExisting
 import btpos.mcmods.devutil.forge.datagen.IBlockDataGen
+import btpos.mcmods.devutil.forge.datagen.rotateForEachHorizontal
 import btpos.mcmods.devutil.forge.datagen.variantDsl
 import btpos.mcmods.devutil.parts.IItemRepresentable
 import btpos.mcmods.devutil.parts.dropItemInWorld
@@ -33,6 +34,7 @@ import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.Item
+import net.minecraft.world.item.context.BlockPlaceContext
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Block
@@ -59,8 +61,6 @@ abstract class AbstractFlagHolderBlock(props: Properties) : Block(props), Entity
 	
 	override fun newBlockEntity(pPos: BlockPos, pState: BlockState): BlockEntity? = ModBlocks.FLAG_BLOCK_ENTITY.create(pPos, pState)
 	//endregion
-	
-	
 	
 	
 	//region Interaction
@@ -98,7 +98,7 @@ abstract class AbstractFlagHolderBlock(props: Properties) : Block(props), Entity
 			pPlayer.sendSystemMessage("No flag set".asComponent())
 		} else {
 			pPlayer.sendSystemMessage(
-					Component.literal("Flag: ") + Component.literal(ourEnt.state.flagName.value!!).withStyle(ChatFormatting.BLUE)
+					Component.literal("Flag: ") + (Component.Serializer.fromJson(ourEnt.state.flagName.value!!) ?: ourEnt.state.flagName.value.asComponent()).withStyle(ChatFormatting.BLUE)
 			)
 		}
 		
@@ -108,11 +108,42 @@ abstract class AbstractFlagHolderBlock(props: Properties) : Block(props), Entity
 }
 
 class BlockFlagReader(props: Properties) : AbstractFlagHolderBlock(props) {
+	companion object : IBlockDataGen {
+		override val id: String
+			get() = "flag_reader"
+		
+		private const val TXT_SIDES = "logic_programmer_side"
+		private const val TXT_SIDES_ON = "logic_programmer_side_on"
+		private const val TXT_TOP = "logic_programmer_top"
+		private const val TXT_TOP_ON = "logic_programmer_top_on"
+		
+		override fun BlockStateProvider.buildModelsAndStates() {
+			val off = models().cubeColumn(id, blockLoc(TXT_SIDES), blockLoc(TXT_TOP))
+			val on = models().cubeColumn("${id}_on", blockLoc(TXT_SIDES_ON), blockLoc(TXT_TOP_ON))
+			
+			variantDsl(ModBlocks.FLAG_READER) {
+				POWERED {
+					false {
+						model {
+							modelFile(off)
+						}
+					}
+					true {
+						model {
+							modelFile(on)
+						}
+					}
+				}
+			}
+			
+			simpleBlockItem(ModBlocks.FLAG_READER, off)
+		}
+	}
 	
 	
 	override fun canConnectRedstone(state: BlockState, level: BlockGetter, pos: BlockPos, direction: Direction?): Boolean = true
 	
-	override fun getDirectSignal(pState: BlockState, pLevel: BlockGetter, pPos: BlockPos, pDirection: Direction): Int {
+	override fun getSignal(pState: BlockState, pLevel: BlockGetter, pPos: BlockPos, pDirection: Direction): Int {
 		if (pState.getValue(POWERED)) {
 			return 15
 		} else {
@@ -130,26 +161,31 @@ class BlockFlagReader(props: Properties) : AbstractFlagHolderBlock(props) {
 			if (level !is ServerLevel || ent !is TileFlagHolder)
 				return@BlockEntityTicker
 			
-			val ourFlag = ent.state.flagName.value ?: return@BlockEntityTicker
+			val isPowered = state.getValue(POWERED)
+			val ourFlag = ent.state.flagName.value ?: run {
+				if (isPowered) {
+					level.setBlockAndUpdate(pos, state.with(POWERED, false))
+				}
+				return@BlockEntityTicker
+			}
 			
-			val isPowered = pState.getValue(POWERED)
 			val shouldBePowered = level.dataStorage.dungeonBuilderData.getFlag(ourFlag)
 			if (isPowered != shouldBePowered) {
-				pLevel.setBlockAndUpdate(pos, pState.with(POWERED, !isPowered))
+				level.setBlockAndUpdate(pos, state.with(POWERED, !isPowered))
 			}
 		}
 	}
 }
 
 
-
-class BlockFlagWriter(props: Properties, val isSetter: Boolean = false) : AbstractFlagHolderBlock(props) {
+class BlockFlagWriter(props: Properties, /** True = is a "setter", false = is a "resetter" */ val isSetter: Boolean) : AbstractFlagHolderBlock(props) {
 	companion object : IBlockDataGen {
 		val FACING = BlockStateProperties.HORIZONTAL_FACING
 		
 		override val id: String
 			get() = "flag_writer"
 		
+		//region DataGen
 		// TODO: Replace dev textures with something we actually own
 		private const val TEXTURE_SIDES = "logic_programmer_side"
 		private const val TEXTURE_ON_SIDES = "logic_programmer_side_on"
@@ -185,28 +221,12 @@ class BlockFlagWriter(props: Properties, val isSetter: Boolean = false) : Abstra
 				POWERED {
 					false {
 						FACING {
-							for ((i, dir) in listOf(Direction.NORTH, Direction.EAST, Direction.WEST, Direction.SOUTH).iterator().withIndex()) {
-								dir {
-									model {
-										modelFile(setter_off)
-										if (i != 0)
-											rotationX(i * 90)
-									}
-								}
-							}
+							rotateForEachHorizontal(setter_off)
 						}
 					}
 					true {
 						FACING {
-							for ((i, dir) in listOf(Direction.NORTH, Direction.EAST, Direction.WEST, Direction.SOUTH).iterator().withIndex()) {
-								dir {
-									model {
-										modelFile(setter_on)
-										if (i != 0)
-											rotationX(i * 90)
-									}
-								}
-							}
+							rotateForEachHorizontal(setter_on)
 						}
 					}
 				}
@@ -231,28 +251,12 @@ class BlockFlagWriter(props: Properties, val isSetter: Boolean = false) : Abstra
 				POWERED {
 					false {
 						FACING {
-							for ((i, dir) in listOf(Direction.NORTH, Direction.EAST, Direction.WEST, Direction.SOUTH).iterator().withIndex()) {
-								dir {
-									model {
-										modelFile(off)
-										if (i != 0)
-											rotationX(i * 90)
-									}
-								}
-							}
+							rotateForEachHorizontal(off)
 						}
 					}
 					true {
 						FACING {
-							for ((i, dir) in listOf(Direction.NORTH, Direction.EAST, Direction.WEST, Direction.SOUTH).iterator().withIndex()) {
-								dir {
-									model {
-										modelFile(on)
-										if (i != 0)
-											rotationX(i * 90)
-									}
-								}
-							}
+							rotateForEachHorizontal(on)
 						}
 					}
 				}
@@ -260,8 +264,12 @@ class BlockFlagWriter(props: Properties, val isSetter: Boolean = false) : Abstra
 
 			simpleBlockItem(ModBlocks.FLAG_RESETTER, off)
 		}
+		//endregion
 	}
 	
+	init {
+		registerDefaultState(stateDefinition.any().with(FACING, Direction.NORTH).with(POWERED, false))
+	}
 	
 	override fun createBlockStateDefinition(pBuilder: StateDefinition.Builder<Block, BlockState>) {
 		super.createBlockStateDefinition(pBuilder)
@@ -271,6 +279,19 @@ class BlockFlagWriter(props: Properties, val isSetter: Boolean = false) : Abstra
 	override fun tick(pState: BlockState, pLevel: ServerLevel, pPos: BlockPos, pRandom: RandomSource) {
 		super.tick(pState, pLevel, pPos, pRandom)
 		
+//		checkShouldSetFlag(pLevel, pPos, pState)
+	}
+	
+	override fun neighborChanged(pState: BlockState, pLevel: Level, pPos: BlockPos, pNeighborBlock: Block,
+	                             pNeighborPos: BlockPos, pMovedByPiston: Boolean) {
+		super.neighborChanged(pState, pLevel, pPos, pNeighborBlock, pNeighborPos, pMovedByPiston)
+		if (pLevel !is ServerLevel)
+			return;
+		checkShouldSetFlag(pLevel, pPos, pState)
+	}
+	
+	private fun checkShouldSetFlag(pLevel: ServerLevel, pPos: BlockPos,
+	                      pState: BlockState) {
 		if (!pLevel.hasSignal(pPos, pState.getValue(FACING)))
 			return;
 		
@@ -282,7 +303,11 @@ class BlockFlagWriter(props: Properties, val isSetter: Boolean = false) : Abstra
 	}
 	
 	override fun canConnectRedstone(state: BlockState, level: BlockGetter, pos: BlockPos, direction: Direction?): Boolean {
-		return direction == state.getValue(FACING)
+		return direction == state.getValue(FACING).opposite
+	}
+	
+	override fun getStateForPlacement(pContext: BlockPlaceContext): BlockState? {
+		return defaultBlockState().with(FACING, pContext.horizontalDirection.opposite)
 	}
 }
 
