@@ -141,6 +141,14 @@ class BlockTriggerHolder(
 	}
 	
 	
+	override fun neighborChanged(pState: BlockState, pLevel: Level, pPos: BlockPos, pNeighborBlock: Block,
+	                             pNeighborPos: BlockPos, pMovedByPiston: Boolean) {
+		super.neighborChanged(pState, pLevel, pPos, pNeighborBlock, pNeighborPos, pMovedByPiston)
+		if (pState.getValue(POWERED) == true && shouldStopCheckingTrigger(pLevel, pPos)) {
+			pLevel.setBlockAndUpdate(pPos, pState.with(POWERED, false))
+		}
+	}
+	
 	override fun use(pState: BlockState, pLevel: Level,
 	                 pPos: BlockPos, pPlayer: Player,
 	                 pHand: InteractionHand, pHit: BlockHitResult
@@ -187,20 +195,20 @@ class BlockTriggerHolder(
 			if (ent !is TileTriggerHolder || ent.state.trigger == null)
 				return@BlockEntityTicker
 			
-			when (state.getValue(POWERED)) {
-				false -> {
-					if (WorldUtils.isPlayerInBoundingBox(ent.state.trigger!!, level)) {
-						level.setBlockAndUpdate(pos, state.with(POWERED, true))
-					}
-				}
-				true -> {
-					if (!WorldUtils.isPlayerInBoundingBox(ent.state.trigger!!, level)) {
-						level.setBlockAndUpdate(pos, state.with(POWERED, false))
-					}
-				}
+			val isPowered = state.getValue(POWERED)
+			
+			if (shouldStopCheckingTrigger(level, pos)) {
+				// Stop ticking if receiving redstone power from above
+				return@BlockEntityTicker
+			}
+			
+			if (isPowered != WorldUtils.isPlayerInBoundingBox(ent.state.trigger!!, level)) {
+				level.setBlockAndUpdate(pos, state.with(POWERED, !isPowered))
 			}
 		}
 	}
+	
+	private fun shouldStopCheckingTrigger(level: Level, pos: BlockPos): Boolean = level.hasSignal(pos, Direction.UP)
 }
 
 class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TRIGGER_BLOCK_ENTITY, p0, p1) {
