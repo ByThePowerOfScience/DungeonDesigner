@@ -41,4 +41,6 @@ inline fun <T : Comparable<T>> BlockState.transform(property: Property<T>, trans
 	return this.setValue(property, transformer(this.getValue(property)))
 }
 
+inline operator fun <T : Comparable<T>> BlockState.get(prop: Property<T>) = this.getValue(prop)
+
 inline fun BlockState.getEntity(level: Level, pos: BlockPos): BlockEntity? = if (this.hasBlockEntity()) level.getBlockEntity(pos) else null

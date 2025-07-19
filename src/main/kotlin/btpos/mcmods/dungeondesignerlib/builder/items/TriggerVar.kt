@@ -36,8 +36,9 @@ class ItemTriggerVariable(props: Properties) : Item(props) {
 	
 	fun whenUsedOnBlock(ctx: UseOnContext): InteractionResult {
 		val player = ctx.player ?: return InteractionResult.FAIL
+		
 		if (ctx.level.isClientSide)
-			return InteractionResult.sidedSuccess(true)
+			return InteractionResult.SUCCESS
 		
 		if (!player.isShiftKeyDown) {
 			ctx.itemInHand.getTriggerBounds().first = ctx.clickedPos
@@ -47,10 +48,11 @@ class ItemTriggerVariable(props: Properties) : Item(props) {
 			player.sendSystemMessage(Component.literal("Set second corner to ").append(ChatUtils.toComponent(ctx.clickedPos)))
 		}
 		
-		return InteractionResult.SUCCESS
+		return InteractionResult.CONSUME
 	}
 	
-	fun ItemStack.getTriggerBounds(): TriggerBoundsTag {
+	@Suppress("NOTHING_TO_INLINE")
+	inline fun ItemStack.getTriggerBounds(): TriggerBoundsTag {
 		return TriggerBoundsTag(this.getOrCreateTagElement(TAGKEY_STATE))
 	}
 }

@@ -5,10 +5,8 @@ package btpos.mcmods.dungeondesignerlib.builder.blocks.actors
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
 import btpos.mcmods.devutil.common.ext.vanilla.data.getCompoundOrNull
 import btpos.mcmods.devutil.common.ext.vanilla.world.blockEntity
-import btpos.mcmods.devutil.common.ext.vanilla.world.dropItem
 import btpos.mcmods.devutil.common.ext.vanilla.world.getMaxCornerBlock
 import btpos.mcmods.devutil.common.ext.vanilla.world.getMinCornerBlock
-import btpos.mcmods.devutil.common.ext.vanilla.stack
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.structure.ITileState
 import btpos.mcmods.devutil.common.util.ChatUtils
@@ -18,7 +16,7 @@ import btpos.mcmods.devutil.common.util.serialization.putNbtSerializable
 import btpos.mcmods.devutil.common.util.serialization.readNbtSerializableToExisting
 import btpos.mcmods.devutil.forge.datagen.IBlockDataGen
 import btpos.mcmods.devutil.forge.datagen.variantDsl
-import btpos.mcmods.devutil.parts.IItemRepresentable
+import btpos.mcmods.devutil.parts.IItemRepresentable_Tag
 import btpos.mcmods.devutil.parts.dropItemInWorld
 import btpos.mcmods.dungeondesignerlib.WorldUtils
 import btpos.mcmods.dungeondesignerlib.POWERED
@@ -49,9 +47,7 @@ import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.block.state.StateDefinition
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.BlockHitResult
-import net.minecraft.world.phys.Vec3
 import net.minecraftforge.client.model.generators.BlockStateProvider
-import thedarkcolour.kotlinforforge.forge.vectorutil.v3d.toVec3
 import java.util.UUID
 
 class BlockTriggerHolder(
@@ -141,6 +137,14 @@ class BlockTriggerHolder(
 	}
 	
 	
+	override fun neighborChanged(pState: BlockState, pLevel: Level, pPos: BlockPos, pNeighborBlock: Block,
+	                             pNeighborPos: BlockPos, pMovedByPiston: Boolean) {
+		super.neighborChanged(pState, pLevel, pPos, pNeighborBlock, pNeighborPos, pMovedByPiston)
+		if (pState.getValue(POWERED) == true && shouldStopCheckingTrigger(pLevel, pPos)) {
+			pLevel.setBlockAndUpdate(pPos, pState.with(POWERED, false))
+		}
+	}
+	
 	override fun use(pState: BlockState, pLevel: Level,
 	                 pPos: BlockPos, pPlayer: Player,
 	                 pHand: InteractionHand, pHit: BlockHitResult
@@ -187,20 +191,20 @@ class BlockTriggerHolder(
 			if (ent !is TileTriggerHolder || ent.state.trigger == null)
 				return@BlockEntityTicker
 			
-			when (state.getValue(POWERED)) {
-				false -> {
-					if (WorldUtils.isPlayerInBoundingBox(ent.state.trigger!!, level)) {
-						level.setBlockAndUpdate(pos, state.with(POWERED, true))
-					}
-				}
-				true -> {
-					if (!WorldUtils.isPlayerInBoundingBox(ent.state.trigger!!, level)) {
-						level.setBlockAndUpdate(pos, state.with(POWERED, false))
-					}
-				}
+			val isPowered = state.getValue(POWERED)
+			
+			if (shouldStopCheckingTrigger(level, pos)) {
+				// Stop ticking if receiving redstone power from above
+				return@BlockEntityTicker
+			}
+			
+			if (isPowered != WorldUtils.isPlayerInBoundingBox(ent.state.trigger!!, level)) {
+				level.setBlockAndUpdate(pos, state.with(POWERED, !isPowered))
 			}
 		}
 	}
+	
+	private fun shouldStopCheckingTrigger(level: Level, pos: BlockPos): Boolean = level.hasSignal(pos, Direction.UP)
 }
 
 class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TRIGGER_BLOCK_ENTITY, p0, p1) {
@@ -219,8 +223,8 @@ class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TR
 		}
 		//endregion
 		
-		var triggerDelegate = object : IItemRepresentable<AABB> {
-			override val acceptedItem: Item
+		var triggerDelegate = object : IItemRepresentable_Tag<AABB> {
+			override val defaultItem: Item
 				get() = ModItems.TRIGGER_ITEM
 			
 			override var value: AABB? by notify(pTrigger)

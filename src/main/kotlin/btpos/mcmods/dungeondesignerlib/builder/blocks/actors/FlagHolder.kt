@@ -13,7 +13,7 @@ import btpos.mcmods.devutil.common.util.serialization.readNbtSerializableToExist
 import btpos.mcmods.devutil.forge.datagen.IBlockDataGen
 import btpos.mcmods.devutil.forge.datagen.rotateForEachHorizontal
 import btpos.mcmods.devutil.forge.datagen.variantDsl
-import btpos.mcmods.devutil.parts.IItemRepresentable
+import btpos.mcmods.devutil.parts.IItemRepresentable_Tag
 import btpos.mcmods.devutil.parts.dropItemInWorld
 import btpos.mcmods.dungeondesignerlib.POWERED
 import btpos.mcmods.dungeondesignerlib.builder.items.ItemFlagVariable
@@ -332,8 +332,8 @@ class TileFlagHolder(pPos: BlockPos, pState: BlockState) : BlockEntity(ModBlocks
 			}
 		}
 		
-		val flagName = object : IItemRepresentable<String> {
-			override val acceptedItem: Item
+		val flagName = object : IItemRepresentable_Tag<String> {
+			override val defaultItem: Item
 				get() = ModItems.FLAG_ITEM
 			
 			override var value: String? = pFlagName

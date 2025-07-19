@@ -5,8 +5,10 @@ import btpos.mcmods.dungeondesignerlib.MODID
 import btpos.mcmods.dungeondesignerlib.builder.blocks.BlockDungeonNexus
 import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.BlockTriggerHolder
 import btpos.mcmods.dungeondesignerlib.builder.blocks.TileDungeonNexus
+import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.BlockFightController
 import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.BlockFlagReader
 import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.BlockFlagWriter
+import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.TileFightController
 import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.TileFlagHolder
 import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.TileTriggerHolder
 import com.mojang.datafixers.types.Type
@@ -48,4 +50,7 @@ object ModBlocks : IBlockRegistry {
 	 */
 	val FLAG_RESETTER by block("flag_resetter", withItem=true) { BlockFlagWriter(dungeonLogicProperties, false) }
 	val FLAG_BLOCK_ENTITY by ent("flag_block") { BlockEntityType.Builder.of(::TileFlagHolder, FLAG_READER, FLAG_SETTER, FLAG_RESETTER).build(null) }
+	
+	val FIGHT_CONTROLLER by block(BlockFightController.id, withItem=true) { BlockFightController(dungeonLogicProperties) }
+	val FIGHT_CONTROLLER_ENTITY by ent(::FIGHT_CONTROLLER, ::TileFightController)
 }
