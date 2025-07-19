@@ -9,13 +9,13 @@ buildscript {
         mavenCentral()
         maven("https://maven.fabricmc.net/")
     }
-    dependencies {
-        classpath("org.spongepowered:mixingradle:0.7.+")
-    }
+//    dependencies {
+//        classpath("org.spongepowered:mixingradle:0.7.+")
+//    }
 }
 
 apply(plugin = "kotlin")
-apply(plugin = "org.spongepowered.mixin")
+//apply(plugin = "org.spongepowered.mixin")
 
 plugins {
     idea
@@ -109,7 +109,7 @@ fun getProperty(name: String): String {
 
 dependencies {
     minecraft("net.minecraftforge:forge:$mc_version-$forge_version")
-    annotationProcessor("org.spongepowered:mixin:0.8.5:processor")
+//    annotationProcessor("org.spongepowered:mixin:0.8.5:processor")
     implementation("thedarkcolour:kotlinforforge:4.11.0")
     
     implementation(fg.deobf("net.darkhax.bookshelf:Bookshelf-Forge-1.20.1:20.2.12"))
@@ -122,17 +122,17 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
-val Project.mixin: MixinExtension
-    get() = extensions.getByType()
-
-mixin.run {
-    add(sourceSets.main.get(), "dungeondesigner.mixins.refmap.json")
-    config("dungeondesigner.mixins.json")
-    val debug = this.debug as DynamicProperties
-    debug.setProperty("verbose", true)
-    debug.setProperty("export", true)
-    setDebug(debug)
-}
+//val Project.mixin: MixinExtension
+//    get() = extensions.getByType()
+//
+//mixin.run {
+//    add(sourceSets.main.get(), "dungeondesigner.mixins.refmap.json")
+//    config("dungeondesigner.mixins.json")
+//    val debug = this.debug as DynamicProperties
+//    debug.setProperty("verbose", true)
+//    debug.setProperty("export", true)
+//    setDebug(debug)
+//}
 
 tasks.withType<Jar> {
     archiveBaseName.set(mod_id)
