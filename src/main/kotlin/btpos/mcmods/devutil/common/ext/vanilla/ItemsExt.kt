@@ -20,3 +20,5 @@ inline val UseOnContext.targetEntity: Entity?
 		val raycast = pick(pickRadius.toDouble(), 1f, false) as? EntityHitResult
 		return@run raycast?.entity
 	}
+
+inline fun ItemStack.isNotEmpty() = !isEmpty

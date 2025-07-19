@@ -3,7 +3,10 @@
 package btpos.mcmods.devutil.common.ext.vanilla.world
 
 import net.minecraft.world.entity.Entity
+import net.minecraft.world.entity.EntityType
+import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.phys.Vec3
+import org.jetbrains.annotations.Contract
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -21,3 +24,20 @@ inline fun Entity.modifyDeltaMovement(transformer: (Vec3) -> Vec3) {
 	
 	deltaMovement = transformer(deltaMovement)
 }
+
+/**
+ * Returns `this` if its wrapped type is or is a subclass of `T`, else null.
+ */
+@Suppress("UNCHECKED_CAST") @Contract(pure=true)
+inline fun <reified T : Entity> EntityType<*>.cast(): EntityType<T>? {
+	if (T::class.java.isAssignableFrom(this.baseClass)) {
+		return this as EntityType<T>
+	} else {
+		return null
+	}
+}
+
+/**
+ * Returns self if this EntityType wraps a [LivingEntity], else null.
+ */
+fun EntityType<*>.checkLivingEntity(): EntityType<out LivingEntity>? = this.cast()

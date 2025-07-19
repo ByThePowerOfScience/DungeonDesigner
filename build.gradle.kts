@@ -1,6 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.spongepowered.asm.gradle.plugins.MixinExtension
-import org.spongepowered.asm.gradle.plugins.struct.DynamicProperties
+//import org.spongepowered.asm.gradle.plugins.MixinExtension
+//import org.spongepowered.asm.gradle.plugins.struct.DynamicProperties
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -14,7 +14,6 @@ buildscript {
 //    }
 }
 
-apply(plugin = "kotlin")
 //apply(plugin = "org.spongepowered.mixin")
 
 plugins {
@@ -23,7 +22,7 @@ plugins {
     id("net.minecraftforge.gradle") version "[6.0,6.2)"
     id("org.parchmentmc.librarian.forgegradle") version "1.+"
     kotlin("jvm") version "2.0.0"
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0"
+    kotlin("plugin.serialization") version "2.0.0"
     kotlin("plugin.assignment") version "2.0.0"
 }
 

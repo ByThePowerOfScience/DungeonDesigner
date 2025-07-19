@@ -11,8 +11,7 @@ import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.util.BlockWithEntity
 import btpos.mcmods.devutil.forge.datagen.IBlockDataGen
 import btpos.mcmods.devutil.forge.datagen.variantDsl
-import btpos.mcmods.dungeondesignerlib.builder.nbt.IPipetteData
-import btpos.mcmods.dungeondesignerlib.builder.nbt.PipetteData
+import btpos.mcmods.dungeondesignerlib.builder.nbt.IEntityFightData
 import btpos.mcmods.dungeondesignerlib.registry.ModBlocks
 import btpos.mcmods.dungeondesignerlib.LOGGER as DLOGGER
 import net.minecraft.core.BlockPos
@@ -33,6 +32,7 @@ import net.minecraft.world.level.block.state.properties.EnumProperty
 import net.minecraftforge.client.model.generators.BlockStateProvider
 import java.lang.ref.WeakReference
 import java.util.UUID
+import kotlin.math.roundToInt
 
 
 enum class FightStatus : StringRepresentable {
@@ -110,63 +110,78 @@ class BlockFightController(props: Properties) : Block(props), BlockWithEntity<Ti
 	
 	override fun getAnalogOutputSignal(pState: BlockState, pLevel: Level, pPos: BlockPos): Int {
 		val ourEnt = pLevel.getOurEntity(pPos) ?: return run { DLOGGER.warn("Fight Controller: null block entity at {}", pPos); 0 }
-		val numMobsAlive = ourEnt.activeFight?.mobsAlive?.size ?: return 0
-		val percentageMobsAlive = numMobsAlive.toFloat() / ourEnt.activeFight.totalMobs
 		
-		return (percentageMobsAlive * 15).toInt()
+		val percentageMobsAlive = ourEnt.activeFight?.run {
+			mobsAlive.size.toFloat() / totalMobs
+		} ?: return 0
+		
+		return (percentageMobsAlive * 15).roundToInt().coerceAtMost(15)
 	}
 }
 
-/**
- * Unlike the compiled form, this one just has its entities stored in a
- */
 class TileFightController(pPos: BlockPos, pState: BlockState)
 	: BlockEntity(ModBlocks.FIGHT_CONTROLLER_ENTITY, pPos, pState)
 {
 	/**
+	 * Keeps track of spawned entities.
 	 * Not synced to NBT.
 	 */
 	data class ActiveFightState(
-		var totalMobs: Int = 0,
-		val mobsAlive: MutableList<UUID> = mutableListOf()
-	)
+		val mobsAlive: MutableList<UUID>
+	) {
+		/**
+		 * How many mobs we started with. For calculating comparator output.
+		 */
+		val totalMobs: Int = mobsAlive.size
+	}
 	
-	val activeFight: ActiveFightState? = null
+	/**
+	 * When a fight is in progress, holds the mobs this fight controller currently has spawned in the world. When no fight is active, is `null`.
+	 */
+	var activeFight: ActiveFightState? = null
+	
+	
 	
 	fun startFight() {
 		val level = this.level as? ServerLevel ?: return
 		
-		val mobPipettes: List<IPipetteData> = getPipetteData()
+		val mobPipettes: List<IEntityFightData> = getPipetteData()
 		
-		val (matching, notMatching) = mobPipettes.filterSplit { it.mob?.type == null || it.spawnPos == null }
+		val (matching, notMatching) = mobPipettes.filterSplit { it.type == null || it.pos == null }
 		
 		notMatching.forEach {
-			val msg = if (it.mob == null) {
-				"No mob found"
-			} else if (it.spawnPos == null) {
-				"No pos selected for mob ${it.mob}"
-			} else if (it.mob?.type == null) {
-				"Invalid mob"
-			} else {
-				"Unknown error"
-			}
+			val msg = when {
+                it.type == null -> "No mob found"
+                it.pos == null -> "No pos selected for mob ${it.type}"
+                else -> "Unknown error"
+            }
 			
 			printError("$msg. Skipping.".asComponent())
 		}
 		
-		val mobsAlive = matching.mapNotNull { (mob, spawnPos) ->
-			val (mobType, nbt) = mob!!
-			return@mapNotNull mobType?.create(level, nbt, null, spawnPos!!, MobSpawnType.MOB_SUMMONED, true, false)
+		val mobsAlive = matching.mapNotNull { (spawnPos, rot, mobType, nbt) ->
+			return@mapNotNull mobType?.create(level, nbt, { if (rot != null) it.xRot = rot }, spawnPos!!, MobSpawnType.MOB_SUMMONED, true, false)
 				.ifNull { printError("Null mob type".asComponent()) }
 				?.uuid
 		}
 		
-		val totalMobs = mobsAlive.size
-		TODO("set state")
+		activeFight = ActiveFightState(mobsAlive.toMutableList())
+		
+		level.setBlockAndUpdate(this.blockPos, this.blockState.with(BlockFightController.STATUS, FightStatus.IN_PROGRESS))
 	}
 	
-	private fun getPipetteData(): List<IPipetteData> {
-		TODO("Not yet implemented")
+	/**
+	 * Check if its mobs exist and remove them from the list if they don't.
+	 */
+	fun onTick() {
+		if (level?.isClientSide.isNullOrTrue() || activeFight == null)
+			return
+		
+		
+	}
+	
+	private fun getPipetteData(): List<IEntityFightData> {
+		TODO("Get the pipette data from the chest or however we store it")
 	}
 	
 	private fun printError(msg: Component) {

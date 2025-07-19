@@ -54,3 +54,13 @@ fun CompoundTag.getOrCreateCompound(key: String): CompoundTag {
 	}
 	return this.get(key)!! as CompoundTag
 }
+
+/**
+ * Macro for "if the value is null, remove the key, else set it using the function
+ */
+inline fun <T> CompoundTag.setOrRemove(key: String, value: T?, setter: CompoundTag.(T) -> Unit) {
+	if (value == null)
+		this.remove(key)
+	else
+		this.setter(value)
+}
