@@ -5,10 +5,8 @@ package btpos.mcmods.dungeondesignerlib.builder.blocks.actors
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
 import btpos.mcmods.devutil.common.ext.vanilla.data.getCompoundOrNull
 import btpos.mcmods.devutil.common.ext.vanilla.world.blockEntity
-import btpos.mcmods.devutil.common.ext.vanilla.world.dropItem
 import btpos.mcmods.devutil.common.ext.vanilla.world.getMaxCornerBlock
 import btpos.mcmods.devutil.common.ext.vanilla.world.getMinCornerBlock
-import btpos.mcmods.devutil.common.ext.vanilla.stack
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.structure.ITileState
 import btpos.mcmods.devutil.common.util.ChatUtils
@@ -18,7 +16,7 @@ import btpos.mcmods.devutil.common.util.serialization.putNbtSerializable
 import btpos.mcmods.devutil.common.util.serialization.readNbtSerializableToExisting
 import btpos.mcmods.devutil.forge.datagen.IBlockDataGen
 import btpos.mcmods.devutil.forge.datagen.variantDsl
-import btpos.mcmods.devutil.parts.IItemRepresentable
+import btpos.mcmods.devutil.parts.IItemRepresentable_Tag
 import btpos.mcmods.devutil.parts.dropItemInWorld
 import btpos.mcmods.dungeondesignerlib.WorldUtils
 import btpos.mcmods.dungeondesignerlib.POWERED
@@ -49,9 +47,7 @@ import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.block.state.StateDefinition
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.BlockHitResult
-import net.minecraft.world.phys.Vec3
 import net.minecraftforge.client.model.generators.BlockStateProvider
-import thedarkcolour.kotlinforforge.forge.vectorutil.v3d.toVec3
 import java.util.UUID
 
 class BlockTriggerHolder(
@@ -227,8 +223,8 @@ class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TR
 		}
 		//endregion
 		
-		var triggerDelegate = object : IItemRepresentable<AABB> {
-			override val acceptedItem: Item
+		var triggerDelegate = object : IItemRepresentable_Tag<AABB> {
+			override val defaultItem: Item
 				get() = ModItems.TRIGGER_ITEM
 			
 			override var value: AABB? by notify(pTrigger)

@@ -11,21 +11,16 @@ import net.minecraft.world.phys.Vec3
 import thedarkcolour.kotlinforforge.forge.vectorutil.v3d.toVec3
 
 /**
- * Wraps some value and provides functions converting it to and from an [net.minecraft.world.item.ItemStack].
+ * Wraps some value, and provides functions converting it to and from an [net.minecraft.world.item.ItemStack].
  */
-@KotlinAssignmentOverloadTarget
 interface IItemRepresentable<T> {
-	/**
-	 * This will only perform ItemStack deserialization if the stack wraps this item.
-	 */
-	val acceptedItem: Item
-	
 	/**
 	 * The ItemStack to be returned if the value is null.
 	 * Defaults to [net.minecraft.world.item.ItemStack.EMPTY]
 	 */
 	val ifNull: ItemStack
 		get() = ItemStack.EMPTY
+	
 	
 	/**
 	 * The actual value being wrapped.
@@ -42,17 +37,48 @@ interface IItemRepresentable<T> {
 			if (value == null)
 				return ifNull
 			
-			return ItemStack(acceptedItem).apply {
-				getOrCreateTag().writeToTag(value!!)
-			}
+			return convertToItem(value)
 		}
 		set(stack) {
-			if (stack.item != acceptedItem)
+			if (!acceptsItem(stack))
 				return;
 			
 			// if tag is null, also sets to null
-			value = stack.tag?.readFromTag()
+			value = convertFromItem(stack)
 		}
+	
+	
+	fun convertToItem(value: T?): ItemStack
+	
+	fun convertFromItem(stack: ItemStack): T?
+	
+	fun acceptsItem(stack: ItemStack): Boolean
+}
+
+/**
+ * Wraps some value, and provides functions converting it to and from an [net.minecraft.world.item.ItemStack]'s CompoundTag.
+ */
+@KotlinAssignmentOverloadTarget
+interface IItemRepresentable_Tag<T> : IItemRepresentable<T> {
+	/**
+	 * This will only perform ItemStack deserialization if the stack wraps this item.
+	 */
+	val defaultItem: Item
+	
+	override fun acceptsItem(stack: ItemStack): Boolean {
+		return stack.`is`(defaultItem)
+	}
+	
+	
+	override fun convertToItem(value: T?): ItemStack {
+		return ItemStack(defaultItem).apply {
+			getOrCreateTag().writeToTag(value!!)
+		}
+	}
+	
+	override fun convertFromItem(stack: ItemStack): T? {
+		return stack.tag?.readFromTag()
+	}
 	
 	/**
 	 * Deserialization function. Reads the value from the ItemStack's tag, or null if it's not present.
@@ -67,15 +93,15 @@ interface IItemRepresentable<T> {
 	fun CompoundTag.writeToTag(value: T)
 	
 	/**
-	 * Default implementation of [IItemRepresentable].
+	 * Default implementation of [IItemRepresentable_Tag].
 	 */
 	class Impl<T>(
 		override var value: T? = null,
-		override val acceptedItem: Item,
+		override val defaultItem: Item,
 		val tagReader: CompoundTag.() -> T?,
 		val tagWriter: CompoundTag.(T) -> Unit,
 		override val ifNull: ItemStack = ItemStack.EMPTY
-	) : IItemRepresentable<T> {
+	) : IItemRepresentable_Tag<T> {
 		override fun CompoundTag.readFromTag(): T? = tagReader()
 		
 		override fun CompoundTag.writeToTag(value: T) = tagWriter(value)
@@ -92,7 +118,7 @@ interface IItemRepresentable<T> {
 	}
 }
 
-fun IItemRepresentable<*>.dropItemInWorld(pLevel: Level, pPos: BlockPos): Boolean {
+fun IItemRepresentable_Tag<*>.dropItemInWorld(pLevel: Level, pPos: BlockPos): Boolean {
 	if (this.value == null) {
 		return false;
 	}
