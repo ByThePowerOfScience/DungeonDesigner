@@ -6,6 +6,8 @@ import btpos.mcmods.devutil.common.ext.kotlin.filterSplit
 import btpos.mcmods.devutil.common.ext.kotlin.ifNull
 import btpos.mcmods.devutil.common.ext.kotlin.isNullOrTrue
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
+import btpos.mcmods.devutil.common.ext.vanilla.world.changeBlock
+import btpos.mcmods.devutil.common.ext.vanilla.world.changeBlockAndUpdate
 import btpos.mcmods.devutil.common.ext.vanilla.world.get
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.util.BlockWithEntity
@@ -25,6 +27,8 @@ import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.entity.BlockEntity
+import net.minecraft.world.level.block.entity.BlockEntityTicker
+import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.block.state.StateDefinition
 import net.minecraft.world.level.block.state.properties.BlockStateProperties
@@ -89,16 +93,17 @@ class BlockFightController(props: Properties) : Block(props), BlockWithEntity<Ti
 		registerDefaultState(stateDefinition.any().with(STATUS, FightStatus.INACTIVE).with(FACING, Direction.NORTH))
 	}
 	
-	//region Configuration
+	//region Setup
 	override fun getEntityType() = ModBlocks.FIGHT_CONTROLLER_ENTITY
 	
 	override fun createBlockStateDefinition(pBuilder: StateDefinition.Builder<Block?, BlockState?>) {
 		super.createBlockStateDefinition(pBuilder)
 	}
 	//endregion
-	
-	
-	override fun canConnectRedstone(state: BlockState, level: BlockGetter, pos: BlockPos, direction: Direction?) = true
+    
+    
+    //region Redstone
+    override fun canConnectRedstone(state: BlockState, level: BlockGetter, pos: BlockPos, direction: Direction?) = true
 	
 	override fun getSignal(pState: BlockState, pLevel: BlockGetter, pPos: BlockPos, pDirection: Direction): Int {
 		if (pState[STATUS] == FightStatus.COMPLETE && pDirection == pState[FACING].opposite) {
@@ -116,6 +121,22 @@ class BlockFightController(props: Properties) : Block(props), BlockWithEntity<Ti
 		} ?: return 0
 		
 		return (percentageMobsAlive * 15).roundToInt().coerceAtMost(15)
+	}
+    //endregion
+	
+	/**
+	 * This is called every time the blockstate changes.
+	 */
+	override fun <T : BlockEntity> getTicker(
+		pLevel: Level,
+		pState: BlockState,
+		pBlockEntityType: BlockEntityType<T>
+	): BlockEntityTicker<T>? {
+		if (pState[STATUS] != FightStatus.IN_PROGRESS)
+			return null;
+		return BlockEntityTicker { level, pos, state, t ->
+			(t as? TileFightController)?.onTick()
+		}
 	}
 }
 
@@ -139,7 +160,6 @@ class TileFightController(pPos: BlockPos, pState: BlockState)
 	 * When a fight is in progress, holds the mobs this fight controller currently has spawned in the world. When no fight is active, is `null`.
 	 */
 	var activeFight: ActiveFightState? = null
-	
 	
 	
 	fun startFight() {
@@ -174,11 +194,28 @@ class TileFightController(pPos: BlockPos, pState: BlockState)
 	 * Check if its mobs exist and remove them from the list if they don't.
 	 */
 	fun onTick() {
-		if (level?.isClientSide.isNullOrTrue() || activeFight == null)
-			return
+		// Only check every quarter-second
+		val ticksElapsed = level?.server?.tickCount ?: return
+		if (ticksElapsed % 5 != 0)
+			return;
 		
+		val activeFight = activeFight ?: return
+		val level = level as? ServerLevel ?: return
 		
+		activeFight.mobsAlive.removeAll { id ->
+			val ent = level.getEntity(id)
+			ent == null || ent.isRemoved
+		}
+		
+		if (activeFight.mobsAlive.isEmpty()) {
+			// End the fight
+			this.activeFight = null
+			level.changeBlockAndUpdate(this.blockPos) { it.with(BlockFightController.STATUS, FightStatus.COMPLETE) }
+		 }
 	}
+	
+	val isFightInProgress: Boolean
+		get() = this.activeFight != null
 	
 	private fun getPipetteData(): List<IEntityFightData> {
 		TODO("Get the pipette data from the chest or however we store it")
@@ -192,8 +229,10 @@ class TileFightController(pPos: BlockPos, pState: BlockState)
 	
 	override fun onChunkUnloaded() {
 		super.onChunkUnloaded()
-		if (level is ServerLevel) {
-			removeAllSpawnedMobs(level as ServerLevel)
+		
+		(level as? ServerLevel)?.let { level ->
+			removeAllSpawnedMobs(level)
+			level.changeBlockAndUpdate(blockPos) { it.with(BlockFightController.STATUS, FightStatus.INACTIVE) }
 		}
 	}
 	
