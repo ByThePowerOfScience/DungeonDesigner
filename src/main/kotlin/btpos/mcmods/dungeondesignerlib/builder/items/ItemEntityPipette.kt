@@ -45,7 +45,7 @@ class ItemEntityPipette(pProps: Properties) : Item(pProps) {
 		
 		heldStack.getOrCreateTagElement(TAGKEY_DATA).let(IEntityFightData::NbtAdapter).run {
 			pos = pContext.clickedPos
-			rotation = pContext.player?.run{ xRot + 180f }?.coerceIn(0f, 360f) // when spawned, mob will be facing the player rotation
+			rotation = -(pContext.player?.xRot ?: 0f)
 		}
 		
 		return InteractionResult.CONSUME
