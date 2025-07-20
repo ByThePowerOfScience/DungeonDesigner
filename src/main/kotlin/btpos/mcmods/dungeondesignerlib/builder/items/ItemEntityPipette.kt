@@ -1,10 +1,14 @@
 package btpos.mcmods.dungeondesignerlib.builder.items
 
 
-import btpos.mcmods.devutil.common.util.EntityUtils
+import btpos.mcmods.devutil.common.ext.vanilla.asComponent
+import btpos.mcmods.devutil.common.ext.vanilla.plus
+import btpos.mcmods.devutil.common.macros.ChatUtils.toComponent
 import btpos.mcmods.devutil.common.util.EntityUtils.getTargetedEntity
 import btpos.mcmods.devutil.forge.datagen.IItemDataGen
-import btpos.mcmods.dungeondesignerlib.builder.nbt.IEntityFightData
+import btpos.mcmods.dungeondesignerlib.builder.nbt.IEntitySpawnData
+import btpos.mcmods.dungeondesignerlib.registry.ModItems
+import net.minecraft.ChatFormatting
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
@@ -12,18 +16,18 @@ import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
-import net.minecraft.world.entity.projectile.ProjectileUtil
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.context.UseOnContext
 import net.minecraft.world.level.Level
 import net.minecraftforge.client.model.generators.ItemModelProvider
-import thedarkcolour.kotlinforforge.forge.vectorutil.v2d.unaryMinus
+import net.minecraftforge.registries.ForgeRegistries
 
 /**
  * Holds a spawn egg and a spawn position. Used to configure the FightController.
  *
  * @see btpos.mcmods.dungeondesignerlib.builder.blocks.actors.BlockFightController
+ * @see IEntitySpawnData.AsTag
  */
 class ItemEntityPipette(pProps: Properties) : Item(pProps) {
 	companion object : IItemDataGen {
@@ -35,6 +39,34 @@ class ItemEntityPipette(pProps: Properties) : Item(pProps) {
 		}
 		
 		const val TAGKEY_DATA = "spawndata"
+		
+		/**
+		 * Returns true if this itemstack both is a pipette and has enough information to spawn a mob.
+		 */
+		fun isReadyToSpawn(stack: ItemStack): Boolean {
+			if (stack.item != this) {
+				return false
+			}
+			return getDataOrNull(stack)?.run {
+				pos != null && type != null && rotation != null
+			} ?: false
+		}
+		
+		fun getDataOrNull(stack: ItemStack): IEntitySpawnData.AsTag? {
+			if (stack.item != ModItems.PIPETTE_ITEM)
+				return null
+			
+			val data = stack.getTagElement(TAGKEY_DATA) ?: return null
+			
+			return IEntitySpawnData.AsTag(data)
+		}
+		
+		fun getOrCreateData(stack: ItemStack): IEntitySpawnData.AsTag {
+			if (stack.item != ModItems.PIPETTE_ITEM)
+				btpos.mcmods.dungeondesignerlib.LOGGER.warn("Expected item {}, got {}", resourceLocation, ForgeRegistries.ITEMS.getKey(stack.item))
+			
+			return IEntitySpawnData.AsTag(stack.getOrCreateTagElement(TAGKEY_DATA))
+		}
 	}
 	
 	/**
@@ -43,12 +75,16 @@ class ItemEntityPipette(pProps: Properties) : Item(pProps) {
 	override fun useOn(pContext: UseOnContext): InteractionResult {
 		val heldStack = pContext.itemInHand
 		
-		heldStack.getOrCreateTagElement(TAGKEY_DATA).let(IEntityFightData::NbtAdapter).run {
-			pos = pContext.clickedPos
-			rotation = -(pContext.player?.xRot ?: 0f)
+		if (!pContext.level.isClientSide){
+			getOrCreateData(heldStack).run {
+				pos = pContext.clickedPos
+				rotation = -(pContext.player?.xRot ?: 0f)
+				
+				pContext.player?.sendSystemMessage("Spawn position: ".asComponent() + pos.toComponent().withStyle(ChatFormatting.YELLOW) + " with rotation $rotation degrees.")
+			}
 		}
 		
-		return InteractionResult.CONSUME
+		return InteractionResult.sidedSuccess(pContext.level.isClientSide)
 	}
 	
 	/**
@@ -74,11 +110,13 @@ class ItemEntityPipette(pProps: Properties) : Item(pProps) {
 			
 			val type = lookedAtEntity.type
 			
-			heldStack.getOrCreateTagElement(TAGKEY_DATA).let(IEntityFightData::NbtAdapter).run {
+			getOrCreateData(heldStack).run {
 				this.nbt = tag
 				@Suppress("UNCHECKED_CAST")
 				this.type = type as EntityType<LivingEntity>
 			}
+			
+			pPlayer.sendSystemMessage("Saved ${ForgeRegistries.ENTITY_TYPES.getKey(type)} to pipette.".asComponent())
 		}
 		
 		return InteractionResultHolder.sidedSuccess(heldStack, pLevel.isClientSide)

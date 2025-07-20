@@ -37,7 +37,11 @@ object ModBlocks : IBlockRegistry {
 	
 	val TRIGGER_BLOCK by block(BlockTriggerHolder.id, withItem=true) { BlockTriggerHolder(dungeonLogicProperties) }
 	val TRIGGER_BLOCK_ENTITY by ent(::TRIGGER_BLOCK, ::TileTriggerHolder)
-	
+    
+    //region Flag Blocks
+    /**
+	 * Emits signal when the flag is on
+	 */
 	val FLAG_READER by block("flag_reader", withItem=true) { BlockFlagReader(dungeonLogicProperties) }
 	
 	/**
@@ -49,7 +53,11 @@ object ModBlocks : IBlockRegistry {
 	 * Turns the flag OFF
 	 */
 	val FLAG_RESETTER by block("flag_resetter", withItem=true) { BlockFlagWriter(dungeonLogicProperties, false) }
+	
 	val FLAG_BLOCK_ENTITY by ent("flag_block") { BlockEntityType.Builder.of(::TileFlagHolder, FLAG_READER, FLAG_SETTER, FLAG_RESETTER).build(null) }
+    //endregion
+	
+	
 	
 	val FIGHT_CONTROLLER by block(BlockFightController.id, withItem=true) { BlockFightController(dungeonLogicProperties) }
 	val FIGHT_CONTROLLER_ENTITY by ent(::FIGHT_CONTROLLER, ::TileFightController)

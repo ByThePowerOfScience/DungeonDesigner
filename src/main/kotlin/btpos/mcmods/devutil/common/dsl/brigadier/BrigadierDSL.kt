@@ -93,8 +93,21 @@ value class ArgBuilder<S, T>(val internal: RequiredArgumentBuilder<S, T>) {
 	}
 	
 	inline fun <T> arg(name: String, type: ArgumentType<T>, crossinline then: ArgBuilder<S, T>.() -> Unit) = argument(name, type, then)
-	
 	inline operator fun <T> ArgumentType<T>.invoke(name: String, crossinline then: ArgBuilder<S, T>.() -> Unit) = argument(name, this, then)
+	inline operator fun <T> String.invoke(arg: ArgumentType<T>, crossinline then: ArgBuilder<S, T>.() -> Unit) = argument(this, arg, then)
+	
+	// I can't find a way to do this that doesn't require a class ;_;
+	/**
+	 * Example:
+	 *
+	 * ```kotlin
+	 * StringArgumentType.word()["name"] {
+	 * 		// ...
+	 * }
+	 * ```
+	 */
+	inline operator fun <T> ArgumentType<T>.get(name: String): ArgTypePair<T> = ArgTypePair(name, this)
+	inline operator fun <T> ArgTypePair<T>.invoke(crossinline then: ArgBuilder<S, T>.() -> Unit) = argument(this.name, this.type, then)
 	
 	
 	
@@ -174,6 +187,9 @@ value class ArgBuilder<S, T>(val internal: RequiredArgumentBuilder<S, T>) {
 		internal.then(argument)
 	}
 	
+	inline operator fun ArgumentBuilder<S, *>.unaryPlus() = then(this)
+	inline operator fun CommandNode<S>.unaryPlus() = then(this)
+	
 	/**
 	 * Directs execution to the given target node (acquired with ArgumentBuilder#build) when parsed, applying the provided modifier to the command context before proceeding to the redirect target.
 	 * I'd imagine it's used for things like adding optional arguments to the front of a command, like "dothing thisway x y z" instead of "dothing x y z".
@@ -206,6 +222,7 @@ value class ArgBuilder<S, T>(val internal: RequiredArgumentBuilder<S, T>) {
 	}
 }
 
+class ArgTypePair<T>(val name: String, val type: ArgumentType<T>)
 
 @JvmInline @BrigadierDSL
 value class LiteralBuilder<S>(val internal: LiteralArgumentBuilder<S>) {
@@ -218,11 +235,25 @@ value class LiteralBuilder<S>(val internal: LiteralArgumentBuilder<S>) {
 	}
 	
 	inline fun <T> arg(name: String, type: ArgumentType<T>, crossinline then: ArgBuilder<S, T>.() -> Unit) = argument(name, type, then)
-	
 	inline operator fun <T> ArgumentType<T>.invoke(name: String, crossinline then: ArgBuilder<S, T>.() -> Unit) = argument(name, this, then)
+	inline operator fun <T> String.invoke(arg: ArgumentType<T>, crossinline then: ArgBuilder<S, T>.() -> Unit) = argument(this, arg, then)
 	
+	// I can't find a way to do this that doesn't require a class ;_;
+	/**
+	 * Example:
+	 *
+	 * ```kotlin
+	 * StringArgumentType.word()["name"] {
+	 * 		// ...
+	 * }
+	 * ```
+	 */
+	inline operator fun <T> ArgumentType<T>.get(name: String): ArgTypePair<T> = ArgTypePair(name, this)
+	inline operator fun <T> ArgTypePair<T>.invoke(crossinline then: ArgBuilder<S, T>.() -> Unit) = argument(this.name, this.type, then)
 	
-	
+	/**
+	 * @see literal
+	 */
 	inline operator fun String.invoke(crossinline then: LiteralBuilder<S>.() -> Unit) = literal(this, then)
 	
 	/**
@@ -247,6 +278,9 @@ value class LiteralBuilder<S>(val internal: LiteralArgumentBuilder<S>) {
 	inline fun then(argument: ArgumentBuilder<S, *>) {
 		internal.then(argument)
 	}
+	
+	inline operator fun ArgumentBuilder<S, *>.unaryPlus() = then(this)
+	inline operator fun CommandNode<S>.unaryPlus() = then(this)
 	
 	/**
 	 * Directs execution to the given target node (acquired with [ArgumentBuilder.build]) when parsed, applying the provided modifier to the command context before proceeding to the redirect target.

@@ -4,16 +4,15 @@ package btpos.mcmods.dungeondesignerlib.builder.blocks.actors
 
 import btpos.mcmods.devutil.common.ext.kotlin.filterSplit
 import btpos.mcmods.devutil.common.ext.kotlin.ifNull
-import btpos.mcmods.devutil.common.ext.kotlin.isNullOrTrue
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
-import btpos.mcmods.devutil.common.ext.vanilla.world.changeBlock
 import btpos.mcmods.devutil.common.ext.vanilla.world.changeBlockAndUpdate
 import btpos.mcmods.devutil.common.ext.vanilla.world.get
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.util.BlockWithEntity
 import btpos.mcmods.devutil.forge.datagen.IBlockDataGen
 import btpos.mcmods.devutil.forge.datagen.variantDsl
-import btpos.mcmods.dungeondesignerlib.builder.nbt.IEntityFightData
+import btpos.mcmods.dungeondesignerlib.builder.nbt.IEntitySpawnData
+import btpos.mcmods.dungeondesignerlib.builder.nbt.trySpawnEntity
 import btpos.mcmods.dungeondesignerlib.registry.ModBlocks
 import btpos.mcmods.dungeondesignerlib.LOGGER as DLOGGER
 import net.minecraft.core.BlockPos
@@ -22,9 +21,10 @@ import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.util.StringRepresentable
 import net.minecraft.world.entity.Entity
-import net.minecraft.world.entity.MobSpawnType
+import net.minecraft.world.item.context.BlockPlaceContext
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.LevelReader
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.entity.BlockEntityTicker
@@ -34,7 +34,6 @@ import net.minecraft.world.level.block.state.StateDefinition
 import net.minecraft.world.level.block.state.properties.BlockStateProperties
 import net.minecraft.world.level.block.state.properties.EnumProperty
 import net.minecraftforge.client.model.generators.BlockStateProvider
-import java.lang.ref.WeakReference
 import java.util.UUID
 import kotlin.math.roundToInt
 
@@ -44,7 +43,7 @@ enum class FightStatus : StringRepresentable {
 	IN_PROGRESS,
 	COMPLETE;
 	
-	override fun getSerializedName(): String = name
+	override fun getSerializedName(): String = name.lowercase()
 }
 
 
@@ -54,9 +53,9 @@ class BlockFightController(props: Properties) : Block(props), BlockWithEntity<Ti
 			get() = "fight_controller"
 		
 		override fun BlockStateProvider.buildModelsAndStates() {
-			val off = models().cubeAll(id + "_inactive", modLoc("fight_controller/${id}_inactive"))
-			val in_progress = models().cubeAll(id + "_ip", modLoc("fight_controller/${id}_ip"))
-			val finished = models().cubeAll(id + "_complete", modLoc("fight_controller/${id}_complete"))
+			val off = models().cubeAll(id + "_inactive", blockLoc("fight_controller/${id}_inactive"))
+			val in_progress = models().cubeAll(id + "_ip", blockLoc("fight_controller/${id}_ip"))
+			val finished = models().cubeAll(id + "_complete", blockLoc("fight_controller/${id}_complete"))
 			
 			variantDsl(ModBlocks.FIGHT_CONTROLLER) {
 				STATUS {
@@ -98,11 +97,12 @@ class BlockFightController(props: Properties) : Block(props), BlockWithEntity<Ti
 	
 	override fun createBlockStateDefinition(pBuilder: StateDefinition.Builder<Block?, BlockState?>) {
 		super.createBlockStateDefinition(pBuilder)
+		pBuilder.add(STATUS, FACING)
 	}
 	//endregion
     
     
-    //region Redstone
+    //region Redstone Emitting
     override fun canConnectRedstone(state: BlockState, level: BlockGetter, pos: BlockPos, direction: Direction?) = true
 	
 	override fun getSignal(pState: BlockState, pLevel: BlockGetter, pPos: BlockPos, pDirection: Direction): Int {
@@ -123,6 +123,30 @@ class BlockFightController(props: Properties) : Block(props), BlockWithEntity<Ti
 		return (percentageMobsAlive * 15).roundToInt().coerceAtMost(15)
 	}
     //endregion
+	
+	override fun getStateForPlacement(pContext: BlockPlaceContext): BlockState? {
+		return defaultBlockState().with(FACING, pContext.horizontalDirection.opposite)
+	}
+	
+	// region Redstone Reception
+	override fun onNeighborChange(state: BlockState, level: LevelReader, pos: BlockPos, neighbor: BlockPos) {
+		super.onNeighborChange(state, level, pos, neighbor)
+		
+		if (state[STATUS] != FightStatus.INACTIVE)
+			return
+		
+		val facing = state[FACING]
+		
+		val shouldStartFight = Direction.Plane.HORIZONTAL.any {
+			it != facing && level.hasSignal(pos, it)
+		}
+		
+		if (shouldStartFight) {
+			level.getOurEntity(pos)?.startFight()
+		}
+	}
+	// endregion
+	
 	
 	/**
 	 * This is called every time the blockstate changes.
@@ -165,7 +189,7 @@ class TileFightController(pPos: BlockPos, pState: BlockState)
 	fun startFight() {
 		val level = this.level as? ServerLevel ?: return
 		
-		val mobPipettes: List<IEntityFightData> = getPipetteData()
+		val mobPipettes: List<IEntitySpawnData> = getPipetteData()
 		
 		val (matching, notMatching) = mobPipettes.filterSplit { it.type == null || it.pos == null }
 		
@@ -179,13 +203,11 @@ class TileFightController(pPos: BlockPos, pState: BlockState)
 			printError("$msg. Skipping.".asComponent())
 		}
 		
-		val mobsAlive = matching.mapNotNull { (spawnPos, rot, mobType, nbt) ->
-			return@mapNotNull mobType?.create(level, nbt, { if (rot != null) it.xRot = rot }, spawnPos!!, MobSpawnType.MOB_SUMMONED, true, false)
-				.ifNull { printError("Null mob type".asComponent()) }
-				?.uuid
+		val mobsAlive = matching.mapNotNullTo(ArrayList(matching.size)) { data ->
+			data.trySpawnEntity(level).ifNull { printError("Failed to spawn entity.".asComponent()) }
 		}
 		
-		activeFight = ActiveFightState(mobsAlive.toMutableList())
+		activeFight = ActiveFightState(mobsAlive)
 		
 		level.setBlockAndUpdate(this.blockPos, this.blockState.with(BlockFightController.STATUS, FightStatus.IN_PROGRESS))
 	}
@@ -217,7 +239,7 @@ class TileFightController(pPos: BlockPos, pState: BlockState)
 	val isFightInProgress: Boolean
 		get() = this.activeFight != null
 	
-	private fun getPipetteData(): List<IEntityFightData> {
+	private fun getPipetteData(): List<IEntitySpawnData> {
 		TODO("Get the pipette data from the chest or however we store it")
 	}
 	

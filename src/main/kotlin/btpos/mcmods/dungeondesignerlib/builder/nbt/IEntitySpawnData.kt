@@ -4,18 +4,18 @@ import btpos.mcmods.devutil.common.ext.vanilla.data.getBlockPos
 import btpos.mcmods.devutil.common.ext.vanilla.data.getCompoundOrNull
 import btpos.mcmods.devutil.common.ext.vanilla.data.setOrRemove
 import btpos.mcmods.devutil.common.ext.vanilla.data.toCompoundTag
-import btpos.mcmods.devutil.common.ext.vanilla.world.checkLivingEntity
 import btpos.mcmods.devutil.common.util.serialization.Serialization.decodeTag
 import btpos.mcmods.devutil.common.util.serialization.Serialization.encodeToTag
-import btpos.mcmods.dungeondesignerlib.LOGGER
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NumericTag
+import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.EntityType
-import net.minecraft.world.entity.LivingEntity
+import net.minecraft.world.entity.MobSpawnType
 import net.minecraftforge.registries.ForgeRegistries
+import java.util.UUID
 
-sealed interface IEntityFightData {
+sealed interface IEntitySpawnData {
 	/**
 	 * The spawn position of the entity.
 	 */
@@ -29,7 +29,7 @@ sealed interface IEntityFightData {
 	/**
 	 * The entity type to spawn. Copied from the template entity.
 	 */
-	var type: EntityType<out LivingEntity>?
+	var type: EntityType<*>?
 	
 	/**
 	 * The NBT to give the entity when spawning it, e.g. inventory, weapons, max health, potion effects, etc.
@@ -54,16 +54,16 @@ sealed interface IEntityFightData {
 	data class ForTile(
 		override var pos: BlockPos?,
 		override var rotation: Float?,
-		override var type: EntityType<out LivingEntity>?,
+		override var type: EntityType<*>?,
 		override var nbt: CompoundTag? = null,
-	) : IEntityFightData
+	) : IEntitySpawnData
 	
 	/**
-	 * Structured access for item NBT.
+	 * Structured access directly to item NBT.
 	 */
 	// I really want to use an interface here, but it also means the value class can't get this conversion for free...
 	@JvmInline
-	value class NbtAdapter(val tag: CompoundTag) : IEntityFightData {
+	value class AsTag(val tag: CompoundTag) : IEntitySpawnData {
 		companion object {
 			const val SPAWN_POS = "pos"
 			const val SPAWN_ROT = "rotation"
@@ -79,14 +79,11 @@ sealed interface IEntityFightData {
 				}
 			}
 		
-		override var type: EntityType<out LivingEntity>?
-			get() = tag.getCompoundOrNull(ENT_TYPE)?.let { ForgeRegistries.ENTITY_TYPES.codec.decodeTag(it) }?.checkLivingEntity()
+		override var type: EntityType<*>?
+			get() = tag.getCompoundOrNull(ENT_TYPE)?.let { ForgeRegistries.ENTITY_TYPES.codec.decodeTag(it) }
 			set(value) {
 				tag.setOrRemove(ENT_TYPE, value) {
-					if (it.checkLivingEntity() == null)
-						LOGGER.warn("Attempted to put a non-LivingEntity into an EntityFightData! Skipping.")
-					else
-						put(ENT_TYPE, ForgeRegistries.ENTITY_TYPES.codec.encodeToTag(it))
+					put(ENT_TYPE, ForgeRegistries.ENTITY_TYPES.codec.encodeToTag(it))
 				}
 			}
 		
@@ -101,8 +98,37 @@ sealed interface IEntityFightData {
 					putFloat(SPAWN_ROT, it)
 				}
 			}
+		
+		fun copyFrom(other: IEntitySpawnData) {
+			pos = other.pos
+			type = other.type
+			nbt = other.nbt
+			rotation = other.rotation
+		}
 	}
 }
 
+/**
+ * Attempts to spawn the entity made by this data in the world.
+ * @return The UUID of the spawned entity if spawning was successful, else null.
+ */
+fun IEntitySpawnData.trySpawnEntity(level: ServerLevel): UUID? {
+	val (pos, rot, type, nbt) = this
+	if (pos == null || type == null) {
+		return null
+	}
+	
+	val newEntity = type.create(level, nbt, { if (rot != null) it.xRot = rot }, pos, MobSpawnType.MOB_SUMMONED, true, false) ?: return null
+	
+	if (level.tryAddFreshEntityWithPassengers(newEntity))
+		return newEntity.uuid
+	else
+		return null
+}
 
-
+fun IEntitySpawnData.serialize(): CompoundTag {
+	return when (this) {
+		is IEntitySpawnData.AsTag -> this.tag
+		else -> IEntitySpawnData.AsTag(CompoundTag()).also { it.copyFrom(this) }.tag
+	}
+}

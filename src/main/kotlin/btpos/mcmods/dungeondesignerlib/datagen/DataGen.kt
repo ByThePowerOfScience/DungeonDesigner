@@ -2,9 +2,11 @@ package btpos.mcmods.dungeondesignerlib.datagen
 
 import btpos.mcmods.dungeondesignerlib.MODID
 import btpos.mcmods.dungeondesignerlib.builder.blocks.BlockDungeonNexus
+import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.BlockFightController
 import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.BlockFlagReader
 import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.BlockFlagWriter
 import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.BlockTriggerHolder
+import btpos.mcmods.dungeondesignerlib.builder.items.ItemEntityPipette
 import btpos.mcmods.dungeondesignerlib.builder.items.ItemFlagVariable
 import btpos.mcmods.dungeondesignerlib.builder.items.ItemTriggerVariable
 import net.minecraft.data.PackOutput
@@ -27,10 +29,11 @@ object DataGenConstants {
 class BlockStateGen(output: PackOutput, efh: ExistingFileHelper) : BlockStateProvider(output, MODID, efh) {
 	override fun registerStatesAndModels() {
 		listOf(
-				BlockDungeonNexus,
-				BlockTriggerHolder,
-				BlockFlagReader,
-				BlockFlagWriter
+			BlockDungeonNexus,
+			BlockTriggerHolder,
+			BlockFlagReader,
+			BlockFlagWriter,
+			BlockFightController
 		).forEach {
 			it.getStatesAndModels(this)
 		}
@@ -40,8 +43,9 @@ class BlockStateGen(output: PackOutput, efh: ExistingFileHelper) : BlockStatePro
 class ItemDataGen(output: PackOutput, efh: ExistingFileHelper) : ItemModelProvider(output, MODID, efh) {
 	override fun registerModels() {
 		listOf(
-				ItemTriggerVariable,
-				ItemFlagVariable
+			ItemTriggerVariable,
+			ItemFlagVariable,
+			ItemEntityPipette
 		).forEach {
 			it.getModels(this)
 		}
