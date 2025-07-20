@@ -1,8 +1,9 @@
 package btpos.mcmods.dungeondesignerlib.builder.items
 
-import btpos.mcmods.devutil.common.util.ChatUtils
+import btpos.mcmods.devutil.common.macros.ChatUtils.toComponent
 import btpos.mcmods.devutil.forge.datagen.IItemDataGen
 import btpos.mcmods.dungeondesignerlib.builder.nbt.TriggerBoundsTag
+import net.minecraft.ChatFormatting
 import net.minecraft.network.chat.Component
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.item.Item
@@ -42,10 +43,10 @@ class ItemTriggerVariable(props: Properties) : Item(props) {
 		
 		if (!player.isShiftKeyDown) {
 			ctx.itemInHand.getTriggerBounds().first = ctx.clickedPos
-			player.sendSystemMessage(Component.literal("Set first corner to ").append(ChatUtils.toComponent(ctx.clickedPos)))
+			player.sendSystemMessage(Component.literal("Set first corner to ").append(ctx.clickedPos.toComponent().withStyle(ChatFormatting.YELLOW)))
 		} else {
 			ctx.itemInHand.getTriggerBounds().second = ctx.clickedPos
-			player.sendSystemMessage(Component.literal("Set second corner to ").append(ChatUtils.toComponent(ctx.clickedPos)))
+			player.sendSystemMessage(Component.literal("Set second corner to ").append(ctx.clickedPos.toComponent().withStyle(ChatFormatting.YELLOW)))
 		}
 		
 		return InteractionResult.CONSUME

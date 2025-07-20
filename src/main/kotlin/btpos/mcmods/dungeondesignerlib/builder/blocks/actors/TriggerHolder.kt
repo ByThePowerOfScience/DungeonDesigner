@@ -9,8 +9,8 @@ import btpos.mcmods.devutil.common.ext.vanilla.world.getMaxCornerBlock
 import btpos.mcmods.devutil.common.ext.vanilla.world.getMinCornerBlock
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.structure.ITileState
-import btpos.mcmods.devutil.common.util.ChatUtils
 import btpos.mcmods.devutil.common.ext.vanilla.plus
+import btpos.mcmods.devutil.common.macros.ChatUtils.toComponent
 import btpos.mcmods.devutil.common.util.serialization.ICodecSerializable
 import btpos.mcmods.devutil.common.util.serialization.putNbtSerializable
 import btpos.mcmods.devutil.common.util.serialization.readNbtSerializableToExisting
@@ -25,6 +25,7 @@ import btpos.mcmods.dungeondesignerlib.registry.ModBlocks
 import btpos.mcmods.dungeondesignerlib.registry.ModItems
 import btpos.mcmods.dungeondesignerlib.builder.nbt.TriggerBoundsTag
 import com.mojang.serialization.codecs.RecordCodecBuilder
+import net.minecraft.ChatFormatting
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.core.UUIDUtil
@@ -177,9 +178,9 @@ class BlockTriggerHolder(
 		} else {
 			pPlayer.sendSystemMessage(
 					Component.literal("Trigger bounds: ")
-					+ ChatUtils.toComponent(ourEnt.state.trigger!!.getMinCornerBlock())
+					+ ourEnt.state.trigger!!.getMinCornerBlock().toComponent().withStyle(ChatFormatting.YELLOW)
 					+ " to "
-					+ ChatUtils.toComponent(ourEnt.state.trigger!!.getMaxCornerBlock())
+					+ ourEnt.state.trigger!!.getMaxCornerBlock().toComponent().withStyle(ChatFormatting.YELLOW)
 			)
 		}
 		
