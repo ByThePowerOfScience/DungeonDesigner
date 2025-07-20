@@ -2,81 +2,159 @@ package btpos.mcmods.dungeondesignerlib.debugging
 
 import btpos.mcmods.devutil.common.dsl.brigadier.literal
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
+import btpos.mcmods.devutil.common.ext.vanilla.plus
+import btpos.mcmods.devutil.common.macros.ChatUtils
+import btpos.mcmods.dungeondesignerlib.builder.items.ItemEntityPipette
+import btpos.mcmods.dungeondesignerlib.builder.nbt.trySpawnEntity
 import btpos.mcmods.dungeondesignerlib.builder.world.dungeonBuilderData
+import btpos.mcmods.dungeondesignerlib.registry.ModItems
 import com.mojang.brigadier.arguments.BoolArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
+import net.minecraft.ChatFormatting
+import com.mojang.brigadier.context.CommandContext as MojCtx
 import net.minecraft.commands.CommandSourceStack
+import net.minecraft.nbt.CompoundTag
+import net.minecraft.nbt.NbtUtils
+import net.minecraft.network.chat.Component
+import net.minecraftforge.registries.ForgeRegistries
 
 typealias CommandBuilder = LiteralArgumentBuilder<CommandSourceStack>
+typealias CommandContext = MojCtx<CommandSourceStack>
 
 object DebugCommands {
-	fun make(): CommandBuilder {
-		return literal("ddl") {
-			"debug" {
-				then(makeFlagCommand())
-			}
-		}
-	}
-	
-	private fun makeFlagCommand(): CommandBuilder {
-		return literal("flag") {
-			"get" {
-				StringArgumentType.string()("name") {
-					executes { ctx ->
-						val level = ctx.source.level
-						val data = level.dataStorage.dungeonBuilderData
-						val flagName = StringArgumentType.getString(ctx, "name")
-						
-						if (flagName in data.state.flagStates) {
-							ctx.source.sendSuccess({ "Flag ${flagName}: ${data.getFlag(flagName)}".asComponent() }, true)
-						} else {
-							ctx.source.sendSuccess({"Flag ${flagName} does not exist.".asComponent()}, true)
-						}
-						
-						return@executes 1
-					}
-				}
-			}
-			"set" {
-				StringArgumentType.string()("name") {
-					BoolArgumentType.bool()("value") {
-						executes { ctx ->
-							val level = ctx.source.level
-							val data = level.dataStorage.dungeonBuilderData
-							val flagName = StringArgumentType.getString(ctx, "name")
-							val value = BoolArgumentType.getBool(ctx, "value")
-							
-							data.setFlag(flagName, value)
-							
-							ctx.source.sendSuccess({ "Flag $flagName set to $value".asComponent() }, true)
-							
-							return@executes 1
-						}
-					}
-				}
-			}
-			"list" {
-				executes { ctx ->
-					val data = ctx.source.level.dataStorage.dungeonBuilderData
-					val out = buildString {
-						for ((k, v) in data.state.flagStates) {
-							append(k).append(": ").append(v).append("\n")
-						}
-					}.asComponent()
-					
-					ctx.source.sendSuccess({ out }, true)
-					return@executes 1
-				}
-			}
-			"clear" {
-				executes { ctx ->
-					val data = ctx.source.level.dataStorage.dungeonBuilderData
-					data.state.flagStates.clear()
-					ctx.source.sendSuccess({ "Cleared flags.".asComponent() }, true)
-					return@executes 1
-				}
-			}
-		}
-	}
+    fun make(): CommandBuilder {
+        return literal("ddl") {
+            "debug" {
+                then(makeFlagCommand())
+            }
+        }
+    }
+    
+    private fun makeFlagCommand(): CommandBuilder {
+        return literal("flag") {
+            "get" {
+                StringArgumentType.string()("name") {
+                    executes { ctx ->
+                        val level = ctx.source.level
+                        val data = level.dataStorage.dungeonBuilderData
+                        val flagName = StringArgumentType.getString(ctx, "name")
+                        
+                        if (flagName in data.state.flagStates) {
+                            ctx.source.sendSuccess(
+                                { "Flag ${flagName}: ${data.getFlag(flagName)}".asComponent() },
+                                true
+                            )
+                        } else {
+                            ctx.source.sendSuccess({ "Flag ${flagName} does not exist.".asComponent() }, true)
+                        }
+                        
+                        return@executes 1
+                    }
+                }
+            }
+            "set" {
+                StringArgumentType.string()("name") {
+                    BoolArgumentType.bool()("value") {
+                        executes { ctx ->
+                            val level = ctx.source.level
+                            val data = level.dataStorage.dungeonBuilderData
+                            val flagName = StringArgumentType.getString(ctx, "name")
+                            val value = BoolArgumentType.getBool(ctx, "value")
+                            
+                            data.setFlag(flagName, value)
+                            
+                            ctx.source.sendSuccess({ "Flag $flagName set to $value".asComponent() }, true)
+                            
+                            return@executes 1
+                        }
+                    }
+                }
+            }
+            "list" {
+                executes { ctx ->
+                    val data = ctx.source.level.dataStorage.dungeonBuilderData
+                    val out = buildString {
+                        for ((k, v) in data.state.flagStates) {
+                            append(k).append(": ").append(v).append("\n")
+                        }
+                    }.asComponent()
+                    
+                    ctx.source.sendSuccess({ out }, true)
+                    return@executes 1
+                }
+            }
+            "clear" {
+                executes { ctx ->
+                    val data = ctx.source.level.dataStorage.dungeonBuilderData
+                    data.state.flagStates.clear()
+                    ctx.source.sendSuccess({ "Cleared flags.".asComponent() }, true)
+                    return@executes 1
+                }
+            }
+        }
+    }
+    
+    private fun makePipetteCommand(): CommandBuilder {
+        return literal("pipette") {
+            requires {
+                it.isPlayer && it.playerOrException.mainHandItem.item == ModItems.PIPETTE_ITEM
+            }
+            "spawn" {
+                requires {
+                    it.playerOrException.mainHandItem.let { ItemEntityPipette.isReadyToSpawn(it) }
+                }
+                executes(::spawnFromPipette)
+            }
+            "get" {
+                executes { ctx ->
+                    val itemNbt = ctx.source
+                            .playerOrException
+                            .mainHandItem
+                            .let(ItemEntityPipette::getDataOrNull)
+                        ?: return@executes 0
+                    
+                    val msg: () -> Component = {
+                        with(itemNbt) {
+                            with(ChatUtils) {
+                                -"Pos: " + pos.toComponent()[ChatFormatting.YELLOW] +
+                                        "\nRotation: " + Component.literal(rotation.toString())[ChatFormatting.YELLOW] +
+                                        "\nEntity Type: " + (-type?.let { ForgeRegistries.ENTITY_TYPES.getKey(it).toString() })[ChatFormatting.BLUE] +
+                                        "\nEntity NBT: " + NbtUtils.toPrettyComponent(nbt ?: CompoundTag())
+                            }
+                        }
+                    }
+                    ctx.source.sendSuccess(msg, true)
+                    return@executes 1
+                }
+            }
+        }
+    }
+    
+    private fun spawnFromPipette(ctx: CommandContext): Int {
+        val stack = ctx.source.playerOrException.mainHandItem
+        require(stack.item == ModItems.PIPETTE_ITEM)
+        
+        val data = ItemEntityPipette.getDataOrNull(stack) ?: return 0
+        val res = data.trySpawnEntity(ctx.source.level)
+        when (res) {
+            null -> {
+                ctx.source.sendFailure("Failed to spawn entity.".asComponent())
+                return 0
+            }
+            else -> {
+                val msg: () -> Component = {
+                    with (data) {
+                        with (ChatUtils) {
+                            -"Spawned entity with UUID '" + (-res.toString())[ChatFormatting.BLUE] +
+                                    " at position " + pos.toComponent()[ChatFormatting.YELLOW] +
+                                    " with rotation " + (-rotation.toString())[ChatFormatting.YELLOW] + " degrees."
+                        }
+                    }
+                }
+                ctx.source.sendSuccess(msg, true)
+                return 1
+            }
+        }
+    }
 }
