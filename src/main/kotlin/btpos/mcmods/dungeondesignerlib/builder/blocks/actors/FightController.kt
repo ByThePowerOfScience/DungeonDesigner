@@ -1,4 +1,4 @@
-@file:Suppress("OVERRIDE_DEPRECATION")
+@file:Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
 
 package btpos.mcmods.dungeondesignerlib.builder.blocks.actors
 
@@ -10,17 +10,22 @@ import btpos.mcmods.devutil.common.ext.vanilla.world.get
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.util.BlockWithEntity
 import btpos.mcmods.devutil.forge.datagen.IBlockDataGen
+import btpos.mcmods.devutil.forge.datagen.rotateForEachHorizontal
 import btpos.mcmods.devutil.forge.datagen.variantDsl
+import btpos.mcmods.devutil.forge.ext.capability.getOrNull
+import btpos.mcmods.devutil.forge.ext.capability.iterFullSlots
+import btpos.mcmods.devutil.forge.ext.capability.iterSlots
+import btpos.mcmods.dungeondesignerlib.builder.items.ItemEntityPipette
 import btpos.mcmods.dungeondesignerlib.builder.nbt.IEntitySpawnData
 import btpos.mcmods.dungeondesignerlib.builder.nbt.trySpawnEntity
 import btpos.mcmods.dungeondesignerlib.registry.ModBlocks
+import btpos.mcmods.dungeondesignerlib.registry.ModItems
 import btpos.mcmods.dungeondesignerlib.LOGGER as DLOGGER
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.util.StringRepresentable
-import net.minecraft.world.entity.Entity
 import net.minecraft.world.item.context.BlockPlaceContext
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.Level
@@ -53,31 +58,37 @@ class BlockFightController(props: Properties) : Block(props), BlockWithEntity<Ti
 			get() = "fight_controller"
 		
 		override fun BlockStateProvider.buildModelsAndStates() {
-			val off = models().cubeAll(id + "_inactive", blockLoc("fight_controller/${id}_inactive"))
-			val in_progress = models().cubeAll(id + "_ip", blockLoc("fight_controller/${id}_ip"))
-			val finished = models().cubeAll(id + "_complete", blockLoc("fight_controller/${id}_complete"))
+			val t_off = blockLoc("fight_controller/${id}_inactive")
+			val t_ip = blockLoc("fight_controller/${id}_ip")
+			val t_com = blockLoc("fight_controller/${id}_complete")
+			val out_off = blockLoc("fight_controller/${id}_inactive_out")
+			val out_ip = blockLoc("fight_controller/${id}_ip_out")
+			val out_com = blockLoc("fight_controller/${id}_complete_out")
+			val off = models().cube(id + "_inactive", t_off, t_off, out_off, t_off, t_off, t_off)
+			val com = models().cube(id + "_complete", t_com, t_com, out_com, t_com, t_com, t_com)
+			val in_progress = models().cube(id + "_ip", t_ip, t_ip, out_ip, t_ip, t_ip, t_ip)
 			
 			variantDsl(ModBlocks.FIGHT_CONTROLLER) {
 				STATUS {
 					FightStatus.INACTIVE {
-						model {
-							modelFile(off)
+						FACING {
+							rotateForEachHorizontal(off)
 						}
 					}
 					FightStatus.IN_PROGRESS {
-						model {
-							modelFile(in_progress)
+						FACING {
+							rotateForEachHorizontal(in_progress)
 						}
 					}
 					FightStatus.COMPLETE {
-						model {
-							modelFile(finished)
+						FACING {
+							rotateForEachHorizontal(com)
 						}
 					}
 				}
 			}
 			
-			simpleBlockItem(ModBlocks.FIGHT_CONTROLLER, off)
+			simpleBlockItem(ModBlocks.FIGHT_CONTROLLER, models().cubeAll(id, t_off))
 		}
 		
 		val STATUS = EnumProperty.create("status", FightStatus::class.java)

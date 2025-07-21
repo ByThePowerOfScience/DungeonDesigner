@@ -1,13 +1,49 @@
 {
   "variants": {
-    "status=complete": {
+    "facing=east,status=complete": {
+      "model": "dungeondesigner:block/fight_controller_complete",
+      "y": 90
+    },
+    "facing=east,status=in_progress": {
+      "model": "dungeondesigner:block/fight_controller_ip",
+      "y": 90
+    },
+    "facing=east,status=inactive": {
+      "model": "dungeondesigner:block/fight_controller_inactive",
+      "y": 90
+    },
+    "facing=north,status=complete": {
       "model": "dungeondesigner:block/fight_controller_complete"
     },
-    "status=in_progress": {
+    "facing=north,status=in_progress": {
       "model": "dungeondesigner:block/fight_controller_ip"
     },
-    "status=inactive": {
+    "facing=north,status=inactive": {
       "model": "dungeondesigner:block/fight_controller_inactive"
+    },
+    "facing=south,status=complete": {
+      "model": "dungeondesigner:block/fight_controller_complete",
+      "y": 180
+    },
+    "facing=south,status=in_progress": {
+      "model": "dungeondesigner:block/fight_controller_ip",
+      "y": 180
+    },
+    "facing=south,status=inactive": {
+      "model": "dungeondesigner:block/fight_controller_inactive",
+      "y": 180
+    },
+    "facing=west,status=complete": {
+      "model": "dungeondesigner:block/fight_controller_complete",
+      "y": 270
+    },
+    "facing=west,status=in_progress": {
+      "model": "dungeondesigner:block/fight_controller_ip",
+      "y": 270
+    },
+    "facing=west,status=inactive": {
+      "model": "dungeondesigner:block/fight_controller_inactive",
+      "y": 270
     }
   }
 }

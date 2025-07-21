@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "dungeondesigner:block/fight_controller/fight_controller_inactive"
+  }
+}
