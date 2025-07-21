@@ -26,6 +26,7 @@ object ChatUtils {
     
     //region unaryMinus String to Component Macros
     inline operator fun String.unaryMinus(): MutableComponent = Component.literal(this)
+	@JvmName("stringMinusNullable")
 	inline operator fun String?.unaryMinus(): MutableComponent = this?.let(Component::literal) ?: Component.literal("[null]")
     //endregion
     
@@ -43,6 +44,7 @@ object ChatUtils {
 	// oh duh of course -("foo"[BLUE]) doesn't work. it would have to be (-"foo")[BLUE], which still doesn't look too bad
 	
 	inline operator fun String.get(formatting: ChatFormatting): MutableComponent = (-this).withStyle(formatting)
+	@JvmName("stringGetNullable")
 	inline operator fun String?.get(formatting: ChatFormatting): MutableComponent = (-this).withStyle(formatting)
     //endregion
 }

@@ -6,6 +6,6 @@ import net.minecraft.resources.ResourceLocation
 interface IObjectData {
 	val id: String
 	
-	val resourceLocation get() = ResourceLocation(MODID, this.id)
+	val resourceLocation get() = ResourceLocation.fromNamespaceAndPath(MODID, this.id)
 }
 
