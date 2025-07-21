@@ -1,12 +1,14 @@
 package btpos.mcmods.dungeondesignerlib.debugging
 
-import btpos.mcmods.devutil.common.dsl.brigadier.literal
+import btpos.dsl.brigadier.literal
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
 import btpos.mcmods.devutil.common.ext.vanilla.plus
 import btpos.mcmods.devutil.common.macros.ChatUtils
 import btpos.mcmods.dungeondesignerlib.builder.items.ItemEntityPipette
+import btpos.mcmods.dungeondesignerlib.builder.nbt.toComponent
 import btpos.mcmods.dungeondesignerlib.builder.nbt.trySpawnEntity
 import btpos.mcmods.dungeondesignerlib.builder.world.dungeonBuilderData
+import btpos.mcmods.dungeondesignerlib.debugging.subcommands.BlockCommands
 import btpos.mcmods.dungeondesignerlib.registry.ModItems
 import com.mojang.brigadier.arguments.BoolArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
@@ -14,22 +16,20 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import net.minecraft.ChatFormatting
 import com.mojang.brigadier.context.CommandContext as MojCtx
 import net.minecraft.commands.CommandSourceStack
-import net.minecraft.nbt.CompoundTag
-import net.minecraft.nbt.NbtUtils
 import net.minecraft.network.chat.Component
-import net.minecraftforge.registries.ForgeRegistries
 
 typealias CommandBuilder = LiteralArgumentBuilder<CommandSourceStack>
 typealias CommandContext = MojCtx<CommandSourceStack>
 
-object DebugCommands {
+object DebugCommands : CommandHandler {
     fun make(): CommandBuilder {
         return literal("ddl") {
-            "debug" {
-                then(makeFlagCommand())
-            }
+            then(makeFlagCommand())
+            then(makePipetteCommand())
+            then(BlockCommands.make())
         }
     }
+    
     
     private fun makeFlagCommand(): CommandBuilder {
         return literal("flag") {
@@ -46,7 +46,7 @@ object DebugCommands {
                                 true
                             )
                         } else {
-                            ctx.source.sendSuccess({ "Flag ${flagName} does not exist.".asComponent() }, true)
+                            ctx.source.sendSuccess({ "Flag $flagName does not exist.".asComponent() }, true)
                         }
                         
                         return@executes 1
@@ -114,17 +114,7 @@ object DebugCommands {
                             .let(ItemEntityPipette::getDataOrNull)
                         ?: return@executes 0
                     
-                    val msg: () -> Component = {
-                        with(itemNbt) {
-                            with(ChatUtils) {
-                                -"Pos: " + pos.toComponent()[ChatFormatting.YELLOW] +
-                                        "\nRotation: " + Component.literal(rotation.toString())[ChatFormatting.YELLOW] +
-                                        "\nEntity Type: " + (-type?.let { ForgeRegistries.ENTITY_TYPES.getKey(it).toString() })[ChatFormatting.BLUE] +
-                                        "\nEntity NBT: " + NbtUtils.toPrettyComponent(nbt ?: CompoundTag())
-                            }
-                        }
-                    }
-                    ctx.source.sendSuccess(msg, true)
+                    ctx.source.sendSuccess({ itemNbt.toComponent() }, true)
                     return@executes 1
                 }
             }
@@ -156,5 +146,26 @@ object DebugCommands {
                 return 1
             }
         }
+    }
+}
+
+interface CommandHandler {
+    /**
+     * Macro for returning the failure message method from within the command instead of having two lines each time
+     */
+    fun CommandContext.sendFailure(msg: String): Int {
+        return sendFailure(msg.asComponent())
+    }
+    fun CommandContext.sendFailure(msg: Component): Int {
+        this.source.sendFailure(msg)
+        return 0
+    }
+    
+    /**
+     * Macro for returning the success message method from within the command instead of having two lines each time
+     */
+    fun CommandContext.sendSuccess(msg: () -> Component, allowLogging: Boolean = true): Int {
+        this.source.sendSuccess(msg, allowLogging)
+        return 1
     }
 }

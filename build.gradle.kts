@@ -100,6 +100,7 @@ repositories {
     maven(url="https://maven.blamejared.com") // For Bookshelf
     maven(url="https://maven.createmod.net") // For Catnip renderer
     maven(url="https://modmaven.dev/") // For Catnip's flywheel dependency
+    maven(url="https://jitpack.io")
 }
 
 fun getProperty(name: String): String {
@@ -110,6 +111,7 @@ dependencies {
     minecraft("net.minecraftforge:forge:$mc_version-$forge_version")
     annotationProcessor("org.spongepowered:mixin:0.8.5:processor")
     implementation("thedarkcolour:kotlinforforge:4.11.0")
+    implementation("com.github.bythepowerofscience:brigadierdsl:v1.0.1")
     
     implementation(fg.deobf("net.darkhax.bookshelf:Bookshelf-Forge-1.20.1:20.2.12"))
     
@@ -125,8 +127,8 @@ val Project.mixin: MixinExtension
     get() = extensions.getByType()
 
 mixin.run {
-//    add(sourceSets.main.get(), "dungeondesigner.mixins.refmap.json")
-//    config("dungeondesigner.mixins.json")
+    add(sourceSets.main.get(), "dungeondesigner.mixins.refmap.json")
+    config("dungeondesigner.mixins.json")
     val debug = this.debug as DynamicProperties
     debug.setProperty("verbose", true)
     debug.setProperty("export", true)
