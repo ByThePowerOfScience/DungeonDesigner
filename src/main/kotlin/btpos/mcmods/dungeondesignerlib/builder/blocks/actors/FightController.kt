@@ -200,15 +200,16 @@ class TileFightController(pPos: BlockPos, pState: BlockState)
 	fun startFight() {
 		val level = this.level as? ServerLevel ?: return
 		
-		val mobPipettes: List<IEntitySpawnData> = getPipetteData()
+		val mobPipettes: List<IEntitySpawnData> = getPipetteData() ?: return
 		
-		val (matching, notMatching) = mobPipettes.filterSplit { it.type == null || it.pos == null }
+		val (matching, notMatching) = mobPipettes.filterSplit { it.type != null && it.pos != null }
 		
 		notMatching.forEach {
-			val msg = when {
-                it.type == null -> "No mob found"
-                it.pos == null -> "No pos selected for mob ${it.type}"
-                else -> "Unknown error"
+			val msg = when (null) {
+                it.type -> "No mob found"
+                it.pos -> "No pos selected for mob ${it.type}"
+                it.rotation -> "No spawn rotation for mob ${it.type}"
+				else -> "Unknown error for mob ${it.type}"
             }
 			
 			printError("$msg. Skipping.".asComponent())
@@ -250,8 +251,19 @@ class TileFightController(pPos: BlockPos, pState: BlockState)
 	val isFightInProgress: Boolean
 		get() = this.activeFight != null
 	
-	private fun getPipetteData(): List<IEntitySpawnData> {
-		TODO("Get the pipette data from the chest or however we store it")
+	/**
+	 * Get pipettes from the chest above the block
+	 */
+	@VisibleForTesting
+	fun getPipetteData(): List<IEntitySpawnData>? {
+		val entAbove = (level as? ServerLevel)?.getBlockEntity(this.blockPos.above()) ?: return null
+		val itemCap = entAbove.getCapability(ForgeCapabilities.ITEM_HANDLER, null).getOrNull() ?: return null
+		println("Count: " + itemCap.iterSlots().count())
+		return itemCap.iterFullSlots().onEach{ println("Full slot: $it") }
+			.filter { it.`is`(ModItems.PIPETTE_ITEM) }.onEach { println("Pipette: $it") }
+			.mapNotNull(ItemEntityPipette::getDataOrNull).onEach { println("Has data: $it") }
+			.filter(ItemEntityPipette::isReadyToSpawn)
+			.toList()
 	}
 	
 	private fun printError(msg: Component) {
