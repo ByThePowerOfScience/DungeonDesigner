@@ -1,9 +1,14 @@
 package btpos.mcmods.devutil.common.ext.kotlin
 
-inline fun <ITEM, YIELD> Iterable<ITEM>.mapReduce(startingValue: YIELD, reductionFunction: (ITEM, YIELD) -> YIELD): YIELD {
+/**
+ * Collects the iterable starting with an initial value. This is a terminal operation.
+ *
+ * ...nevermind, turns out this is just [fold]
+ */
+inline fun <ITEM, YIELD> Iterable<ITEM>.mapReduce(startingValue: YIELD, reductionFunction: (YIELD, ITEM) -> YIELD): YIELD {
 	var yield: YIELD = startingValue
 	for (el in this) {
-		yield = reductionFunction(el, yield)
+		yield = reductionFunction(yield, el)
 	}
 	return yield
 }
