@@ -40,6 +40,10 @@ class ItemEntityPipette(pProps: Properties) : Item(pProps) {
 		
 		const val TAGKEY_DATA = "spawndata"
 		
+		fun isReadyToSpawn(data: IEntitySpawnData.AsTag): Boolean {
+			return data.run { pos != null && type != null && rotation != null }
+		}
+		
 		/**
 		 * Returns true if this itemstack both is a pipette and has enough information to spawn a mob.
 		 */
@@ -47,9 +51,7 @@ class ItemEntityPipette(pProps: Properties) : Item(pProps) {
 			if (stack.item != this) {
 				return false
 			}
-			return getDataOrNull(stack)?.run {
-				pos != null && type != null && rotation != null
-			} ?: false
+			return getDataOrNull(stack)?.let(::isReadyToSpawn) ?: false
 		}
 		
 		fun getDataOrNull(stack: ItemStack): IEntitySpawnData.AsTag? {
@@ -75,13 +77,20 @@ class ItemEntityPipette(pProps: Properties) : Item(pProps) {
 	override fun useOn(pContext: UseOnContext): InteractionResult {
 		val heldStack = pContext.itemInHand
 		
+		
+		
 		if (!pContext.level.isClientSide){
-			getOrCreateData(heldStack).run {
+			// split one off
+			val shouldSplitOff = heldStack.count > 1
+			val newStack = if (shouldSplitOff) heldStack.split(1) else heldStack
+			getOrCreateData(newStack).run {
 				pos = pContext.clickedPos
 				rotation = -(pContext.player?.xRot ?: 0f)
 				
 				pContext.player?.sendSystemMessage("Spawn position: ".asComponent() + pos.toComponent().withStyle(ChatFormatting.YELLOW) + " with rotation $rotation degrees.")
 			}
+			if (shouldSplitOff)
+				pContext.player?.addItem(newStack)
 		}
 		
 		return InteractionResult.sidedSuccess(pContext.level.isClientSide)

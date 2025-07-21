@@ -39,6 +39,8 @@ import net.minecraft.world.level.block.state.StateDefinition
 import net.minecraft.world.level.block.state.properties.BlockStateProperties
 import net.minecraft.world.level.block.state.properties.EnumProperty
 import net.minecraftforge.client.model.generators.BlockStateProvider
+import net.minecraftforge.common.capabilities.ForgeCapabilities
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.UUID
 import kotlin.math.roundToInt
 
@@ -149,6 +151,26 @@ class BlockFightController(props: Properties) : Block(props), BlockWithEntity<Ti
 	override fun onNeighborChange(state: BlockState, level: LevelReader, pos: BlockPos, neighbor: BlockPos) {
 		super.onNeighborChange(state, level, pos, neighbor)
 		
+		checkShouldStartFight(state, level, pos)
+	}
+	
+	override fun neighborChanged(
+		pState: BlockState,
+		pLevel: Level,
+		pPos: BlockPos,
+		pNeighborBlock: Block,
+		pNeighborPos: BlockPos,
+		pMovedByPiston: Boolean
+	) {
+		super.neighborChanged(pState, pLevel, pPos, pNeighborBlock, pNeighborPos, pMovedByPiston)
+		checkShouldStartFight(pState, pLevel, pPos)
+	}
+	
+	private fun checkShouldStartFight(
+		state: BlockState,
+		level: LevelReader,
+		pos: BlockPos
+	) {
 		if (state[STATUS] != FightStatus.INACTIVE)
 			return
 		

@@ -2,13 +2,20 @@ package btpos.mcmods.dungeondesignerlib.builder.nbt
 
 import btpos.mcmods.devutil.common.ext.vanilla.data.getBlockPos
 import btpos.mcmods.devutil.common.ext.vanilla.data.getCompoundOrNull
+import btpos.mcmods.devutil.common.ext.vanilla.data.getStringOrNull
 import btpos.mcmods.devutil.common.ext.vanilla.data.setOrRemove
 import btpos.mcmods.devutil.common.ext.vanilla.data.toCompoundTag
+import btpos.mcmods.devutil.common.ext.vanilla.plus
+import btpos.mcmods.devutil.common.macros.ChatUtils
 import btpos.mcmods.devutil.common.util.serialization.Serialization.decodeTag
 import btpos.mcmods.devutil.common.util.serialization.Serialization.encodeToTag
+import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.TAGKEY_SPAWNED_BY_FIGHT_CONTROLLER
+import net.minecraft.ChatFormatting
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.nbt.NbtUtils
 import net.minecraft.nbt.NumericTag
+import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.MobSpawnType
@@ -48,6 +55,7 @@ sealed interface IEntitySpawnData {
 	operator fun component3() = type
 	operator fun component4() = nbt
 	
+	
 	/**
 	 * Proper Java object for use in a BlockEntity
 	 */
@@ -80,7 +88,9 @@ sealed interface IEntitySpawnData {
 			}
 		
 		override var type: EntityType<*>?
-			get() = tag.getCompoundOrNull(ENT_TYPE)?.let { ForgeRegistries.ENTITY_TYPES.codec.decodeTag(it) }
+			get() {
+				return tag.get(ENT_TYPE)?.let { ForgeRegistries.ENTITY_TYPES.codec.decodeTag(it) }
+			}
 			set(value) {
 				tag.setOrRemove(ENT_TYPE, value) {
 					put(ENT_TYPE, ForgeRegistries.ENTITY_TYPES.codec.encodeToTag(it))
@@ -104,6 +114,10 @@ sealed interface IEntitySpawnData {
 			type = other.type
 			nbt = other.nbt
 			rotation = other.rotation
+		}
+		
+		override fun toString(): String {
+			return "Pos: $pos\nRot: $rotation\nType: $type\nNBT: ${nbt?.let(NbtUtils::prettyPrint)}"
 		}
 	}
 }
@@ -130,5 +144,14 @@ fun IEntitySpawnData.serialize(): CompoundTag {
 	return when (this) {
 		is IEntitySpawnData.AsTag -> this.tag
 		else -> IEntitySpawnData.AsTag(CompoundTag()).also { it.copyFrom(this) }.tag
+	}
+}
+
+fun IEntitySpawnData.toComponent(): Component {
+	return with (ChatUtils) {
+		-"Pos: " + pos.toComponent()[ChatFormatting.YELLOW] +
+				"\nRotation: " + Component.literal(rotation.toString())[ChatFormatting.YELLOW] +
+				"\nEntity Type: " + (-type?.let { ForgeRegistries.ENTITY_TYPES.getKey(it).toString() })[ChatFormatting.BLUE] +
+				"\nEntity NBT: " + NbtUtils.toPrettyComponent(nbt ?: CompoundTag())
 	}
 }
