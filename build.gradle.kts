@@ -45,6 +45,8 @@ println(
     }) Arch: ${System.getProperty("os.arch")}"
 )
 
+jarJar.enable()
+
 minecraft {
     mappings("parchment", "2023.09.03-1.20.1")
     accessTransformer(file("src/main/resources/META-INF/accesstransformer.cfg"))
@@ -100,7 +102,10 @@ repositories {
     maven(url="https://maven.blamejared.com") // For Bookshelf
     maven(url="https://maven.createmod.net") // For Catnip renderer
     maven(url="https://modmaven.dev/") // For Catnip's flywheel dependency
-    maven(url="https://jitpack.io")
+//    maven(url="https://jitpack.io")
+    flatDir {
+        dirs("libs")
+    }
 }
 
 fun getProperty(name: String): String {
@@ -111,13 +116,21 @@ dependencies {
     minecraft("net.minecraftforge:forge:$mc_version-$forge_version")
     annotationProcessor("org.spongepowered:mixin:0.8.5:processor")
     implementation("thedarkcolour:kotlinforforge:4.11.0")
-    implementation("com.github.bythepowerofscience:brigadierdsl:v1.0.1")
+    
+    minecraftLibrary(jarJar("com.github.bythepowerofscience:brigadierdsl:1.0.0")) {
+        jarJar.ranged(this, "[1,)")
+    }
+//
+//    minecraftLibrary(jarJar("org.jetbrains.kotlin:kotlin-stdlib:2.1.21")) {
+//        jarJar.ranged(this, "[2,2.2)")
+//    }
     
     implementation(fg.deobf("net.darkhax.bookshelf:Bookshelf-Forge-1.20.1:20.2.12"))
     
-    implementation(fg.deobf("net.createmod.catnip:Catnip-Forge-1.20.1:0.8.44")) {
-        jarJar(this)
+    implementation(jarJar(fg.deobf("net.createmod.catnip:Catnip-Forge-1.20.1:0.8.44"))) {
+        jarJar.ranged(this, "[0.8,0.9)")
     }
+    
     runtimeOnly(fg.deobf("dev.engine-room.flywheel:flywheel-forge-1.20.1:1.0+"))
     
     testImplementation(kotlin("test"))

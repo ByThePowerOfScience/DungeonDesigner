@@ -1,7 +1,6 @@
 package btpos.mcmods.dungeondesignerlib.debugging.subcommands
 
-import btpos.dsl.brigadier.literal
-import btpos.mcmods.devutil.common.ext.kotlin.mapReduce
+import btpos.devutil.common.macros.brigadier.literal
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
 import btpos.mcmods.devutil.common.ext.vanilla.plus
 import btpos.mcmods.devutil.common.ext.vanilla.world.blockEntity
