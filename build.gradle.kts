@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.spongepowered.asm.gradle.plugins.MixinExtension
 import org.spongepowered.asm.gradle.plugins.struct.DynamicProperties
 import java.text.SimpleDateFormat
@@ -24,6 +25,7 @@ plugins {
     kotlin("jvm") version "2.0.0"
     kotlin("plugin.serialization") version "2.0.0"
     kotlin("plugin.assignment") version "2.0.0"
+//    id("com.gradleup.shadow") version "9.0.0-rc1"
 }
 
 group = "btpos.mcmods"
@@ -45,7 +47,6 @@ println(
     }) Arch: ${System.getProperty("os.arch")}"
 )
 
-jarJar.enable()
 
 minecraft {
     mappings("parchment", "2023.09.03-1.20.1")
@@ -103,9 +104,6 @@ repositories {
     maven(url="https://maven.createmod.net") // For Catnip renderer
     maven(url="https://modmaven.dev/") // For Catnip's flywheel dependency
 //    maven(url="https://jitpack.io")
-    flatDir {
-        dirs("libs")
-    }
 }
 
 fun getProperty(name: String): String {
@@ -117,13 +115,7 @@ dependencies {
     annotationProcessor("org.spongepowered:mixin:0.8.5:processor")
     implementation("thedarkcolour:kotlinforforge:4.11.0")
     
-    minecraftLibrary(jarJar("com.github.bythepowerofscience:brigadierdsl:1.0.0")) {
-        jarJar.ranged(this, "[1,)")
-    }
-//
-//    minecraftLibrary(jarJar("org.jetbrains.kotlin:kotlin-stdlib:2.1.21")) {
-//        jarJar.ranged(this, "[2,2.2)")
-//    }
+//    shadow("com.github.bythepowerofscience:brigadierdsl:1.0.0")
     
     implementation(fg.deobf("net.darkhax.bookshelf:Bookshelf-Forge-1.20.1:20.2.12"))
     
@@ -135,6 +127,13 @@ dependencies {
     
     testImplementation(kotlin("test"))
 }
+//
+//tasks.shadowJar {
+//    dependencies {
+//        include(dependency("com.github.bythepowerofscience:brigadierdsl:1.0.0"))
+//    }
+//}
+
 
 val Project.mixin: MixinExtension
     get() = extensions.getByType()
@@ -205,7 +204,7 @@ tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+tasks.withType<KotlinCompile> {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
     }

@@ -1,6 +1,6 @@
 @file:Suppress("NOTHING_TO_INLINE")
 
-package btpos.devutil.common.macros.brigadier
+package btpos.mcmods.devutil.common.macros.brigadier
 
 import btpos.dsl.brigadier.ArgBuilder
 import btpos.dsl.brigadier.Command

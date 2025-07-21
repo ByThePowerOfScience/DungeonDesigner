@@ -1,6 +1,6 @@
 package btpos.mcmods.dungeondesignerlib
 
-import btpos.devutil.common.macros.brigadier.literal
+import btpos.mcmods.devutil.common.macros.brigadier.literal
 import btpos.mcmods.dungeondesignerlib.datagen.DataGenConstants
 import btpos.mcmods.dungeondesignerlib.debugging.DebugCommands
 import btpos.mcmods.dungeondesignerlib.registry.ModBlocks
@@ -28,6 +28,8 @@ object CommonEntry {
         
         ModBlocks.register()
         ModItems.register()
+        
+        literal("foo") {}
     }
     
     fun registerCommands(evt: RegisterCommandsEvent) {
