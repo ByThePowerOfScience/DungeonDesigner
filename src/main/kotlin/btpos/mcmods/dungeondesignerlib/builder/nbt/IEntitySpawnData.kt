@@ -109,7 +109,7 @@ sealed interface IEntitySpawnData {
 }
 
 /**
- * Attempts to spawn the entity made by this data in the world.
+ * Attempts to spawn the entity made by this data in the world. Entities spawned will not be saved to chunk NBT.
  * @return The UUID of the spawned entity if spawning was successful, else null.
  */
 fun IEntitySpawnData.trySpawnEntity(level: ServerLevel): UUID? {
@@ -118,7 +118,7 @@ fun IEntitySpawnData.trySpawnEntity(level: ServerLevel): UUID? {
 		return null
 	}
 	
-	val newEntity = type.create(level, nbt, { if (rot != null) it.xRot = rot }, pos, MobSpawnType.MOB_SUMMONED, true, false) ?: return null
+	val newEntity = type.create(level, nbt, { if (rot != null) it.xRot = rot; it.persistentData.putBoolean(TAGKEY_SPAWNED_BY_FIGHT_CONTROLLER, true) }, pos, MobSpawnType.MOB_SUMMONED, true, false) ?: return null
 	
 	if (level.tryAddFreshEntityWithPassengers(newEntity))
 		return newEntity.uuid

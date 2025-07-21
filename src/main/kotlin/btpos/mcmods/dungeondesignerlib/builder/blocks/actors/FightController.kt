@@ -51,6 +51,12 @@ enum class FightStatus : StringRepresentable {
 	override fun getSerializedName(): String = name.lowercase()
 }
 
+/**
+ * Put into entities' persistentdata to say they shouldn't be saved to the chunk.
+ * @see btpos.mcmods.dungeondesignerlib.mixin.MArenaDespawnOnUnload
+ */
+const val TAGKEY_SPAWNED_BY_FIGHT_CONTROLLER = "dungeondesigner_temporary"
+
 
 class BlockFightController(props: Properties) : Block(props), BlockWithEntity<TileFightController> {
 	companion object : IBlockDataGen {
@@ -175,9 +181,23 @@ class BlockFightController(props: Properties) : Block(props), BlockWithEntity<Ti
 	}
 }
 
+/**
+ * Fight progress is reset every time the chunk is unloaded, and the mobs are prevented from being saved to the chunk with a Mixin.
+ * @see btpos.mcmods.dungeondesignerlib.mixin.MArenaDespawnOnUnload
+ */
 class TileFightController(pPos: BlockPos, pState: BlockState)
 	: BlockEntity(ModBlocks.FIGHT_CONTROLLER_ENTITY, pPos, pState)
 {
+	// Reset the fight status on load, which is the equivalent of resetting it when the chunk is unloaded
+	fun resetFightStateOnLoad() {
+		if (blockState[BlockFightController.STATUS] != FightStatus.INACTIVE)
+			level?.setBlockAndUpdate(blockPos, blockState.with(BlockFightController.STATUS, FightStatus.INACTIVE))
+	}
+	
+	override fun onLoad() {
+		super.onLoad()
+		resetFightStateOnLoad()
+	}
 	/**
 	 * Keeps track of spawned entities.
 	 * Not synced to NBT.
@@ -269,21 +289,6 @@ class TileFightController(pPos: BlockPos, pState: BlockState)
 	private fun printError(msg: Component) {
 		(level as? ServerLevel)?.players()?.forEach {
 			it.sendSystemMessage(msg, true)
-		}
-	}
-	
-	override fun onChunkUnloaded() {
-		super.onChunkUnloaded()
-		
-		(level as? ServerLevel)?.let { level ->
-			removeAllSpawnedMobs(level)
-			level.changeBlockAndUpdate(blockPos) { it.with(BlockFightController.STATUS, FightStatus.INACTIVE) }
-		}
-	}
-	
-	fun removeAllSpawnedMobs(level: ServerLevel) {
-		activeFight?.mobsAlive?.forEach {
-			level.entities.get(it)?.remove(Entity.RemovalReason.DISCARDED)
 		}
 	}
 }
