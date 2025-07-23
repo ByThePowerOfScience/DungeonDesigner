@@ -10,6 +10,7 @@ import btpos.mcmods.dungeondesignerlib.builder.nbt.toComponent
 import btpos.mcmods.dungeondesignerlib.builder.nbt.trySpawnEntity
 import btpos.mcmods.dungeondesignerlib.builder.world.dungeonBuilderData
 import btpos.mcmods.dungeondesignerlib.debugging.subcommands.BlockCommands
+import btpos.mcmods.dungeondesignerlib.debugging.subcommands.ItemCommands
 import btpos.mcmods.dungeondesignerlib.registry.ModItems
 import com.mojang.brigadier.arguments.BoolArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
@@ -28,6 +29,7 @@ object DebugCommands : CommandHandler {
             then(makeFlagCommand())
             then(makePipetteCommand())
             then(BlockCommands.make())
+            +ItemCommands.make()
         }
     }
     
