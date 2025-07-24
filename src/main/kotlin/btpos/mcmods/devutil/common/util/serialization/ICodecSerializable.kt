@@ -5,6 +5,7 @@ import btpos.mcmods.devutil.common.ext.vanilla.destructuring.component2
 import btpos.mcmods.devutil.common.ext.vanilla.data.set
 import btpos.mcmods.devutil.common.util.IReverseCloneable
 import btpos.mcmods.dungeondesignerlib.MOD_LOGGER
+import btpos.mcmods.devutil.common.structure.IOnChange
 import com.mojang.serialization.Codec
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NbtOps
@@ -39,6 +40,7 @@ interface ICodecSerializable<SELF> : IReverseCloneable<SELF>, INbtSerializable
 		}
 	}
 	
+	@Suppress("IfThenToSafeAccess")
 	override fun writeAsNbt(tag: CompoundTag) {
 		val newtag = codec().encode(self(), NbtOps.INSTANCE, null).resultOrPartial(MOD_LOGGER::error).getOrNull() as? CompoundTag
 		if (newtag != null) {

@@ -3,6 +3,7 @@ package btpos.mcmods.dungeondesignerlib.builder.world
 import btpos.mcmods.devutil.common.util.serialization.ICodecSerializable
 import btpos.mcmods.devutil.common.util.serialization.putNbtSerializable
 import btpos.mcmods.devutil.common.util.serialization.readNbtSerializable
+import btpos.mcmods.devutil.common.structure.IOnChange
 import btpos.mcmods.dungeondesignerlib.common.redstone.WirelessRedstoneController
 import btpos.mcmods.dungeondesignerlib.compiled.saveddata.FlagName
 import com.mojang.serialization.Codec
@@ -16,11 +17,11 @@ import net.minecraft.world.level.storage.DimensionDataStorage
 val DimensionDataStorage.dungeonBuilderData: DungeonBuilderWorldData
 	get() = computeIfAbsent(::DungeonBuilderWorldData, ::DungeonBuilderWorldData, "dungeon_designer_builder")
 
-class DungeonBuilderWorldData() : SavedData() {
-	lateinit var state: DungeonBuilderState
+class DungeonBuilderWorldData(val state: DungeonBuilderState = DungeonBuilderState()) : SavedData() {
+	constructor(tag: CompoundTag) : this(tag.readNbtSerializable(TAGKEY_STATE, DungeonBuilderState.CODEC))
 	
-	constructor(tag: CompoundTag) : this() {
-		state = tag.readNbtSerializable(TAGKEY_STATE, DungeonBuilderState.CODEC)
+	init {
+		state.onChange = this::setDirty
 	}
 	
 	companion object {
@@ -63,22 +64,29 @@ class DungeonBuilderWorldData() : SavedData() {
 		pCompoundTag.putNbtSerializable(TAGKEY_STATE, state)
 		return pCompoundTag
 	}
+	
+	
 }
-
+// TODO figure out how to propogate up the onChange method...
 class DungeonBuilderState(
 	/**
 	 * Stores the value of each flag
 	 */
 	val flagStates: Object2BooleanMap<FlagName> = Object2BooleanOpenHashMap(),
-	val redstoneHandler: WirelessRedstoneController
-) : ICodecSerializable<DungeonBuilderState> {
+	val redstoneHandler: WirelessRedstoneController = WirelessRedstoneController()
+) : ICodecSerializable<DungeonBuilderState>, IOnChange {
     //region ICodecSerializable
     override fun codec() = CODEC
 	override fun copyFrom(other: DungeonBuilderState) {
-		this.flagStates.clear()
-		this.flagStates.putAll(other.flagStates)
+		throw IllegalStateException("This method should never be called. All states are made anew every time the wrapper SavedData is constructed.")
 	}
     //endregion
+	
+	override var onChange = {}
+		set(value) {
+			field = value
+			redstoneHandler.onChange = value
+		}
 	
 	companion object {
 		val CODEC = RecordCodecBuilder.create {

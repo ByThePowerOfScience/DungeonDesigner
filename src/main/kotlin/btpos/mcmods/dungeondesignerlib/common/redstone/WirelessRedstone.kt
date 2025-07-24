@@ -2,6 +2,8 @@ package btpos.mcmods.dungeondesignerlib.common.redstone
 
 import btpos.mcmods.devutil.common.ext.vanilla.world.modifyBlockAndUpdate
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
+import btpos.mcmods.devutil.common.util.serialization.ICodecSerializable
+import btpos.mcmods.devutil.common.structure.IOnChange
 import btpos.mcmods.dungeondesignerlib.MOD_LOGGER
 import btpos.mcmods.dungeondesignerlib.POWERED
 import btpos.mcmods.dungeondesignerlib.builder.redstone.IWirelessRedstone.Companion.NO_CHANNEL
@@ -10,6 +12,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder
 import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
+import net.minecraftforge.common.world.ForgeChunkManager
 import kotlin.collections.forEach
 
 /**
@@ -23,21 +26,33 @@ class WirelessRedstoneController(
 	 * Channels are stored by index.
 	 * @see btpos.mcmods.dungeondesignerlib.builder.redstone.IWirelessRedstone.channel
 	 */
-	val channels: ArrayList<WirelessRedstoneChannel> = ArrayList()
-) {
+    pChannels: ArrayList<WirelessRedstoneChannel> = ArrayList()
+) : ICodecSerializable<WirelessRedstoneController>, IOnChange {
+    //region ICodecSerializable
+    override fun codec() = CODEC
+	override fun copyFrom(other: WirelessRedstoneController) {
+		this.channels = other.channels
+	}
+    //endregion
 	companion object {
 		val CODEC = RecordCodecBuilder.create {
 			it.group(
-				Codec.list(WirelessRedstoneChannel.CODEC).fieldOf("active_channels").forGetter(WirelessRedstoneController::channels),
+				Codec.list(WirelessRedstoneChannel.CODEC).fieldOf("channels").forGetter(WirelessRedstoneController::channels),
 			).apply(it) { WirelessRedstoneController(ArrayList(it)) }
         }
 	}
+	
+	var channels = pChannels
+		private set
+	
+	override var onChange: () -> Unit = {}
 	
 	/**
 	 * @return Index of newly created channel.
 	 */
 	fun makeNewChannel(): Int {
 		channels.add(WirelessRedstoneChannel())
+		onChange()
 		return channels.size - 1
 	}
 	
@@ -54,6 +69,7 @@ class WirelessRedstoneController(
 		val channelObj = safeGetChannel(channel)
 		
 		val numPreviouslyPowering = channelObj.numTransmitting++
+		onChange()
 		
 		if (numPreviouslyPowering > 0)
 		// Someone was already powering this before us, so we haven't changed anything.
@@ -72,6 +88,8 @@ class WirelessRedstoneController(
 		val channelObj = safeGetChannel(channel)
 		
 		val currentlyPowering = --channelObj.numTransmitting
+		onChange()
+		
 		if (currentlyPowering > 0)
 			return // No change
 		
@@ -88,11 +106,13 @@ class WirelessRedstoneController(
 			else -> pChannel
 		}
 		safeGetChannel(pChannel).receivers.add(pos)
+		onChange()
 		return channel
 	}
 	
 	fun unregisterWirelessReceiver(channel: Int, pos: BlockPos) {
 		channels.getOrNull(channel)?.receivers?.remove(pos) ?: return MOD_LOGGER.error("Error when removing wireless receiver: No channel \"{}\" found!", channel)
+		onChange()
 	}
 	
 	/**

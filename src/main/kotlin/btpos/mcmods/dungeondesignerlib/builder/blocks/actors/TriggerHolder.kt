@@ -212,9 +212,8 @@ class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TR
 	class TriggerHolderState(
 		pTrigger: AABB? = null,
 		pPlacer: UUID? = null,
-		override val onChange: () -> Unit = {}
-	)
-		: ITileState, ICodecSerializable<TriggerHolderState>
+		override var onChange: () -> Unit = {}
+	) : ITileState, ICodecSerializable<TriggerHolderState>
 	{
 		//region Codec
 		override fun codec() = CODEC

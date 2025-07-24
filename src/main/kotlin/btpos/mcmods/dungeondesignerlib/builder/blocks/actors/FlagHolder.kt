@@ -316,7 +316,7 @@ class TileFlagHolder(pPos: BlockPos, pState: BlockState) : BlockEntity(ModBlocks
 {
 	class State(
 		pFlagName: FlagName? = null,
-		override val onChange: () -> Unit = {},
+		override var onChange: () -> Unit = {},
 		pAddFlagFunc: (String) -> Unit = {}
 	) : ITileState, ICodecSerializable<State> {
 		override fun codec() = CODEC

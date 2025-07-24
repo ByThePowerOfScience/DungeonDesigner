@@ -1,16 +1,17 @@
 package btpos.mcmods.devutil.common.structure
 
+import btpos.mcmods.devutil.common.structure.IOnChange
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 /**
  * Utilities for compositional tile state.
  */
-interface ITileState {
+interface ITileState : IOnChange {
 	/**
 	 * Callback to be invoked whenever this state is changed.
 	 */
-	val onChange: () -> Unit
+	override var onChange: () -> Unit
 	
 	/**
 	 * Property delegate that calls [::onChange] when the value has been set.
