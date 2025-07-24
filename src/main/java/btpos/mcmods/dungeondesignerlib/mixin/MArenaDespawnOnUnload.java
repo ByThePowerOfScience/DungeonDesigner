@@ -19,13 +19,15 @@ public abstract class MArenaDespawnOnUnload {
     
     @Shadow public abstract CompoundTag getPersistentData();
     
+    @Shadow public abstract boolean isRemoved();
+    
     @Inject(
             method="getEncodeId",
             at=@At("HEAD"),
             cancellable = true
     )
     private void checkForNoSaveNbt(CallbackInfoReturnable<String> cir) {
-        if (this.getPersistentData().contains(FightControllerKt.TAGKEY_SPAWNED_BY_FIGHT_CONTROLLER)) {
+        if (this.isRemoved() && this.getPersistentData().contains(FightControllerKt.TAGKEY_SPAWNED_BY_FIGHT_CONTROLLER)) {
             cir.setReturnValue(null);
         }
     }

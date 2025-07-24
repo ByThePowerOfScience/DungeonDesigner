@@ -17,9 +17,12 @@ import net.minecraft.nbt.NbtUtils
 import net.minecraft.nbt.NumericTag
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
+import net.minecraft.world.entity.Mob
 import net.minecraft.world.entity.MobSpawnType
 import net.minecraftforge.registries.ForgeRegistries
+import thedarkcolour.kotlinforforge.forge.vectorutil.v3d.toVec3
 import java.util.UUID
 
 sealed interface IEntitySpawnData {
@@ -132,7 +135,16 @@ fun IEntitySpawnData.trySpawnEntity(level: ServerLevel): UUID? {
 		return null
 	}
 	
-	val newEntity = type.create(level, nbt, { if (rot != null) it.xRot = rot; it.persistentData.putBoolean(TAGKEY_SPAWNED_BY_FIGHT_CONTROLLER, true) }, pos, MobSpawnType.MOB_SUMMONED, true, false) ?: return null
+	val consumer: (Entity) -> Unit = {
+		it.deserializeNBT(nbt)
+		it.persistentData.putBoolean(TAGKEY_SPAWNED_BY_FIGHT_CONTROLLER, true)
+		if (rot != null)
+			it.xRot = rot
+		it.setPos(pos.above().toVec3())
+		
+	}
+	
+	val newEntity = type.create(level, null /* This param is entirely unused. idk why */, consumer, pos, MobSpawnType.MOB_SUMMONED, true, false) ?: return null
 	
 	if (level.tryAddFreshEntityWithPassengers(newEntity))
 		return newEntity.uuid

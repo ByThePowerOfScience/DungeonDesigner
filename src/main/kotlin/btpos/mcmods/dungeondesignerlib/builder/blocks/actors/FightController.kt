@@ -235,6 +235,9 @@ class TileFightController(pPos: BlockPos, pState: BlockState)
 	
 	
 	fun startFight() { // TODO figure out why they aren't spawning with armor
+		if (activeFight != null)
+			return
+		
 		val level = this.level as? ServerLevel ?: return
 		
 		val mobPipettes: List<IEntitySpawnData> = getPipetteData() ?: return
