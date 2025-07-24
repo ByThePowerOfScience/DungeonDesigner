@@ -9,6 +9,8 @@ import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.BlockTriggerHolder
 import btpos.mcmods.dungeondesignerlib.builder.items.ItemEntityPipette
 import btpos.mcmods.dungeondesignerlib.builder.items.ItemFlagVariable
 import btpos.mcmods.dungeondesignerlib.builder.items.ItemTriggerVariable
+import btpos.mcmods.dungeondesignerlib.builder.redstone.blocks.BlockRedstoneReceiver
+import btpos.mcmods.dungeondesignerlib.builder.redstone.blocks.BlockRedstoneTransmitter
 import net.minecraft.data.PackOutput
 import net.minecraftforge.client.model.generators.BlockStateProvider
 import net.minecraftforge.client.model.generators.ItemModelProvider
@@ -33,7 +35,9 @@ class BlockStateGen(output: PackOutput, efh: ExistingFileHelper) : BlockStatePro
 			BlockTriggerHolder,
 			BlockFlagReader,
 			BlockFlagWriter,
-			BlockFightController
+			BlockFightController,
+			BlockRedstoneReceiver,
+			BlockRedstoneTransmitter
 		).forEach {
 			it.getStatesAndModels(this)
 		}
