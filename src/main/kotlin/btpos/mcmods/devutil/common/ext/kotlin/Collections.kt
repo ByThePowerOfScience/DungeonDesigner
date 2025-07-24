@@ -1,4 +1,8 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package btpos.mcmods.devutil.common.ext.kotlin
+
+import kotlin.collections.ArrayList
 
 /**
  * Collects the iterable starting with an initial value. This is a terminal operation.
@@ -40,3 +44,13 @@ data class FilterResult<T>(val matching: List<T>, val notMatching: List<T>) {
 		return this
 	}
 }
+
+/**
+ * Returns a _mutable_ list containing the results of applying the given [transform] function
+ * to each element in the original collection.
+ */
+inline fun <T, R> Iterable<T>.mapMutable(transform: (T) -> R): MutableList<R> {
+	return mapTo(ArrayList(collectionSizeOrDefault(10)), transform)
+}
+
+inline fun <T> Iterable<T>.collectionSizeOrDefault(default: Int) = if (this is Collection<*>) this.size else default

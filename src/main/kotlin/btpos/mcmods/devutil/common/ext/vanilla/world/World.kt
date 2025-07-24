@@ -52,7 +52,7 @@ fun Level.dropItem(item: ItemStack, pos: Vec3, velocity: Vec3? = null) {
  *
  * @param updater An inlined function that accepts the old state and returns the new.
  */
-inline fun Level.changeBlockAndUpdate(pos: BlockPos, updater: (BlockState) -> BlockState): Boolean {
+inline fun Level.modifyBlockAndUpdate(pos: BlockPos, updater: (BlockState) -> BlockState): Boolean {
 	return this.setBlockAndUpdate(pos, updater(this.getBlockState(pos)))
 }
 
@@ -63,7 +63,7 @@ inline fun Level.changeBlockAndUpdate(pos: BlockPos, updater: (BlockState) -> Bl
  *
  * @param updater Function that accepts the old state and returns the new.
  */
-inline fun Level.changeBlock(pos: BlockPos, flags: Int, updater: (BlockState) -> BlockState) = this.setBlock(pos, this.getBlockState(pos).let(updater), flags)
+inline fun Level.modifyBlock(pos: BlockPos, flags: Int, updater: (BlockState) -> BlockState) = this.setBlock(pos, this.getBlockState(pos).let(updater), flags)
 
 operator fun ResourceKey<Level>.contains(player: Player): Boolean {
 	return player.level().dimension() == this

@@ -65,7 +65,7 @@ class ItemEntityPipette(pProps: Properties) : Item(pProps) {
 		
 		fun getOrCreateData(stack: ItemStack): IEntitySpawnData.AsTag {
 			if (stack.item != ModItems.PIPETTE_ITEM)
-				btpos.mcmods.dungeondesignerlib.LOGGER.warn("Expected item {}, got {}", resourceLocation, ForgeRegistries.ITEMS.getKey(stack.item))
+				btpos.mcmods.dungeondesignerlib.MOD_LOGGER.warn("Expected item {}, got {}", resourceLocation, ForgeRegistries.ITEMS.getKey(stack.item))
 			
 			return IEntitySpawnData.AsTag(stack.getOrCreateTagElement(TAGKEY_DATA))
 		}

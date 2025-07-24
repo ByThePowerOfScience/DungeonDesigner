@@ -13,12 +13,12 @@ import thedarkcolour.kotlinforforge.forge.FORGE_BUS
 import thedarkcolour.kotlinforforge.forge.MOD_BUS
 
 const val MODID = "dungeondesigner"
-val LOGGER: Logger = LogManager.getLogger(MODID)
+val MOD_LOGGER: Logger = LogManager.getLogger(MODID)
 
 @Mod(MODID)
 object CommonEntry {
     init {
-        LOGGER.log(Level.INFO, "$MODID has started!")
+        MOD_LOGGER.log(Level.INFO, "$MODID has started!")
 
         MOD_BUS.addListener(ClientEntry::init)
         MOD_BUS.addListener(DataGenConstants::gatherDataEvent)

@@ -6,6 +6,7 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.context.UseOnContext
+import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.phys.EntityHitResult
 
@@ -14,6 +15,12 @@ inline fun Item.stack(count: Int) = ItemStack(this, count)
 
 inline val UseOnContext.targetBlockState: BlockState
 	inline get() = level.getBlockState(clickedPos)
+
+inline val UseOnContext.targetBlockEntity: BlockEntity?
+	inline get() = level.getBlockEntity(clickedPos)
+
+inline val UseOnContext.isClientSide: Boolean
+	inline get() = level.isClientSide
 
 inline val UseOnContext.targetEntity: Entity?
 	inline get() = player?.run {

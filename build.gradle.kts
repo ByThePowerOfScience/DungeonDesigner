@@ -207,6 +207,7 @@ tasks.withType<JavaCompile>().configureEach {
 tasks.withType<KotlinCompile> {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
+        freeCompilerArgs.add("-Xcontext-receivers")
     }
 }
 

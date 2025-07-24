@@ -3,6 +3,7 @@ package btpos.mcmods.dungeondesignerlib.builder.world
 import btpos.mcmods.devutil.common.util.serialization.ICodecSerializable
 import btpos.mcmods.devutil.common.util.serialization.putNbtSerializable
 import btpos.mcmods.devutil.common.util.serialization.readNbtSerializable
+import btpos.mcmods.dungeondesignerlib.common.redstone.WirelessRedstoneController
 import btpos.mcmods.dungeondesignerlib.compiled.saveddata.FlagName
 import com.mojang.serialization.Codec
 import com.mojang.serialization.codecs.RecordCodecBuilder
@@ -15,17 +16,20 @@ import net.minecraft.world.level.storage.DimensionDataStorage
 val DimensionDataStorage.dungeonBuilderData: DungeonBuilderWorldData
 	get() = computeIfAbsent(::DungeonBuilderWorldData, ::DungeonBuilderWorldData, "dungeon_designer_builder")
 
-class DungeonBuilderWorldData(
-	internal val state: DungeonBuilderState = DungeonBuilderState()
-) : SavedData() {
-	constructor(tag: CompoundTag) : this(tag.readNbtSerializable(TAGKEY_STATE, DungeonBuilderState.CODEC))
+class DungeonBuilderWorldData() : SavedData() {
+	lateinit var state: DungeonBuilderState
+	
+	constructor(tag: CompoundTag) : this() {
+		state = tag.readNbtSerializable(TAGKEY_STATE, DungeonBuilderState.CODEC)
+	}
 	
 	companion object {
 		const val TAGKEY_STATE = "state"
 	}
-	
-	
-	fun addFlag(name: FlagName) {
+    
+    
+    //region Flags
+    fun addFlag(name: FlagName) {
 		if (name in state.flagStates)
 			return
 		
@@ -51,6 +55,9 @@ class DungeonBuilderWorldData(
 	fun getFlag(name: FlagName): Boolean {
 		return state.flagStates.getBoolean(name)
 	}
+    //endregion
+    
+    
 	
 	override fun save(pCompoundTag: CompoundTag): CompoundTag {
 		pCompoundTag.putNbtSerializable(TAGKEY_STATE, state)
@@ -63,21 +70,25 @@ class DungeonBuilderState(
 	 * Stores the value of each flag
 	 */
 	val flagStates: Object2BooleanMap<FlagName> = Object2BooleanOpenHashMap(),
+	val redstoneHandler: WirelessRedstoneController
 ) : ICodecSerializable<DungeonBuilderState> {
-	override fun codec() = CODEC
-	
+    //region ICodecSerializable
+    override fun codec() = CODEC
 	override fun copyFrom(other: DungeonBuilderState) {
 		this.flagStates.clear()
 		this.flagStates.putAll(other.flagStates)
 	}
+    //endregion
 	
 	companion object {
 		val CODEC = RecordCodecBuilder.create {
 			it.group(
-					Codec.unboundedMap(Codec.STRING, Codec.BOOL).fieldOf("flags").forGetter(DungeonBuilderState::flagStates)
-			).apply(it) { map ->
-				DungeonBuilderState(Object2BooleanOpenHashMap(map))
+				Codec.unboundedMap(Codec.STRING, Codec.BOOL).fieldOf("flags").forGetter(DungeonBuilderState::flagStates),
+				WirelessRedstoneController.CODEC.fieldOf("redstone_handler").forGetter(DungeonBuilderState::redstoneHandler)
+			).apply(it) { flags, redstone_handler ->
+				DungeonBuilderState(Object2BooleanOpenHashMap(flags), redstone_handler)
 			}
 		}
 	}
 }
+

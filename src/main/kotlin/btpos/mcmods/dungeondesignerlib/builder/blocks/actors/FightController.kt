@@ -5,7 +5,7 @@ package btpos.mcmods.dungeondesignerlib.builder.blocks.actors
 import btpos.mcmods.devutil.common.ext.kotlin.filterSplit
 import btpos.mcmods.devutil.common.ext.kotlin.ifNull
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
-import btpos.mcmods.devutil.common.ext.vanilla.world.changeBlockAndUpdate
+import btpos.mcmods.devutil.common.ext.vanilla.world.modifyBlockAndUpdate
 import btpos.mcmods.devutil.common.ext.vanilla.world.get
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.util.BlockWithEntity
@@ -20,7 +20,7 @@ import btpos.mcmods.dungeondesignerlib.builder.nbt.IEntitySpawnData
 import btpos.mcmods.dungeondesignerlib.builder.nbt.trySpawnEntity
 import btpos.mcmods.dungeondesignerlib.registry.ModBlocks
 import btpos.mcmods.dungeondesignerlib.registry.ModItems
-import btpos.mcmods.dungeondesignerlib.LOGGER as DLOGGER
+import btpos.mcmods.dungeondesignerlib.MOD_LOGGER as DLOGGER
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.network.chat.Component
@@ -286,7 +286,7 @@ class TileFightController(pPos: BlockPos, pState: BlockState)
 		if (activeFight.mobsAlive.isEmpty()) {
 			// End the fight
 			this.activeFight = null
-			level.changeBlockAndUpdate(this.blockPos) { it.with(BlockFightController.STATUS, FightStatus.COMPLETE) }
+			level.modifyBlockAndUpdate(this.blockPos) { it.with(BlockFightController.STATUS, FightStatus.COMPLETE) }
 		 }
 	}
 	

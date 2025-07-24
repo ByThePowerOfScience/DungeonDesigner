@@ -13,6 +13,7 @@ import net.minecraftforge.registries.DeferredRegister
 import thedarkcolour.kotlinforforge.forge.MOD_BUS
 import thedarkcolour.kotlinforforge.forge.ObjectHolderDelegate
 import thedarkcolour.kotlinforforge.forge.registerObject
+import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty0
 import kotlin.reflect.jvm.isAccessible
 
@@ -57,17 +58,17 @@ interface IBlockRegistry : IObjectRegistry<Block> {
 		}
 	}
 	
+	fun <T : Item> item(bprop: KProperty0<*>, factory: () -> T): ObjectHolderDelegate<T> {
+		val name = getId(bprop).path
+		return item(name, factory)
+	}
+	
 	fun <T : Item> item(name: String, supplier: () -> T): ObjectHolderDelegate<T> {
 		return ITEMS.registerObject(name, supplier)
 	}
 	
 	fun <B : Block> blockItem(bprop: KProperty0<B>, props: Item.Properties = Item.Properties()): ObjectHolderDelegate<BlockItem> {
 		return item(bprop) { BlockItem(bprop.get(), props) }
-	}
-	fun <B : Block, I : Item> item(bprop: KProperty0<B>, itemGetter: () -> I): ObjectHolderDelegate<I> {
-		val name = getId(bprop).path
-		
-		return item(name, itemGetter)
 	}
 	
 	fun <T : BlockEntity> ent(name: String, supplier: () -> BlockEntityType<T>): ObjectHolderDelegate<BlockEntityType<T>> {

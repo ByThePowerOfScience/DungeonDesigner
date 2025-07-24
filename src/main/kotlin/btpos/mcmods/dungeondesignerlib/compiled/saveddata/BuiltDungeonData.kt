@@ -3,7 +3,7 @@ package btpos.mcmods.dungeondesignerlib.compiled.saveddata
 import btpos.mcmods.devutil.common.dsl.CodecBuilderMacros
 import btpos.mcmods.devutil.common.ext.vanilla.destructuring.component1
 import btpos.mcmods.devutil.common.ext.vanilla.destructuring.component2
-import btpos.mcmods.devutil.common.ext.vanilla.world.changeBlockAndUpdate
+import btpos.mcmods.devutil.common.ext.vanilla.world.modifyBlockAndUpdate
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.macros.fastMapOf
 import btpos.mcmods.devutil.common.util.serialization.Serialization
@@ -158,7 +158,7 @@ class DeserializedDungeonNbt private constructor(
 		val oldValue = this.flagValues.put(flag, value)
 		if (oldValue != value)
 			flagsToBlocks[flag]?.forEach { pos ->
-				level.changeBlockAndUpdate(pos) { it.with(POWERED, value) }
+				level.modifyBlockAndUpdate(pos) { it.with(POWERED, value) }
 			}
 	}
 }
