@@ -15,6 +15,8 @@ import btpos.mcmods.devutil.common.util.BlockWithEntity
 import btpos.mcmods.devutil.forge.datagen.IBlockDataGen
 import btpos.mcmods.devutil.forge.datagen.blockLoc
 import btpos.mcmods.devutil.forge.datagen.variantDsl
+import btpos.mcmods.devutil.forge.ext.capability.getOrNull
+import btpos.mcmods.devutil.forge.ext.capability.iterFullSlots
 import btpos.mcmods.dungeondesignerlib.MOD_LOGGER
 import btpos.mcmods.dungeondesignerlib.POWERED
 import btpos.mcmods.dungeondesignerlib.builder.redstone.IWirelessRedstone
@@ -23,8 +25,10 @@ import btpos.mcmods.dungeondesignerlib.builder.redstone.IWirelessRedstone.NbtAda
 import btpos.mcmods.dungeondesignerlib.builder.redstone.IWirelessRedstoneTransmitter
 import btpos.mcmods.dungeondesignerlib.builder.redstone.blocks.WirelessRedstoneItem.Companion.getData
 import btpos.mcmods.dungeondesignerlib.builder.redstone.blocks.WirelessRedstoneItem.Companion.getOrCreateData
+import btpos.mcmods.dungeondesignerlib.builder.redstone.items.ItemRemoteLinker
 import btpos.mcmods.dungeondesignerlib.builder.world.dungeonBuilderData
 import btpos.mcmods.dungeondesignerlib.registry.ModBlocks
+import btpos.mcmods.dungeondesignerlib.registry.ModItems
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.nbt.CompoundTag
@@ -49,6 +53,8 @@ import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.block.state.StateDefinition
 import net.minecraft.world.phys.BlockHitResult
 import net.minecraftforge.client.model.generators.BlockStateProvider
+import net.minecraftforge.common.capabilities.ForgeCapabilities
+import net.minecraftforge.items.IItemHandler
 
 /**
  * In the builder phase, this stores the channel of an emitter that's linked to it, or otherwise can be linked to an emitter.  Think "RFTools Redstone Transmitter".
@@ -128,6 +134,7 @@ class BlockRedstoneTransmitter(props: Properties) : Block(props), BlockWithEntit
         pMovedByPiston: Boolean
     ) {
         super.neighborChanged(pState, pLevel, pPos, pNeighborBlock, pNeighborPos, pMovedByPiston)
+        
         if (pLevel is ServerLevel) {
             val isPowered = pState[POWERED]
             val shouldBePowered = pLevel.hasNeighborSignal(pPos)
@@ -135,11 +142,27 @@ class BlockRedstoneTransmitter(props: Properties) : Block(props), BlockWithEntit
                 pLevel.setBlockAndUpdate(pPos, pState.with(POWERED, !isPowered))
                 if (shouldBePowered) {
                     pLevel.getOurEntity(pPos)?.onStartReceivingSignal(pLevel)
+                    doRemoteLinkers(pLevel, pPos, true)
                 } else {
                     pLevel.getOurEntity(pPos)?.onStopReceivingSignal(pLevel)
+                    doRemoteLinkers(pLevel, pPos, false)
                 }
             }
         }
+    }
+    
+    private fun doRemoteLinkers(pLevel: ServerLevel, pPos: BlockPos, powered: Boolean) {
+        getRemoteLinkers(pLevel, pPos).forEach {
+            val targetPos = ItemRemoteLinker.getData(it)?.target ?: return@forEach
+            val state = pLevel.getBlockState(targetPos)
+            if (state.hasProperty(POWERED))
+                pLevel.setBlockAndUpdate(targetPos, state.with(POWERED, powered))
+        }
+    }
+    
+    fun getRemoteLinkers(level: ServerLevel, pos: BlockPos): Sequence<ItemStack> {
+        val cap = level.getBlockEntity(pos.above())?.getCapability(ForgeCapabilities.ITEM_HANDLER, null)?.getOrNull() ?: return emptySequence()
+        return cap.iterFullSlots().filter { it.item == ModItems.REMOTE_LINKER }
     }
     
     override fun use(pState: BlockState, pLevel: Level, pPos: BlockPos, pPlayer: Player, pHand: InteractionHand, pHit: BlockHitResult): InteractionResult {

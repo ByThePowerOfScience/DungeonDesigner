@@ -46,6 +46,13 @@ fun CompoundTag.getStringOrNull(key: String): String? {
 	return this.getString(key)
 }
 
+fun CompoundTag.getIntOrNull(key: String): Int? {
+	if (!this.contains(key, CompoundTag.TAG_INT.toInt())) {
+		return null
+	}
+	return this.getInt(key)
+}
+
 fun CompoundTag.getOrCreateCompound(key: String): CompoundTag {
 	if (!this.contains(key, CompoundTag.TAG_COMPOUND.toInt())) {
 		return CompoundTag().also {

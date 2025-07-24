@@ -5,6 +5,7 @@ import btpos.mcmods.dungeondesignerlib.MODID
 import btpos.mcmods.dungeondesignerlib.builder.items.ItemEntityPipette
 import btpos.mcmods.dungeondesignerlib.builder.items.ItemFlagVariable
 import btpos.mcmods.dungeondesignerlib.builder.items.ItemTriggerVariable
+import btpos.mcmods.dungeondesignerlib.builder.redstone.items.ItemRemoteLinker
 import net.minecraft.world.item.Item
 import net.minecraftforge.registries.DeferredRegister
 import net.minecraftforge.registries.ForgeRegistries
@@ -18,4 +19,6 @@ object ModItems : IObjectRegistry<Item> {
 	val TRIGGER_ITEM by REGISTRY.registerObject(ItemTriggerVariable.id) { ItemTriggerVariable(variable_props) }
 	val FLAG_ITEM by REGISTRY.registerObject(ItemFlagVariable.id) { ItemFlagVariable(variable_props) }
 	val PIPETTE_ITEM by REGISTRY.registerObject(ItemEntityPipette.id) { ItemEntityPipette(variable_props) }
+	
+	val REMOTE_LINKER by registering(ItemRemoteLinker.id) { ItemRemoteLinker(variable_props) }
 }

@@ -93,7 +93,7 @@ class WirelessRedstoneController(
 		if (currentlyPowering > 0)
 			return // No change
 		
-		channelObj.receivers.forEach { level.modifyBlockAndUpdate(it) { it.with(POWERED, false) } }
+		channelObj.receivers.forEach { level.modifyBlockAndUpdate(it) { if (it.hasProperty(POWERED)) it.with(POWERED, false) else it } }
 	}
 	
 	/**

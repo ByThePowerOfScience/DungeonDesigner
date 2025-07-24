@@ -34,6 +34,10 @@ interface IObjectRegistry<T> {
 	fun <T : BlockEntity> DeferredRegister<BlockEntityType<*>>.regBE(name: String, generator: () -> BlockEntityType<T>): ObjectHolderDelegate<BlockEntityType<T>> {
 		return this.registerObject(name, generator)
 	}
+	
+	fun registering(name: String, generator: () -> T): ObjectHolderDelegate<T> {
+		return REGISTRY.registerObject(name, generator)
+	}
 }
 
 interface IBlockRegistry : IObjectRegistry<Block> {

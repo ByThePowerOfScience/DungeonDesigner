@@ -90,8 +90,9 @@ class ItemEntityPipette(pProps: Properties) : Item(pProps) {
 				
 				pContext.player?.sendSystemMessage("Spawn position: ".asComponent() + pos.toComponent().withStyle(ChatFormatting.YELLOW) + " with rotation $rotation degrees.")
 			}
-			if (shouldSplitOff)
+			if (shouldSplitOff) {
 				pContext.player?.addItem(newStack)
+			}
 		}
 		
 		return InteractionResult.sidedSuccess(pContext.level.isClientSide)
