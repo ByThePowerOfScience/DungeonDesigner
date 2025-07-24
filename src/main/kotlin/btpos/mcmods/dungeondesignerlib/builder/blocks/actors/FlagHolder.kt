@@ -290,9 +290,9 @@ class BlockFlagWriter(props: Properties, /** True = is a "setter", false = is a 
 		checkShouldSetFlag(pLevel, pPos, pState)
 	}
 	
-	private fun checkShouldSetFlag(pLevel: ServerLevel, pPos: BlockPos,
-	                      pState: BlockState) {
-		if (!pLevel.hasSignal(pPos, pState.getValue(FACING)))
+	private fun checkShouldSetFlag(pLevel: ServerLevel, pPos: BlockPos, pState: BlockState) {
+		val pDirection = pState.getValue(FACING)
+		if (!pLevel.hasSignal(pPos.relative(pDirection), pDirection))
 			return;
 		
 		val ourFlag = pLevel.blockEntity(pPos, ModBlocks.FLAG_BLOCK_ENTITY)!!.state.flagName.value ?: return

@@ -205,7 +205,7 @@ class BlockTriggerHolder(
 		}
 	}
 	
-	private fun shouldStopCheckingTrigger(level: Level, pos: BlockPos): Boolean = level.hasSignal(pos, Direction.UP)
+	private fun shouldStopCheckingTrigger(level: Level, pos: BlockPos): Boolean = level.hasSignal(pos.above(), Direction.UP)
 }
 
 class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TRIGGER_BLOCK_ENTITY, p0, p1) {

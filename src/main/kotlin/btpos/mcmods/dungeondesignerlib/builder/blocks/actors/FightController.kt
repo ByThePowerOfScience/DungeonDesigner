@@ -148,12 +148,6 @@ class BlockFightController(props: Properties) : Block(props), BlockWithEntity<Ti
 	}
 	
 	// region Redstone Reception
-	override fun onNeighborChange(state: BlockState, level: LevelReader, pos: BlockPos, neighbor: BlockPos) {
-		super.onNeighborChange(state, level, pos, neighbor)
-		
-		checkShouldStartFight(state, level, pos)
-	}
-	
 	override fun neighborChanged(
 		pState: BlockState,
 		pLevel: Level,
@@ -163,7 +157,8 @@ class BlockFightController(props: Properties) : Block(props), BlockWithEntity<Ti
 		pMovedByPiston: Boolean
 	) {
 		super.neighborChanged(pState, pLevel, pPos, pNeighborBlock, pNeighborPos, pMovedByPiston)
-		checkShouldStartFight(pState, pLevel, pPos)
+		if (!pLevel.isClientSide)
+			checkShouldStartFight(pState, pLevel, pPos)
 	}
 	
 	private fun checkShouldStartFight(
@@ -177,7 +172,7 @@ class BlockFightController(props: Properties) : Block(props), BlockWithEntity<Ti
 		val facing = state[FACING]
 		
 		val shouldStartFight = Direction.Plane.HORIZONTAL.any {
-			it != facing && level.hasSignal(pos, it)
+			it != facing && level.hasSignal(pos.relative(it), it)
 		}
 		
 		if (shouldStartFight) {

@@ -1,5 +1,6 @@
 package btpos.mcmods.dungeondesignerlib.debugging.subcommands
 
+import btpos.mcmods.devutil.common.SetBlockStateFlags
 import btpos.mcmods.devutil.common.macros.brigadier.literal
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
 import btpos.mcmods.devutil.common.ext.vanilla.plus
