@@ -3,6 +3,7 @@ package btpos.mcmods.dungeondesignerlib.builder.items
 
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
 import btpos.mcmods.devutil.common.ext.vanilla.plus
+import btpos.mcmods.devutil.common.macros.ChatUtils.get
 import btpos.mcmods.devutil.common.macros.ChatUtils.toComponent
 import btpos.mcmods.devutil.common.util.EntityUtils.getTargetedEntity
 import btpos.mcmods.devutil.forge.datagen.IItemDataGen
@@ -10,6 +11,7 @@ import btpos.mcmods.dungeondesignerlib.builder.nbt.IEntitySpawnData
 import btpos.mcmods.dungeondesignerlib.registry.ModItems
 import net.minecraft.ChatFormatting
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.network.chat.Component
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.InteractionResultHolder
@@ -18,6 +20,7 @@ import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.TooltipFlag
 import net.minecraft.world.item.context.UseOnContext
 import net.minecraft.world.level.Level
 import net.minecraftforge.client.model.generators.ItemModelProvider
@@ -77,15 +80,13 @@ class ItemEntityPipette(pProps: Properties) : Item(pProps) {
 	override fun useOn(pContext: UseOnContext): InteractionResult {
 		val heldStack = pContext.itemInHand
 		
-		
-		
 		if (!pContext.level.isClientSide){
 			// split one off
 			val shouldSplitOff = heldStack.count > 1
 			val newStack = if (shouldSplitOff) heldStack.split(1) else heldStack
 			getOrCreateData(newStack).run {
 				pos = pContext.clickedPos
-				rotation = -(pContext.player?.xRot ?: 0f)
+				rotation = -(pContext.player?.yRot ?: 0f)
 				
 				pContext.player?.sendSystemMessage("Spawn position: ".asComponent() + pos.toComponent().withStyle(ChatFormatting.YELLOW) + " with rotation $rotation degrees.")
 			}
@@ -129,5 +130,17 @@ class ItemEntityPipette(pProps: Properties) : Item(pProps) {
 		}
 		
 		return InteractionResultHolder.sidedSuccess(heldStack, pLevel.isClientSide)
+	}
+	
+	override fun appendHoverText(pStack: ItemStack, pLevel: Level?, pTooltipComponents: MutableList<Component>, pIsAdvanced: TooltipFlag) {
+		super.appendHoverText(pStack, pLevel, pTooltipComponents, pIsAdvanced)
+		val data = getDataOrNull(pStack) ?: return
+		with (pTooltipComponents) {
+			with (data) {
+				type?.let { add("Mob: ${ForgeRegistries.ENTITY_TYPES.getKey(type)}".asComponent()) }
+				pos?.let { add("Position: ".asComponent() + it.toComponent()) }
+				rotation?.let { add("Rotation: $it".asComponent()) }
+			}
+		}
 	}
 }

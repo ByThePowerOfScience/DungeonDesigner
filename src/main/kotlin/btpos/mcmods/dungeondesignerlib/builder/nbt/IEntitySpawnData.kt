@@ -139,7 +139,7 @@ fun IEntitySpawnData.trySpawnEntity(level: ServerLevel): UUID? {
 		it.deserializeNBT(nbt)
 		it.persistentData.putBoolean(TAGKEY_SPAWNED_BY_FIGHT_CONTROLLER, true)
 		if (rot != null)
-			it.xRot = rot
+			it.yRot = rot
 		it.setPos(pos.above().toVec3())
 		
 	}
