@@ -10,8 +10,10 @@ inline val <T : Any> Optional<T>.value: T?
 inline fun <T : Any> T?.asOptional(): Optional<T> = Optional.ofNullable(this)
 
 /**
+ * This converts `Optional<T & Any>` to `Optional<T>` so we can actually use them.
+ *
  * This is clearly a bug in the Kotlin compiler.
- * There's literally no difference between Optional<T & Any> and Optional<T>, because the output type is always T.
+ * `Optional` is already <T & Any>.  There's no reason that `Optional#ofNullable` should be returning an _even stricter_ Optional than normal.
  */
 @Suppress("UNCHECKED_CAST")
 inline fun <U, T : U & Any> Optional<T>.cast() = this as Optional<U>

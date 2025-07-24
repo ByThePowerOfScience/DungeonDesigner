@@ -3,6 +3,9 @@
 package btpos.mcmods.dungeondesignerlib.builder.blocks.actors
 
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
+import btpos.mcmods.devutil.common.ext.vanilla.data.forNullableGetter
+import btpos.mcmods.devutil.common.ext.vanilla.data.nullableFieldOf
+import btpos.mcmods.devutil.common.ext.vanilla.data.optionalToNull
 import btpos.mcmods.devutil.common.ext.vanilla.world.blockEntity
 import btpos.mcmods.devutil.common.ext.vanilla.world.getMaxCornerBlock
 import btpos.mcmods.devutil.common.ext.vanilla.world.getMinCornerBlock
@@ -51,8 +54,11 @@ import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.block.state.StateDefinition
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.BlockHitResult
+import net.minecraft.world.phys.Vec3
 import net.minecraftforge.client.model.generators.BlockStateProvider
+import java.util.Optional
 import java.util.UUID
+import kotlin.jvm.optionals.getOrNull
 
 class BlockTriggerHolder(
 	props: Properties
@@ -268,12 +274,19 @@ class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TR
 			const val TAGKEY_PLACER = "placer"
 			const val TAGKEY_NAME = "item_name"
 			
-			val CODEC = RecordCodecBuilder.create<TriggerHolderState> { inst ->
-				inst.group(
-					Serialization.CODEC_AABB_BLOCK.optionalFieldOf(TAGKEY_BOUNDS, null).forGetter(TriggerHolderState::trigger),
-					UUIDUtil.CODEC.optionalFieldOf(TAGKEY_PLACER, null).forGetter(TriggerHolderState::placer),
-					Codec.STRING.optionalFieldOf(TAGKEY_NAME, null).forGetter(TriggerHolderState::itemName)
-				).apply(inst, ::TriggerHolderState)
+			val CODEC = RecordCodecBuilder.create {
+				it.group(
+					Serialization.CODEC_AABB_BLOCK.fieldOf(TAGKEY_BOUNDS).forGetter(TriggerHolderState::trigger),
+					UUIDUtil.CODEC.fieldOf(TAGKEY_PLACER).forGetter(TriggerHolderState::placer),
+					Codec.STRING.optionalFieldOf(TAGKEY_NAME).forNullableGetter(TriggerHolderState::itemName)
+				).apply(it,
+                    { pTrigger, pPlacer, pItemName ->
+                        TriggerHolderState(
+                            pTrigger,
+                            pPlacer,
+                            pItemName.getOrNull()
+                        )
+                    })
 			}
 		}
 	}

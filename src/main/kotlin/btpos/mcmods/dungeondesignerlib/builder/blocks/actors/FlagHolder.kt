@@ -3,6 +3,8 @@
 package btpos.mcmods.dungeondesignerlib.builder.blocks.actors
 
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
+import btpos.mcmods.devutil.common.ext.vanilla.data.forNullableGetter
+import btpos.mcmods.devutil.common.ext.vanilla.data.nullableFieldOf
 import btpos.mcmods.devutil.common.ext.vanilla.plus
 import btpos.mcmods.devutil.common.ext.vanilla.world.blockEntity
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
@@ -327,8 +329,8 @@ class TileFlagHolder(pPos: BlockPos, pState: BlockState) : BlockEntity(ModBlocks
 		companion object {
 			val CODEC = RecordCodecBuilder.create { inst ->
 				inst.group(
-						Codec.STRING.optionalFieldOf("flag_name", null).forGetter({ it: State -> it.flagName.value })
-				).apply(inst, ::State)
+						Codec.STRING.optionalFieldOf("flag_name").forNullableGetter({ it: State -> it.flagName.value })
+				).apply(inst, { pFlagName-> State(pFlagName.orElse(null)) })
 			}
 		}
 		

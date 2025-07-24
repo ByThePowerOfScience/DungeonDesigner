@@ -1,7 +1,7 @@
 package btpos.unittests.builder.blocks
 
+import btpos.mcmods.devutil.common.util.serialization.Serialization
 import btpos.mcmods.devutil.common.util.serialization.Serialization.encodeToTag
-import btpos.mcmods.dungeondesignerlib.builder.nbt.TriggerBoundsTag
 import btpos.mcmods.dungeondesignerlib.builder.blocks.actors.TileTriggerHolder.TriggerHolderState
 import net.minecraft.core.UUIDUtil
 import net.minecraft.nbt.CompoundTag
@@ -11,38 +11,37 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 
-class TriggerHolder {
+class TriggerHolderStateTest {
 	val bounds = AABB(1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
 	val id = UUID(123, 456)
 	
-	val state = TriggerHolderState(bounds, id)
-	
 	@Test
 	fun serialize_toTag() {
+		val state = TriggerHolderState(bounds, id)
+		
 		val expected = CompoundTag().also {
-			it.put(TriggerHolderState.TAGKEY_BOUNDS, TriggerBoundsTag(bounds).tag)
+			it.put(TriggerHolderState.TAGKEY_BOUNDS, Serialization.CODEC_AABB_BLOCK.encodeToTag(bounds))
 			it.put(TriggerHolderState.TAGKEY_PLACER, UUIDUtil.CODEC.encodeToTag(id))
 		}
 		
-		val encoded = CompoundTag().also {
+		val actual = CompoundTag().also {
 			state.writeAsNbt(it)
 		}
 		
-		assertEquals(expected, encoded)
+		assertEquals(expected, actual)
 	}
 	
 	@Test
 	fun serialize_fromTag() {
-		val tag = CompoundTag().also {
-			it.put(TriggerHolderState.TAGKEY_BOUNDS, TriggerBoundsTag(bounds).tag)
-			it.put(TriggerHolderState.TAGKEY_PLACER, UUIDUtil.CODEC.encodeToTag(id))
+		val expectedState = TriggerHolderState(bounds, id)
+		
+		val tag = TriggerHolderState.CODEC.encodeToTag(expectedState) as CompoundTag
+		
+		val decodedState = TriggerHolderState().apply {
+			populateFromNbt(tag)
 		}
 		
-		val decodedState = TriggerHolderState()
-		
-		decodedState.populateFromNbt(tag)
-		
-		assertEquals(state.trigger, decodedState.trigger)
-		assertEquals(state.placer, decodedState.placer)
+		assertEquals(expectedState.trigger, decodedState.trigger)
+		assertEquals(expectedState.placer, decodedState.placer)
 	}
 }
