@@ -81,13 +81,15 @@ interface IItemRepresentable_Tag<T> : IItemRepresentable<T> {
 	}
 	
 	/**
-	 * Deserialization function. Reads the value from the ItemStack's tag, or null if it's not present.
+	 * Deserialization function. Returns the value read from the ItemStack's root tag, or null if it's not present.
+	 *
 	 * Called in [asItem]'s setter.
 	 */
 	fun CompoundTag.readFromTag(): T?
 	
 	/**
-	 * Serialization function. Puts the value into the ItemStack's tag.
+	 * Serialization function. Puts the value into the ItemStack's root tag.
+	 *
 	 * Called in [asItem]'s getter.
 	 */
 	fun CompoundTag.writeToTag(value: T)

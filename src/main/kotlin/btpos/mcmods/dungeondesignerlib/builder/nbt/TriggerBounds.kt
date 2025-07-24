@@ -1,11 +1,21 @@
 package btpos.mcmods.dungeondesignerlib.builder.nbt
 
 import btpos.mcmods.devutil.common.ext.vanilla.data.getBlockPos
+import btpos.mcmods.devutil.common.ext.vanilla.data.getCompoundOrNull
+import btpos.mcmods.devutil.common.ext.vanilla.data.getOrCreateCompound
+import btpos.mcmods.devutil.common.ext.vanilla.data.getStringOrNull
+import btpos.mcmods.devutil.common.ext.vanilla.data.setOrRemove
 import btpos.mcmods.devutil.common.ext.vanilla.data.toCompoundTag
+import btpos.mcmods.devutil.common.ext.vanilla.world.getMaxCornerBlock
+import btpos.mcmods.devutil.common.ext.vanilla.world.getMinCornerBlock
 import btpos.mcmods.devutil.common.util.serialization.Serialization
 import btpos.mcmods.devutil.common.util.serialization.Serialization.encodeToTag
+import btpos.mcmods.dungeondesignerlib.builder.items.ItemTriggerVariable.Companion.TAGKEY_STATE
+import btpos.mcmods.dungeondesignerlib.common.nbtadapters.DisplayNameGetter
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.world.item.ItemStack.TAG_DISPLAY
+import net.minecraft.world.item.ItemStack.TAG_DISPLAY_NAME
 import net.minecraft.world.phys.AABB
 
 
@@ -17,7 +27,10 @@ value class TriggerBoundsTag(val tag: CompoundTag) {
 	companion object {
 		val CODEC = Serialization.CODEC_AABB_BLOCK
 	}
-	constructor(aabb: AABB) : this(CODEC.encodeToTag(aabb) as CompoundTag)
+	
+	constructor(aabb: AABB) : this(CompoundTag()) {
+		putAABB(aabb)
+	}
 	
 	var first: BlockPos?
 		get() = tag.getBlockPos("first")
@@ -39,5 +52,10 @@ value class TriggerBoundsTag(val tag: CompoundTag) {
 	
 	fun toAABB(): AABB? {
 		return if (first == null || second == null) null else AABB(first!!, second!!)
+	}
+	
+	fun putAABB(aabb: AABB) {
+		this.first = aabb.getMinCornerBlock()
+		this.second = aabb.getMaxCornerBlock()
 	}
 }

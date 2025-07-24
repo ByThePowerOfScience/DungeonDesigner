@@ -6,7 +6,7 @@ import btpos.mcmods.devutil.common.ext.vanilla.asComponent
 import btpos.mcmods.devutil.common.ext.vanilla.plus
 import btpos.mcmods.devutil.common.ext.vanilla.world.blockEntity
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
-import btpos.mcmods.devutil.common.structure.ITileState
+import btpos.mcmods.devutil.common.structure.IOnChange
 import btpos.mcmods.devutil.common.util.serialization.ICodecSerializable
 import btpos.mcmods.devutil.common.util.serialization.putNbtSerializable
 import btpos.mcmods.devutil.common.util.serialization.readNbtSerializableToExisting
@@ -16,8 +16,8 @@ import btpos.mcmods.devutil.forge.datagen.variantDsl
 import btpos.mcmods.devutil.parts.IItemRepresentable_Tag
 import btpos.mcmods.devutil.parts.dropItemInWorld
 import btpos.mcmods.dungeondesignerlib.POWERED
-import btpos.mcmods.dungeondesignerlib.builder.items.ItemFlagVariable
 import btpos.mcmods.dungeondesignerlib.builder.world.dungeonBuilderData
+import btpos.mcmods.dungeondesignerlib.common.nbtadapters.DisplayNameGetter
 import btpos.mcmods.dungeondesignerlib.compiled.saveddata.FlagName
 import btpos.mcmods.dungeondesignerlib.registry.ModBlocks
 import btpos.mcmods.dungeondesignerlib.registry.ModItems
@@ -318,7 +318,7 @@ class TileFlagHolder(pPos: BlockPos, pState: BlockState) : BlockEntity(ModBlocks
 		pFlagName: FlagName? = null,
 		override var onChange: () -> Unit = {},
 		pAddFlagFunc: (String) -> Unit = {}
-	) : ITileState, ICodecSerializable<State> {
+	) : IOnChange, ICodecSerializable<State> {
 		override fun codec() = CODEC
 		override fun copyFrom(other: State) {
 			this.flagName.value = other.flagName.value
@@ -340,17 +340,17 @@ class TileFlagHolder(pPos: BlockPos, pState: BlockState) : BlockEntity(ModBlocks
 				set(value) {
 					field = value
 					// Add this flag to the world data.
-					// I don't really know if we NEED to delete the flag if no one's watching it anymore, but that's something to consider.
+					// I don't know if we might need to delete the flag once no one's watching it anymore, but that's something to consider.
 					if (value != null)
 						pAddFlagFunc(value)
 					
 					onChange()
 				}
 			
-			override fun CompoundTag.readFromTag(): String? = ItemFlagVariable.NbtAdapter(this).name
+			override fun CompoundTag.readFromTag(): String? = DisplayNameGetter(this).nameJson
 			
 			override fun CompoundTag.writeToTag(value: String) {
-				ItemFlagVariable.NbtAdapter(this).name = value
+				DisplayNameGetter(this).nameJson = value
 			}
 		}
 	}
