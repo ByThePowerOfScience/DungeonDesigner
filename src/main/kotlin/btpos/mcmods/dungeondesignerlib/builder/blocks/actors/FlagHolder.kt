@@ -349,9 +349,10 @@ class TileFlagHolder(pPos: BlockPos, pState: BlockState) : BlockEntity(ModBlocks
 					onChange()
 				}
 			
-			override fun CompoundTag.readFromTag(): String? = DisplayNameGetter(this).nameJson
-			
-			override fun CompoundTag.writeToTag(value: String) {
+			override fun CompoundTag.readFromTag() {
+				value = DisplayNameGetter(this).nameJson
+			}
+			override fun CompoundTag.writeToTag() {
 				DisplayNameGetter(this).nameJson = value
 			}
 		}

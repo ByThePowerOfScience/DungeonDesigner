@@ -28,11 +28,10 @@ fun <T : Any> Codec<T>.nullableFieldOf(name: String): MapCodec<T?> {
 
 /**
  * WHY does DFU throw an NPE when you put null as the default value???  Sometimes you just want null to be the default!!!
- * You can't even use [Minecraft's idiom][optionalToNull].  If the value isn't present, it'll throw a NPE.
+ * You can't even use [Minecraft's idiom][optionalToNull].  If the value isn't present, it'll throw a NPE.  I wonder if Mojang knows about that, or if they just assume it still works?
  *
- * I wonder if Mojang knows about this?
- *
- * Anyway, this is the best I could do: at least make it where I didn't have to use manual getters each time and could just use property reference syntax.
+ * Anyway, this is the best I could do: at least make it where I didn't have to use manual getters each time.
+ * Still have to use manual constructor invocations, though...
  */
 inline fun <ENCL, T> MapCodec<Optional<T>>.forNullableGetter(crossinline getter: (ENCL) -> T?): RecordCodecBuilder<ENCL, Optional<T>> {
     return this.forGetter<ENCL> { encl -> Optional.ofNullable(getter(encl)).cast() }
@@ -88,6 +87,11 @@ fun CompoundTag.getIntOrNull(key: String): Int? {
 }
 //endregion
 
+/**
+ * Gets the CompoundTag for the given key if present.
+ *
+ * Otherwise, creates a new CompoundTag and adds it to this object, then returns the newly-created tag.
+ */
 fun CompoundTag.getOrCreateCompound(key: String): CompoundTag {
 	if (!this.contains(key, CompoundTag.TAG_COMPOUND.toInt())) {
 		return CompoundTag().also {
@@ -98,7 +102,7 @@ fun CompoundTag.getOrCreateCompound(key: String): CompoundTag {
 }
 
 /**
- * Macro for "if the value is null, remove the key, else set it using the function
+ * Macro for "if the value is null, remove the key, else set it using the function".
  */
 inline fun <T> CompoundTag.setOrRemove(key: String, value: T?, setter: CompoundTag.(T) -> Unit) {
 	if (value == null)

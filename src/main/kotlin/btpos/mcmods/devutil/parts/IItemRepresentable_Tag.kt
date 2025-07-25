@@ -8,6 +8,7 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
 import net.minecraft.world.phys.Vec3
+import org.jetbrains.annotations.Contract
 import thedarkcolour.kotlinforforge.forge.vectorutil.v3d.toVec3
 
 /**
@@ -15,43 +16,57 @@ import thedarkcolour.kotlinforforge.forge.vectorutil.v3d.toVec3
  */
 interface IItemRepresentable<T> {
 	/**
-	 * The ItemStack to be returned if the value is null.
+	 * The ItemStack to be returned if [writeToItem] returns `null`.
+	 *
 	 * Defaults to [net.minecraft.world.item.ItemStack.EMPTY]
 	 */
-	val ifNull: ItemStack
+	val defaultItemStack: ItemStack
 		get() = ItemStack.EMPTY
 	
 	
 	/**
 	 * The actual value being wrapped.
+	 *
+	 * This is used as the default assignment operator target, but there can be multiple value fields in this class.
 	 */
 	var value: T?
 	
 	/**
 	 * The ItemStack representation of [value].
 	 *
-	 * If the value of [value] is null, returns [ifNull]. (defaults to [ItemStack.EMPTY])
+	 * If the value of [value] is null, returns [defaultItemStack]. (defaults to [ItemStack.EMPTY])
 	 */
 	var asItem: ItemStack
 		get() {
-			if (value == null)
-				return ifNull
-			
-			return convertToItem(value)
+			return writeToItem() ?: defaultItemStack
 		}
 		set(stack) {
 			if (!acceptsItem(stack))
 				return;
 			
-			// if tag is null, also sets to null
-			value = convertFromItem(stack)
+			setFromItem(stack)
 		}
 	
+	/**
+	 * Store this object's state in item form.
+	 *
+	 * Return null to use [defaultItemStack] instead.
+	 */
+	@Contract(pure=true)
+	fun writeToItem(): ItemStack?
 	
-	fun convertToItem(value: T?): ItemStack
+	/**
+	 * Should set the value of [value] based on the ItemStack provided.
+	 */
+	@Contract(pure=false)
+	fun setFromItem(stack: ItemStack)
 	
-	fun convertFromItem(stack: ItemStack): T?
-	
+	/**
+	 * Check whether this should accept the provided itemstack.
+	 *
+	 * @param stack The itemstack the caller is attempting to insert into this object.
+	 */
+	@Contract(pure=true)
 	fun acceptsItem(stack: ItemStack): Boolean
 }
 
@@ -69,15 +84,14 @@ interface IItemRepresentable_Tag<T> : IItemRepresentable<T> {
 		return stack.`is`(defaultItem)
 	}
 	
-	
-	override fun convertToItem(value: T?): ItemStack {
+	override fun writeToItem(): ItemStack {
 		return ItemStack(defaultItem).apply {
-			getOrCreateTag().writeToTag(value!!)
+			getOrCreateTag().writeToTag()
 		}
 	}
 	
-	override fun convertFromItem(stack: ItemStack): T? {
-		return stack.tag?.readFromTag()
+	override fun setFromItem(stack: ItemStack) {
+		stack.tag?.readFromTag()
 	}
 	
 	/**
@@ -85,30 +99,15 @@ interface IItemRepresentable_Tag<T> : IItemRepresentable<T> {
 	 *
 	 * Called in [asItem]'s setter.
 	 */
-	fun CompoundTag.readFromTag(): T?
+	fun CompoundTag.readFromTag()
 	
 	/**
 	 * Serialization function. Puts the value into the ItemStack's root tag.
 	 *
 	 * Called in [asItem]'s getter.
 	 */
-	fun CompoundTag.writeToTag(value: T)
+	fun CompoundTag.writeToTag()
 	
-	/**
-	 * Default implementation of [IItemRepresentable_Tag].
-	 */
-	class Impl<T>(
-		override var value: T? = null,
-		override val defaultItem: Item,
-		val tagReader: CompoundTag.() -> T?,
-		val tagWriter: CompoundTag.(T) -> Unit,
-		override val ifNull: ItemStack = ItemStack.EMPTY
-	) : IItemRepresentable_Tag<T> {
-		override fun CompoundTag.readFromTag(): T? = tagReader()
-		
-		override fun CompoundTag.writeToTag(value: T) = tagWriter(value)
-	}
-
 	// Assignment Overloading
 	@Suppress("UNUSED")
 	fun assign(stack: ItemStack) {
@@ -117,6 +116,34 @@ interface IItemRepresentable_Tag<T> : IItemRepresentable<T> {
 	@Suppress("UNUSED")
 	fun assign(t: T?) {
 		this.value = t
+	}
+	
+	companion object {
+		
+		/**
+		 * Returns a default dynamic implementation of [IItemRepresentable_Tag].
+		 */
+		operator fun <T> invoke(
+			initialValue: T?,
+			defaultItem: Item,
+			tagReader: CompoundTag.() -> T?,
+			tagWriter: CompoundTag.(T?) -> Unit,
+			defaultItemStack: ItemStack = ItemStack.EMPTY
+		) : IItemRepresentable_Tag<T> {
+			return object : IItemRepresentable_Tag<T> {
+				override var value: T? = initialValue
+				override val defaultItem = defaultItem
+				override val defaultItemStack: ItemStack = defaultItemStack
+				
+				override fun CompoundTag.readFromTag() {
+					value = tagReader()
+				}
+				
+				override fun CompoundTag.writeToTag() {
+                    tagWriter(initialValue)
+                }
+			}
+		}
 	}
 }
 
@@ -129,3 +156,5 @@ fun IItemRepresentable_Tag<*>.dropItemInWorld(pLevel: Level, pPos: BlockPos): Bo
 	this.value = null
 	return true
 }
+
+interface IItemRepresentable_OneValue

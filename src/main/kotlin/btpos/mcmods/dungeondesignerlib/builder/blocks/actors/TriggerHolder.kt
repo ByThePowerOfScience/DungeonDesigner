@@ -4,8 +4,6 @@ package btpos.mcmods.dungeondesignerlib.builder.blocks.actors
 
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
 import btpos.mcmods.devutil.common.ext.vanilla.data.forNullableGetter
-import btpos.mcmods.devutil.common.ext.vanilla.data.nullableFieldOf
-import btpos.mcmods.devutil.common.ext.vanilla.data.optionalToNull
 import btpos.mcmods.devutil.common.ext.vanilla.world.blockEntity
 import btpos.mcmods.devutil.common.ext.vanilla.world.getMaxCornerBlock
 import btpos.mcmods.devutil.common.ext.vanilla.world.getMinCornerBlock
@@ -54,9 +52,7 @@ import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.block.state.StateDefinition
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.BlockHitResult
-import net.minecraft.world.phys.Vec3
 import net.minecraftforge.client.model.generators.BlockStateProvider
-import java.util.Optional
 import java.util.UUID
 import kotlin.jvm.optionals.getOrNull
 
@@ -237,11 +233,9 @@ class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TR
 		}
 		//endregion
 		
-		var triggerDelegate = TriggerVarItemConverter(pTrigger, onChange).apply {
-			name = pItemName
-		}
+		var triggerDelegate = TriggerVarItemConverter(pTrigger, pItemName, onChange)
 		
-		class TriggerVarItemConverter(triggerIn: AABB?, override var onChange: () -> Unit = {}) : IOnChange, IItemRepresentable_Tag<AABB> {
+		class TriggerVarItemConverter(triggerIn: AABB? = null, nameIn: String? = null, override var onChange: () -> Unit = {}) : IOnChange, IItemRepresentable_Tag<AABB> {
 			override val defaultItem: Item
 				get() = ModItems.TRIGGER_ITEM
 			
@@ -250,18 +244,17 @@ class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TR
 			/**
 			 * Also store the anvil name of the item so we can restore it with its name when it's popped out
 			 */
-			var name: String? by notify(null)
+			var name: String? by notify(nameIn)
 			
-			override fun CompoundTag.readFromTag(): AABB? {
+			override fun CompoundTag.readFromTag() {
 				name = DisplayNameGetter(this).nameJson
-				
-				return TriggerBoundsTag(this).toAABB()
+				value = TriggerBoundsTag(this).toAABB()
 			}
 			
-			override fun CompoundTag.writeToTag(value: AABB) {
+			override fun CompoundTag.writeToTag() {
 				DisplayNameGetter(this).nameJson = name
-				
-                TriggerBoundsTag(ItemTriggerVariable.getOrCreateTriggerNbt(this)).putAABB(value)
+                
+                value?.let { TriggerBoundsTag(ItemTriggerVariable.getOrCreateTriggerNbt(this)).putAABB(it) }
 			}
 		}
 		
