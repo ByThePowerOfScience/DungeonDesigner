@@ -16,24 +16,10 @@ import net.minecraft.world.level.LevelReader
 import net.minecraft.world.level.SignalGetter
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.chunk.ChunkAccess
-import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
 
 inline fun LevelAccessor.getChunk(pos: ChunkPos): ChunkAccess = this.getChunk(pos.x, pos.z)
 
-
-fun AABB.getMinCorner(): Vec3 {
-	return Vec3(minX, minY, minZ)
-}
-fun AABB.getMaxCorner(): Vec3 {
-	return Vec3(maxX, maxY, maxZ)
-}
-fun AABB.getMinCornerBlock(): BlockPos {
-	return BlockPos(minX.toInt(), minY.toInt(), minZ.toInt())
-}
-fun AABB.getMaxCornerBlock(): BlockPos {
-	return BlockPos(maxX.toInt(), maxY.toInt(), maxZ.toInt())
-}
 
 /**
  * Macro to drop an itemstack in the world at the given position.

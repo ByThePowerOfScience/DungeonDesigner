@@ -17,9 +17,6 @@ import net.minecraft.world.item.TooltipFlag
 import net.minecraft.world.item.context.UseOnContext
 import net.minecraft.world.level.Level
 import net.minecraftforge.client.model.generators.ItemModelProvider
-import org.jetbrains.annotations.VisibleForTesting
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.contract
 
 /**
  * Draws a trigger in the world.

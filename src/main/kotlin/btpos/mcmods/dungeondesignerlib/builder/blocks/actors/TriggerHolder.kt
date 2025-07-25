@@ -235,29 +235,6 @@ class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TR
 		
 		var triggerDelegate = TriggerVarItemConverter(pTrigger, pItemName, onChange)
 		
-		class TriggerVarItemConverter(triggerIn: AABB? = null, nameIn: String? = null, override var onChange: () -> Unit = {}) : IOnChange, IItemRepresentable_Tag<AABB> {
-			override val defaultItem: Item
-				get() = ModItems.TRIGGER_ITEM
-			
-			override var value: AABB? by notify(triggerIn)
-			
-			/**
-			 * Also store the anvil name of the item so we can restore it with its name when it's popped out
-			 */
-			var name: String? by notify(nameIn)
-			
-			override fun CompoundTag.readFromTag() {
-				name = DisplayNameGetter(this).nameJson
-				value = TriggerBoundsTag(this).toAABB()
-			}
-			
-			override fun CompoundTag.writeToTag() {
-				DisplayNameGetter(this).nameJson = name
-                
-                value?.let { TriggerBoundsTag(ItemTriggerVariable.getOrCreateTriggerNbt(this)).putAABB(it) }
-			}
-		}
-		
 		var trigger: AABB? by triggerDelegate::value
 		var placer: UUID? by notify(pPlacer)
 		var itemName: String? by triggerDelegate::name
@@ -300,5 +277,29 @@ class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TR
 	override fun load(tag: CompoundTag) {
 		super.load(tag)
 		tag.readNbtSerializableToExisting(TAGKEY_STATE, state)
+	}
+}
+
+
+class TriggerVarItemConverter(triggerIn: AABB? = null, nameIn: String? = null, override var onChange: () -> Unit = {}) : IOnChange, IItemRepresentable_Tag<AABB> {
+	override val defaultItem: Item
+		get() = ModItems.TRIGGER_ITEM
+	
+	override var value: AABB? by notify(triggerIn)
+	
+	/**
+	 * Also store the anvil name of the item so we can restore it with its name when it's popped out
+	 */
+	var name: String? by notify(nameIn)
+	
+	override fun CompoundTag.readFromTag() {
+		name = DisplayNameGetter(this).nameJson
+		value = TriggerBoundsTag(this).toAABB()
+	}
+	
+	override fun CompoundTag.writeToTag() {
+		DisplayNameGetter(this).nameJson = name
+		
+		value?.let { TriggerBoundsTag(ItemTriggerVariable.getOrCreateTriggerNbt(this)).putAABB(it) }
 	}
 }

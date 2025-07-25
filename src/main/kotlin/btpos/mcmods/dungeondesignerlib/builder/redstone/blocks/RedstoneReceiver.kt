@@ -1,4 +1,4 @@
-@file:Suppress("OVERRIDE_DEPRECATION")
+@file:Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
 
 package btpos.mcmods.dungeondesignerlib.builder.redstone.blocks
 
@@ -167,8 +167,13 @@ class TileRedstoneReceiver(pPos: BlockPos, pState: BlockState)
         super.load(pTag)
         channel = pTag.getInt("channel")
     }
+    
     override fun saveToItem(pStack: ItemStack) {
         super.saveToItem(pStack)
+        
+        with(WirelessRedstoneItem) {
+            pStack.getOrCreateData().channel = channel // for display
+        }
     }
 }
 
