@@ -2,6 +2,7 @@
 
 package btpos.mcmods.dungeondesignerlib.builder.blocks.actors
 
+import btpos.mcmods.devutil.common.ext.kotlin.isNullOrTrue
 import btpos.mcmods.devutil.common.ext.kotlin.safeGetDelegate
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
 import btpos.mcmods.devutil.common.ext.vanilla.data.nullableFieldOf
@@ -12,7 +13,7 @@ import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.ext.vanilla.plus
 import btpos.mcmods.devutil.common.ext.vanilla.world.BlockInclusiveAABB
 import btpos.mcmods.devutil.common.ext.vanilla.world.BlockInclusiveAABB.Companion.toBlockInclusive
-import btpos.mcmods.devutil.common.ext.vanilla.world.dropItem
+import btpos.mcmods.devutil.common.ext.vanilla.world.dropItemAboveBlock
 import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
 import btpos.mcmods.devutil.common.macros.ChatUtils.toComponent
 import btpos.mcmods.devutil.common.structure.IOnChange
@@ -22,7 +23,6 @@ import btpos.mcmods.devutil.common.util.serialization.readNbtSerializableToExist
 import btpos.mcmods.devutil.forge.datagen.IBlockDataGen
 import btpos.mcmods.devutil.forge.datagen.variantDsl
 import btpos.mcmods.devutil.parts.IItemRepresentable_Tag
-import btpos.mcmods.devutil.parts.dropItemInWorld
 import btpos.mcmods.devutil.util.properties.LazyCache
 import btpos.mcmods.dungeondesignerlib.WorldUtils
 import btpos.mcmods.dungeondesignerlib.POWERED
@@ -54,9 +54,12 @@ import net.minecraftforge.client.model.generators.BlockStateProvider
 import com.mojang.datafixers.util.Pair
 import com.mojang.serialization.Codec
 import com.mojang.serialization.codecs.RecordCodecBuilder
+import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.storage.loot.LootParams
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams
+import net.minecraft.world.phys.Vec3
+import thedarkcolour.kotlinforforge.forge.vectorutil.v3d.toVec3
 import kotlin.jvm.optionals.getOrNull
 
 class BlockTriggerHolder(
@@ -180,6 +183,13 @@ class BlockTriggerHolder(
 		}.sidedResult
 	}
 	
+	override fun getDrops(pState: BlockState, pParams: LootParams.Builder): MutableList<ItemStack> {
+		val sup = super.getDrops(pState, pParams)
+		val item = (pParams.getOptionalParameter(LootContextParams.BLOCK_ENTITY) as? TileTriggerHolder)?.triggerItem ?: return sup
+		sup += item
+		return sup
+	}
+	
 	override fun <T : BlockEntity> getTicker(pLevel: Level, pState: BlockState, pBlockEntityType: BlockEntityType<T>): BlockEntityTicker<T>? {
 		return if (pLevel.isClientSide) null else BlockEntityTicker { level, pos, state, ent ->
 			if (ent !is TileTriggerHolder || ent.triggerBoundingBox == null)
@@ -230,7 +240,10 @@ class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TR
      * Return true if successfully dropped, false otherwise.
      */
     fun dropItem(): Boolean {
-        return state.triggerDelegate.dropItemInWorld(level ?: return false, blockPos)
+		if (!hasTrigger() || level?.isClientSide.isNullOrTrue())
+			return false
+		
+		return (level as ServerLevel).dropItemAboveBlock(triggerItem, blockPos)
     }
 	
 	override fun saveAdditional(tag: CompoundTag) {

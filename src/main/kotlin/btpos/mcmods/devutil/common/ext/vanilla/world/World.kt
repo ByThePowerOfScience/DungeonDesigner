@@ -5,6 +5,7 @@ package btpos.mcmods.devutil.common.ext.vanilla.world
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.resources.ResourceKey
+import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.entity.player.Player
@@ -17,21 +18,35 @@ import net.minecraft.world.level.SignalGetter
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.chunk.ChunkAccess
 import net.minecraft.world.phys.Vec3
+import thedarkcolour.kotlinforforge.forge.vectorutil.v3d.toVec3
 
 inline fun LevelAccessor.getChunk(pos: ChunkPos): ChunkAccess = this.getChunk(pos.x, pos.z)
 
 
 /**
  * Macro to drop an itemstack in the world at the given position.
+ *
+ * @param pos The position of the block the item should be spawned on top of.
+ * @param velocity Velocity of the spawned item. Defaults to random.
  */
-fun Level.dropItem(item: ItemStack, pos: Vec3, velocity: Vec3? = null) {
+fun ServerLevel.dropItem(item: ItemStack, pos: Vec3, velocity: Vec3? = null): Boolean {
 	val ent = if (velocity != null) {
 		ItemEntity(this, pos.x, pos.y, pos.z, item, velocity.x, velocity.y, velocity.z)
 	} else {
 		ItemEntity(this, pos.x, pos.y, pos.z, item)
 	}
 	
-	this.addFreshEntity(ent)
+	return this.addFreshEntity(ent)
+}
+
+/**
+ * Macro to drop an itemstack 1 y-level above a block, since I'm doing that a lot.
+ *
+ * @param pos The position of the block the item should be spawned on top of.
+ * @param velocity Velocity of the spawned item. Defaults to [0, 0.1, 0]. Set to `null` for random.
+ */
+fun ServerLevel.dropItemAboveBlock(item: ItemStack, pos: BlockPos, velocity: Vec3? = Vec3(0.0, 0.1, 0.0)): Boolean {
+	return this.dropItem(item, pos.above().toVec3(), velocity)
 }
 
 /**
@@ -77,6 +92,13 @@ inline fun LevelReader.runOnServer(action: () -> Unit): AfterSidedRun {
     if (!this.isClientSide)
         action()
     
+	return AfterSidedRun(this)
+}
+
+inline fun LevelReader.runOnServerLevel(action: ServerLevel.() -> Unit): AfterSidedRun {
+	if (!this.isClientSide)
+		action(this as ServerLevel)
+	
 	return AfterSidedRun(this)
 }
 

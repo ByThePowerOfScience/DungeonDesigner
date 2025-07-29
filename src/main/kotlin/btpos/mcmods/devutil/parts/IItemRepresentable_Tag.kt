@@ -1,15 +1,10 @@
 package btpos.mcmods.devutil.parts
 
-import btpos.mcmods.devutil.common.ext.vanilla.world.dropItem
 import btpos.mcmods.devutil.misc.KotlinAssignmentOverloadTarget
-import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
-import net.minecraft.world.level.Level
-import net.minecraft.world.phys.Vec3
 import org.jetbrains.annotations.Contract
-import thedarkcolour.kotlinforforge.forge.vectorutil.v3d.toVec3
 
 /**
  * Wraps some value, and provides functions converting it to and from an [net.minecraft.world.item.ItemStack].
@@ -150,14 +145,3 @@ interface IItemRepresentable_Tag<T> : IItemRepresentable<T> {
 }
 
 
-fun IItemRepresentable_Tag<*>.dropItemInWorld(pLevel: Level, pPos: BlockPos): Boolean {
-	if (this.value == null) {
-		return false;
-	}
-	
-	pLevel.dropItem(this.asItem, pPos.above().toVec3(), Vec3(0.0, 0.1, 0.0))
-	this.value = null
-	return true
-}
-
-interface IItemRepresentable_OneValue

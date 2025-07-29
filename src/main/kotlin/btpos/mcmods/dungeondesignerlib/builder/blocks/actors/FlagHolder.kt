@@ -7,6 +7,9 @@ import btpos.mcmods.devutil.common.ext.vanilla.data.forNullableGetter
 import btpos.mcmods.devutil.common.ext.vanilla.data.nullableFieldOf
 import btpos.mcmods.devutil.common.ext.vanilla.plus
 import btpos.mcmods.devutil.common.ext.vanilla.world.blockEntity
+import btpos.mcmods.devutil.common.ext.vanilla.world.dropItemAboveBlock
+import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
+import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServerLevel
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.structure.IOnChange
 import btpos.mcmods.devutil.common.util.serialization.ICodecSerializable
@@ -16,7 +19,6 @@ import btpos.mcmods.devutil.forge.datagen.IBlockDataGen
 import btpos.mcmods.devutil.forge.datagen.rotateForEachHorizontal
 import btpos.mcmods.devutil.forge.datagen.variantDsl
 import btpos.mcmods.devutil.parts.IItemRepresentable_Tag
-import btpos.mcmods.devutil.parts.dropItemInWorld
 import btpos.mcmods.dungeondesignerlib.POWERED
 import btpos.mcmods.dungeondesignerlib.builder.world.dungeonBuilderData
 import btpos.mcmods.dungeondesignerlib.common.nbtadapters.DisplayNameGetter
@@ -36,6 +38,7 @@ import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.Item
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.context.BlockPlaceContext
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.Level
@@ -74,34 +77,31 @@ abstract class AbstractFlagHolderBlock(props: Properties) : Block(props), Entity
 	{
 		val itemInHand = pPlayer.getItemInHand(pHand)
 		
-		if (pLevel.isClientSide) {
-			return InteractionResult.SUCCESS
-		}
-		
 		val ourEnt = pLevel.blockEntity(pPos, ModBlocks.FLAG_BLOCK_ENTITY) ?: return InteractionResult.PASS
 		
 		// Pop out trigger item into world if it exists
-		if (pPlayer.isShiftKeyDown) {
-			ourEnt.state.flagName.dropItemInWorld(pLevel, pPos)
-			return InteractionResult.SUCCESS
+		if (pPlayer.isShiftKeyDown && ourEnt.hasFlag()) {
+			return pLevel.runOnServerLevel {
+				dropItemAboveBlock(ourEnt.flagItem, pPos)
+			}.sidedResult
 		}
 		
 		// Else add it to the block
-		if (itemInHand.`is`(ModItems.FLAG_ITEM) && ourEnt.state.flagName.value == null) {
-			ourEnt.state.flagName.asItem = itemInHand
-			if (ourEnt.state.flagName.value != null)
-				itemInHand.shrink(1)
-			
-			return InteractionResult.CONSUME
+		if (itemInHand.`is`(ModItems.FLAG_ITEM) && !ourEnt.hasFlag()) {
+			return pLevel.runOnServer {
+				ourEnt.flagItem = itemInHand
+				if (ourEnt.hasFlag())
+					itemInHand.shrink(1)
+			}.sidedResult
 		}
 		
 		
 		// Finally, if no other action has occurred, show the name of the flag.
-		if (ourEnt.state.flagName.value == null) {
+		if (!ourEnt.hasFlag()) {
 			pPlayer.sendSystemMessage("No flag set".asComponent())
 		} else {
 			pPlayer.sendSystemMessage(
-					Component.literal("Flag: ") + (Component.Serializer.fromJson(ourEnt.state.flagName.value!!) ?: ourEnt.state.flagName.value.asComponent()).withStyle(ChatFormatting.BLUE)
+					Component.literal("Flag: ") + (Component.Serializer.fromJson(ourEnt.flagName!!) ?: ourEnt.flagName.asComponent()).withStyle(ChatFormatting.BLUE)
 			)
 		}
 		
@@ -165,7 +165,7 @@ class BlockFlagReader(props: Properties) : AbstractFlagHolderBlock(props) {
 				return@BlockEntityTicker
 			
 			val isPowered = state.getValue(POWERED)
-			val ourFlag = ent.state.flagName.value ?: run {
+			val ourFlag = ent.flagName ?: run {
 				if (isPowered) {
 					level.setBlockAndUpdate(pos, state.with(POWERED, false))
 				}
@@ -298,7 +298,7 @@ class BlockFlagWriter(props: Properties, /** True = is a "setter", false = is a 
 		if (!pLevel.hasSignal(pPos.relative(pDirection), pDirection))
 			return;
 		
-		val ourFlag = pLevel.blockEntity(pPos, ModBlocks.FLAG_BLOCK_ENTITY)!!.state.flagName.value ?: return
+		val ourFlag = pLevel.blockEntity(pPos, ModBlocks.FLAG_BLOCK_ENTITY)!!.flagName ?: return
 		
 		val newvalue = isSetter
 		
@@ -363,7 +363,16 @@ class TileFlagHolder(pPos: BlockPos, pState: BlockState) : BlockEntity(ModBlocks
 		const val TAGKEY_STATE = "state"
 	}
 	
-	val state: State = State(onChange=this::setChanged, pAddFlagFunc={ (this.level as? ServerLevel)?.dataStorage?.dungeonBuilderData?.addFlag(it) })
+	private val state: State = State(onChange=this::setChanged, pAddFlagFunc={ (this.level as? ServerLevel)?.dataStorage?.dungeonBuilderData?.addFlag(it) })
+	
+	val flagName: String?
+		get() = state.flagName.value
+	var flagItem: ItemStack
+		get() = state.flagName.asItem
+		set(value) {
+			state.flagName.asItem = value
+		}
+	
 	
 	override fun saveAdditional(pTag: CompoundTag) {
 		super.saveAdditional(pTag)
@@ -373,5 +382,9 @@ class TileFlagHolder(pPos: BlockPos, pState: BlockState) : BlockEntity(ModBlocks
 	override fun load(pTag: CompoundTag) {
 		super.load(pTag)
 		pTag.readNbtSerializableToExisting(TAGKEY_STATE, state)
+	}
+	
+	fun hasFlag(): Boolean {
+		return this.flagName != null
 	}
 }
