@@ -49,6 +49,7 @@ import net.minecraft.world.level.block.state.StateDefinition
 import net.minecraft.world.level.block.state.properties.BlockStateProperties
 import net.minecraft.world.phys.BlockHitResult
 import net.minecraftforge.client.model.generators.BlockStateProvider
+import kotlin.jvm.optionals.getOrNull
 
 abstract class AbstractFlagHolderBlock(props: Properties) : Block(props), EntityBlock {
 	init {
@@ -329,8 +330,8 @@ class TileFlagHolder(pPos: BlockPos, pState: BlockState) : BlockEntity(ModBlocks
 		companion object {
 			val CODEC = RecordCodecBuilder.create { inst ->
 				inst.group(
-						Codec.STRING.optionalFieldOf("flag_name").forNullableGetter({ it: State -> it.flagName.value })
-				).apply(inst, { pFlagName-> State(pFlagName.orElse(null)) })
+						Codec.STRING.nullableFieldOf("flag_name") { it: State -> it.flagName.value }
+				).apply(inst, { pFlagName-> State(pFlagName.getOrNull()) })
 			}
 		}
 		
@@ -350,7 +351,7 @@ class TileFlagHolder(pPos: BlockPos, pState: BlockState) : BlockEntity(ModBlocks
 				}
 			
 			override fun CompoundTag.readFromTag() {
-				value = DisplayNameGetter(this).nameJson
+				value = DisplayNameGetter(this).nameJson ?: return
 			}
 			override fun CompoundTag.writeToTag() {
 				DisplayNameGetter(this).nameJson = value

@@ -3,11 +3,16 @@ package btpos.mcmods.devutil.common.structure
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
+/**
+ * Standardized interface for objects that invoke a callback whenever they change.
+ *
+ * Implementers should make sure that [onChange]'s setter also sets onChange for any members that also implement this class.
+ */
 interface IOnChange {
     /**
      * Callback to be invoked whenever this object's state is changed. (Usually to updated the NBT serialization).
      *
-     * Implementers need to make sure the setter also sets onChange for any member IChangeListeners.
+     * Implementers need to make sure the setter also sets onChange for any members that also implement this class.
      */
     var onChange: () -> Unit
     

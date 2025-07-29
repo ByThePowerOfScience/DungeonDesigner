@@ -3,29 +3,30 @@
 package btpos.mcmods.dungeondesignerlib.builder.blocks.actors
 
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
-import btpos.mcmods.devutil.common.ext.vanilla.data.forNullableGetter
+import btpos.mcmods.devutil.common.ext.vanilla.data.nullableFieldOf
+import btpos.mcmods.devutil.common.ext.vanilla.destructuring.component1
+import btpos.mcmods.devutil.common.ext.vanilla.destructuring.component2
 import btpos.mcmods.devutil.common.ext.vanilla.world.blockEntity
-import btpos.mcmods.devutil.common.ext.vanilla.world.getMaxCornerBlock
-import btpos.mcmods.devutil.common.ext.vanilla.world.getMinCornerBlock
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.ext.vanilla.plus
+import btpos.mcmods.devutil.common.ext.vanilla.world.BlockInclusiveAABB
+import btpos.mcmods.devutil.common.ext.vanilla.world.BlockInclusiveAABB.Companion.toBlockInclusive
 import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
 import btpos.mcmods.devutil.common.macros.ChatUtils.toComponent
 import btpos.mcmods.devutil.common.structure.IOnChange
 import btpos.mcmods.devutil.common.util.serialization.ICodecSerializable
-import btpos.mcmods.devutil.common.util.serialization.Serialization
 import btpos.mcmods.devutil.common.util.serialization.putNbtSerializable
 import btpos.mcmods.devutil.common.util.serialization.readNbtSerializableToExisting
 import btpos.mcmods.devutil.forge.datagen.IBlockDataGen
 import btpos.mcmods.devutil.forge.datagen.variantDsl
 import btpos.mcmods.devutil.parts.IItemRepresentable_Tag
 import btpos.mcmods.devutil.parts.dropItemInWorld
+import btpos.mcmods.devutil.util.properties.LazyCache
 import btpos.mcmods.dungeondesignerlib.WorldUtils
 import btpos.mcmods.dungeondesignerlib.POWERED
 import btpos.mcmods.dungeondesignerlib.builder.items.ItemTriggerVariable
 import btpos.mcmods.dungeondesignerlib.registry.ModBlocks
 import btpos.mcmods.dungeondesignerlib.registry.ModItems
-import btpos.mcmods.dungeondesignerlib.builder.nbt.TriggerBoundsTag
 import btpos.mcmods.dungeondesignerlib.common.nbtadapters.DisplayNameGetter
 import com.mojang.serialization.Codec
 import com.mojang.serialization.codecs.RecordCodecBuilder
@@ -55,6 +56,7 @@ import net.minecraft.world.phys.BlockHitResult
 import net.minecraftforge.client.model.generators.BlockStateProvider
 import java.util.UUID
 import kotlin.jvm.optionals.getOrNull
+import com.mojang.datafixers.util.Pair
 
 class BlockTriggerHolder(
 	props: Properties
@@ -168,40 +170,41 @@ class BlockTriggerHolder(
 		
 		// Else add it to the block
 		if (itemInHand.`is`(ModItems.TRIGGER_ITEM) && ourEnt.state.trigger == null) {
-			ourEnt.state.triggerDelegate.asItem = itemInHand
-			itemInHand.shrink(1)
-			
-			return InteractionResult.CONSUME
+			return pLevel.runOnServer {
+				ourEnt.state.triggerDelegate.asItem = itemInHand
+				itemInHand.shrink(1)
+			}.sidedResult
 		}
 		
 		// Finally, if no other action has occurred, show the bounds.
-		if (ourEnt.state.trigger == null) {
-			pPlayer.sendSystemMessage("No bbox".asComponent())
-		} else {
-			pPlayer.sendSystemMessage(
+		return pLevel.runOnServer {
+			if (ourEnt.state.trigger == null) {
+				pPlayer.sendSystemMessage("No bbox".asComponent())
+			} else {
+				pPlayer.sendSystemMessage(
 					Component.literal("Trigger bounds: ")
-					+ ourEnt.state.trigger!!.getMinCornerBlock().toComponent().withStyle(ChatFormatting.YELLOW)
-					+ " to "
-					+ ourEnt.state.trigger!!.getMaxCornerBlock().toComponent().withStyle(ChatFormatting.YELLOW)
-			)
-		}
-		
-		return InteractionResult.CONSUME
+							+ ourEnt.state.trigger!!.component1().toComponent().withStyle(ChatFormatting.YELLOW)
+							+ " to "
+							+ ourEnt.state.trigger!!.component2().toComponent().withStyle(ChatFormatting.YELLOW)
+				)
+			}
+		}.sidedResult
 	}
 	
 	override fun <T : BlockEntity> getTicker(pLevel: Level, pState: BlockState, pBlockEntityType: BlockEntityType<T>): BlockEntityTicker<T>? {
-		return BlockEntityTicker { level, pos, state, ent ->
+		return if (pLevel.isClientSide) null else BlockEntityTicker { level, pos, state, ent ->
 			if (ent !is TileTriggerHolder || ent.state.trigger == null)
 				return@BlockEntityTicker
 			
-			val isPowered = state.getValue(POWERED)
 			
 			if (shouldStopCheckingTrigger(level, pos)) {
 				// Stop ticking if receiving redstone power from above
 				return@BlockEntityTicker
 			}
 			
-			if (isPowered != WorldUtils.isPlayerInBoundingBox(ent.state.trigger!!, level)) {
+			val isPowered = state.getValue(POWERED)
+			
+			if (isPowered != WorldUtils.isPlayerInBoundingBox(ent.state.triggerDelegate.cachedInclusiveAABB!!.bb, level)) {
 				level.setBlockAndUpdate(pos, state.with(POWERED, !isPowered))
 			}
 		}
@@ -212,32 +215,34 @@ class BlockTriggerHolder(
 
 class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TRIGGER_BLOCK_ENTITY, p0, p1) {
 	class TriggerHolderState(
-		pTrigger: AABB? = null,
+		pTrigger: Pair<BlockPos, BlockPos>? = null,
 		pPlacer: UUID? = null,
 		pItemName: String? = null,
 		pOnChange: () -> Unit = {}
 	) : IOnChange, ICodecSerializable<TriggerHolderState>
 	{
 		override var onChange = pOnChange
-			set(value) {
-				field = value
-				triggerDelegate.onChange = value
+			set(callback) {
+				field = callback
+				triggerDelegate.onChange = callback
 			}
 		
 		//region Codec
 		override fun codec() = CODEC
 		override fun copyFrom(other: TriggerHolderState) {
-			this.trigger = other.trigger
+			this.triggerDelegate = other.triggerDelegate.also {
+				it.onChange = this.onChange
+			}
 			this.placer = other.placer
-			this.itemName = other.itemName
 		}
 		//endregion
 		
-		var triggerDelegate = TriggerVarItemConverter(pTrigger, pItemName, onChange)
+		var triggerDelegate = TriggerVarItemConverter(pTrigger, pItemName, pOnChange)
 		
-		var trigger: AABB? by triggerDelegate::value
+		val trigger by triggerDelegate::value
+		val itemName by triggerDelegate::name
+		
 		var placer: UUID? by notify(pPlacer)
-		var itemName: String? by triggerDelegate::name
 		
 		companion object {
 			const val TAGKEY_BOUNDS = "trigger"
@@ -246,14 +251,14 @@ class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TR
 			
 			val CODEC = RecordCodecBuilder.create {
 				it.group(
-					Serialization.CODEC_AABB_BLOCK.fieldOf(TAGKEY_BOUNDS).forGetter(TriggerHolderState::trigger),
-					UUIDUtil.CODEC.fieldOf(TAGKEY_PLACER).forGetter(TriggerHolderState::placer),
-					Codec.STRING.optionalFieldOf(TAGKEY_NAME).forNullableGetter(TriggerHolderState::itemName)
+					Codec.pair(BlockPos.CODEC, BlockPos.CODEC).nullableFieldOf(TAGKEY_BOUNDS, TriggerHolderState::trigger),
+					UUIDUtil.CODEC.nullableFieldOf(TAGKEY_PLACER, TriggerHolderState::placer),
+					Codec.STRING.nullableFieldOf(TAGKEY_NAME, TriggerHolderState::itemName)
 				).apply(it,
                     { pTrigger, pPlacer, pItemName ->
                         TriggerHolderState(
-                            pTrigger,
-                            pPlacer,
+                            pTrigger.getOrNull(),
+                            pPlacer.getOrNull(),
                             pItemName.getOrNull()
                         )
                     })
@@ -265,9 +270,7 @@ class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TR
 		private const val TAGKEY_STATE = "trigger"
 	}
 	
-	val state = TriggerHolderState().also {
-		it.onChange = this::setChanged
-	}
+	val state = TriggerHolderState(pOnChange=this::setChanged)
 	
 	override fun saveAdditional(tag: CompoundTag) {
 		super.saveAdditional(tag)
@@ -281,25 +284,53 @@ class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TR
 }
 
 
-class TriggerVarItemConverter(triggerIn: AABB? = null, nameIn: String? = null, override var onChange: () -> Unit = {}) : IOnChange, IItemRepresentable_Tag<AABB> {
+class TriggerVarItemConverter(triggerIn: Pair<BlockPos, BlockPos>? = null, nameIn: String? = null, override var onChange: () -> Unit = {}) : IOnChange, IItemRepresentable_Tag<Pair<BlockPos, BlockPos>> {
 	override val defaultItem: Item
 		get() = ModItems.TRIGGER_ITEM
 	
-	override var value: AABB? by notify(triggerIn)
+	/**
+	 * A cache of the bounding box for the trigger we check every tick in [BlockTriggerHolder.getTicker].
+	 *
+	 * Derived from [value], and invalidated by [value]'s setter.
+	 */
+	val cachedInclusiveAABB: BlockInclusiveAABB? by LazyCache { value?.run { AABB(first, second).toBlockInclusive() } }
 	
 	/**
-	 * Also store the anvil name of the item so we can restore it with its name when it's popped out
+	 * Store the corners as BlockPos instead of the value as an AABB so we can return the item in the same way it was given,
+	 * since the AABB constructor changes the corners around.
 	 */
-	var name: String? by notify(nameIn)
+	override var value: Pair<BlockPos, BlockPos>? = triggerIn
+		set(v) {
+			field = v
+			onChange()
+			(::cachedInclusiveAABB.getDelegate() as LazyCache<*>).invalidate()
+		}
+	
+	/**
+	 * Also store the anvil name of the item so we can restore it with its name when it's popped out.
+	 *
+	 * We don't need to hook this up to [notify] since it's always set at the same time as [value] in [readFromTag].
+	 */
+	var name: String? = nameIn
+		private set
 	
 	override fun CompoundTag.readFromTag() {
-		name = DisplayNameGetter(this).nameJson
-		value = TriggerBoundsTag(this).toAABB()
+		// Reject if trigger bounds is incomplete on this stack
+		val tagData = ItemTriggerVariable.getTriggerBoundsNbt(this)?.let(ItemTriggerVariable::NbtAdapter)?.takeIf { it.isComplete() } ?: return
+		val nameJson = DisplayNameGetter(this).nameJson
+		
+		value = Pair(tagData.first!!, tagData.second!!)
+		name = nameJson
 	}
 	
 	override fun CompoundTag.writeToTag() {
 		DisplayNameGetter(this).nameJson = name
 		
-		value?.let { TriggerBoundsTag(ItemTriggerVariable.getOrCreateTriggerNbt(this)).putAABB(it) }
+		val (vFirst, vSecond) = value!!
+		ItemTriggerVariable.getOrCreateTriggerNbt(this).let(ItemTriggerVariable::NbtAdapter).run {
+			first = vFirst
+			second = vSecond
+		}
 	}
 }
+

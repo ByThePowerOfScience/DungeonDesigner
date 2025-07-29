@@ -84,7 +84,9 @@ interface IItemRepresentable_Tag<T> : IItemRepresentable<T> {
 		return stack.`is`(defaultItem)
 	}
 	
-	override fun writeToItem(): ItemStack {
+	override fun writeToItem(): ItemStack? {
+		if (value == null)
+			return null
 		return ItemStack(defaultItem).apply {
 			getOrCreateTag().writeToTag()
 		}

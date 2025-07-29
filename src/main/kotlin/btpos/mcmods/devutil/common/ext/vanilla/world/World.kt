@@ -79,3 +79,10 @@ inline fun LevelReader.runOnServer(action: () -> Unit): AfterSidedRun {
     
 	return AfterSidedRun(this)
 }
+
+inline fun LevelReader.runOnClient(action: () -> Unit): AfterSidedRun {
+	if (this.isClientSide)
+		action()
+	
+	return AfterSidedRun(this)
+}
