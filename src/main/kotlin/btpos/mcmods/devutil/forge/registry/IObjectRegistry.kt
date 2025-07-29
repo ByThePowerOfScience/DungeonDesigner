@@ -1,5 +1,6 @@
 package btpos.mcmods.devutil.forge.registry
 
+import btpos.mcmods.devutil.common.ext.kotlin.safeGetDelegate
 import com.mojang.datafixers.types.Type
 import net.minecraft.core.BlockPos
 import net.minecraft.resources.ResourceLocation
@@ -27,7 +28,7 @@ interface IObjectRegistry<T> {
 	fun getId(prop: KProperty0<*>): ResourceLocation {
 		prop.isAccessible = true
 		
-		return (prop.getDelegate() as? ObjectHolderDelegate<*>)?.registryObject?.id
+		return prop.safeGetDelegate<ObjectHolderDelegate<*>>()?.registryObject?.id
 		       ?: throw IllegalStateException("Property $prop is not a registry delegate!")
 	}
 	
