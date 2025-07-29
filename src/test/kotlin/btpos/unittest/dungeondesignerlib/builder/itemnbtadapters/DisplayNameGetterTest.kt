@@ -1,4 +1,4 @@
-package btpos.mcmods.dungeondesignerlib.itemnbtadapters
+package btpos.test.dungeondesignerlib.itemnbtadapters
 
 import btpos.mcmods.devutil.common.ext.vanilla.data.getOrCreateCompound
 import btpos.mcmods.dungeondesignerlib.common.nbtadapters.DisplayNameGetter

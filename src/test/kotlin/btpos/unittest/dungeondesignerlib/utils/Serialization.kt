@@ -1,4 +1,4 @@
-package btpos.unittests.utils
+package btpos.unittest.dungeondesignerlib.utils
 
 import btpos.mcmods.devutil.common.util.serialization.Serialization
 import btpos.mcmods.devutil.common.util.serialization.Serialization.decodeTag

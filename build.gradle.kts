@@ -51,7 +51,7 @@ println(
 minecraft {
     mappings("parchment", "2023.09.03-1.20.1")
     accessTransformer(file("src/main/resources/META-INF/accesstransformer.cfg"))
-
+    
     runs.all {
         mods {
             workingDirectory(project.file("run"))
@@ -66,30 +66,70 @@ minecraft {
             }
         }
     }
-
+    
     runs.run {
         create("client") {
             property("log4j.configurationFile", "log4j2.xml")
             jvmArg("-XX:+AllowEnhancedClassRedefinition")
             args("--username", "Player")
         }
-
+        
         create("server") {}
-        create("gameTestServer") {}
+        create("gameTestServer") {
+            // TODO hook this up to run JUnit. Maybe a Mixin in the test sources that injects into the gametest runner to run JUnit as well?
+            sources(sourceSets.main.get(), sourceSets.test.get())
+        }
         create("data") {
             workingDirectory(project.file("run"))
             args(
-                    "--mod",
-                    mod_id,
-                    "--all",
-                    "--output",
-                    file("src/generated/resources/"),
-                    "--existing",
-                    file("src/main/resources")
+                "--mod",
+                mod_id,
+                "--all",
+                "--output",
+                file("src/generated/resources/"),
+                "--existing",
+                file("src/main/resources")
             )
         }
     }
 }
+/**
+ * Configure a task that will only exist in the future, because Gradle can't find the `run` tasks since they don't exist yet.
+ */
+@Suppress("UNCHECKED_CAST")
+inline fun <reified T : Task> TaskContainer.configureFuture(name: String, crossinline action: T.() -> Unit) {
+    (this.matching { it is T && it.name == name } as TaskCollection<T>).configureEach { action() }
+}
+
+
+//tasks.configureFuture<JavaExec>("runGameTestServer") {
+//    val newClasspath = layout.buildDirectory.file("classpath/customGameTestClasspath.txt").get().asFile
+//
+//    /*doFirst { // maybe this will work???
+//        val classpathFile = project.layout.buildDirectory.file("classpath/runGameTestServer_minecraftClasspath.txt").get().asFile
+//
+//        val existing = classpathFile.readLines().toSet()
+//
+//        val newFilesToAdd =
+//            sequenceOf(configurations.testRuntimeClasspath.get(),  layout.buildDirectory.dir("classes/kotlin/test").get().asFileTree.files)
+//                .flatMap { it }.distinct()
+//                .filter { "kotlin-test" in it.name || "kotlin" !in it.name }
+//                .map { it.absolutePath }
+//                .toSet()
+//
+//        val classpathLines = newFilesToAdd + existing
+//
+//        newClasspath.also {
+//            it.delete()
+//            it.createNewFile()
+//            it.writeText(classpathLines.joinToString("\n"))
+//        }
+//    }*/
+//    classpath(configurations.testRuntimeClasspath.get(), sourceSets.test.get())
+//    jvmArgs("-DlegacyClassPath.file=${newClasspath.absolutePath}")
+//    args("--mixin.config", "dungeondesignertests.mixins.json")
+//}
+
 
 sourceSets.main.configure { resources.srcDirs("src/generated/resources/") }
 
@@ -100,9 +140,9 @@ repositories {
         url = uri("https://thedarkcolour.github.io/KotlinForForge/")
     }
     
-    maven(url="https://maven.blamejared.com") // For Bookshelf
-    maven(url="https://maven.createmod.net") // For Catnip renderer
-    maven(url="https://modmaven.dev/") // For Catnip's flywheel dependency
+    maven(url = "https://maven.blamejared.com") // For Bookshelf
+    maven(url = "https://maven.createmod.net") // For Catnip renderer
+    maven(url = "https://modmaven.dev/") // For Catnip's flywheel dependency
 //    maven(url="https://jitpack.io")
 }
 
@@ -114,7 +154,7 @@ dependencies {
     minecraft("net.minecraftforge:forge:$mc_version-$forge_version")
     annotationProcessor("org.spongepowered:mixin:0.8.5:processor")
     implementation("thedarkcolour:kotlinforforge:4.11.0")
-    
+
 //    shadow("com.github.bythepowerofscience:brigadierdsl:1.0.0")
     
     implementation(fg.deobf("net.darkhax.bookshelf:Bookshelf-Forge-1.20.1:20.2.12"))
@@ -125,7 +165,9 @@ dependencies {
     
     runtimeOnly(fg.deobf("dev.engine-room.flywheel:flywheel-forge-1.20.1:1.0+"))
     
-    testImplementation(kotlin("test"))
+    // I have to make these implementation since the gametests are technically not "test" tasks
+    implementation(kotlin("test"))
+    implementation("org.junit.platform:junit-platform-launcher:1.10.1")
 }
 //
 //tasks.shadowJar {
@@ -152,13 +194,13 @@ tasks.withType<Jar> {
     manifest {
         attributes(
             mapOf(
-                    "Specification-Title" to mod_id,
-                    "Specification-Vendor" to vendor,
-                    "Specification-Version" to "1",
-                    "Implementation-Title" to project.name,
-                    "Implementation-Version" to project.version.toString(),
-                    "Implementation-Vendor" to vendor,
-                    "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(Date())
+                "Specification-Title" to mod_id,
+                "Specification-Vendor" to vendor,
+                "Specification-Version" to "1",
+                "Implementation-Title" to project.name,
+                "Implementation-Version" to project.version.toString(),
+                "Implementation-Vendor" to vendor,
+                "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(Date())
             )
         )
     }
@@ -168,16 +210,16 @@ tasks.withType<Jar> {
 
 tasks.processResources {
     val replaceProperties = mapOf(
-            "minecraft_version" to mc_version,
-            "minecraft_version_range" to project.properties["minecraft_version_range"],
-            "forge_version" to forge_version,
-            "forge_version_range" to project.properties["forge_version_range"],
-            "mod_id" to mod_id,
-            "mod_name" to project.properties["mod_name"],
-            "mod_license" to project.properties["mod_license"],
-            "mod_version" to version,
-            "mod_authors" to project.properties["mod_authors"],
-            "mod_description" to project.properties["mod_description"]
+        "minecraft_version" to mc_version,
+        "minecraft_version_range" to project.properties["minecraft_version_range"],
+        "forge_version" to forge_version,
+        "forge_version_range" to project.properties["forge_version_range"],
+        "mod_id" to mod_id,
+        "mod_name" to project.properties["mod_name"],
+        "mod_license" to project.properties["mod_license"],
+        "mod_version" to version,
+        "mod_authors" to project.properties["mod_authors"],
+        "mod_description" to project.properties["mod_description"]
     )
     
     inputs.properties(replaceProperties)

@@ -1,7 +1,7 @@
-package btpos.mcmods.dungeondesignerlib.itemnbtadapters
+package btpos.test.dungeondesignerlib.itemnbtadapters
 
 import btpos.mcmods.devutil.common.ext.vanilla.data.toCompoundTag
-import btpos.mcmods.dungeondesignerlib.builder.nbt.TriggerBoundsTag
+import btpos.mcmods.dungeondesignerlib.builder.items.NbtAdapter
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import org.junit.jupiter.api.assertAll
@@ -9,7 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * @see btpos.mcmods.dungeondesignerlib.builder.nbt.TriggerBoundsTag
+ * @see NbtAdapter
  */
 class TriggerVariableTest {
     @Test
@@ -21,7 +21,7 @@ class TriggerVariableTest {
             put("second", secondPos.toCompoundTag())
         }
         
-        val data = TriggerBoundsTag(startingTag)
+        val data = NbtAdapter(startingTag)
         
         assertAll(
             { assertEquals(firstPos, data.first) },
@@ -38,7 +38,7 @@ class TriggerVariableTest {
             put("second", secondPos.toCompoundTag())
         }
         
-        val actual = TriggerBoundsTag(CompoundTag()).apply {
+        val actual = NbtAdapter(CompoundTag()).apply {
             first = firstPos
             second = secondPos
         }.tag
