@@ -40,13 +40,14 @@ interface ICodecSerializable<SELF> : IReverseCloneable<SELF>, INbtSerializable
 		}
 	}
 	
-	@Suppress("IfThenToSafeAccess")
 	override fun writeAsNbt(tag: CompoundTag) {
-		val newtag = codec().encode(self(), NbtOps.INSTANCE, null).resultOrPartial(MOD_LOGGER::error).getOrNull() as? CompoundTag
+		val newtag = codec().encode(self(), NbtOps.INSTANCE, null).getOrThrow(false) { MOD_LOGGER.error("[ICodecSerializable] Error when writing {} to NBT: \"{}\"", this@ICodecSerializable.javaClass.name, it) } as? CompoundTag
 		if (newtag != null) {
 			newtag.allKeys.forEach {
 				tag[it] = newtag[it]!!
 			}
+		} else {
+			MOD_LOGGER.error("[ICodecSerializable] Error when writing {} to NBT: object serialized to non-Compound Tag.", this.javaClass.simpleName)
 		}
 	}
 }
