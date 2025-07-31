@@ -37,5 +37,10 @@ object Serialization {
 		return this.encodeStart(NbtOps.INSTANCE, item).getOrThrow(false, { LOGGER.error("Fail codec encode: {}", it) })
 	}
 	
-	// TODO figure out if the codec is causing performance issues
+	// TODO figure out if all of the codec use is causing performance issues
+	
+	/**
+	 * A pair codec that actually supports "primitive" values (e.g. BlockPos). Idk why it only supports compounds natively.
+	 */
+	fun <A, B> pairCodec(first: Codec<A>, second: Codec<B>) = FixedPairCodec(first, second)
 }

@@ -18,6 +18,7 @@ import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
 import btpos.mcmods.devutil.common.macros.ChatUtils.toComponent
 import btpos.mcmods.devutil.common.structure.IOnChange
 import btpos.mcmods.devutil.common.util.serialization.ICodecSerializable
+import btpos.mcmods.devutil.common.util.serialization.Serialization
 import btpos.mcmods.devutil.common.util.serialization.putNbtSerializable
 import btpos.mcmods.devutil.common.util.serialization.readNbtSerializableToExisting
 import btpos.mcmods.devutil.forge.datagen.IBlockDataGen
@@ -285,12 +286,11 @@ class TriggerHolderState(
     
     companion object {
         const val TAGKEY_BOUNDS = "trigger"
-        const val TAGKEY_PLACER = "placer"
         const val TAGKEY_NAME = "item_name"
         
         val CODEC = RecordCodecBuilder.create {
             it.group(
-                Codec.pair(BlockPos.CODEC, BlockPos.CODEC).nullableFieldOf(TAGKEY_BOUNDS, TriggerHolderState::corners),
+				Serialization.pairCodec(BlockPos.CODEC, BlockPos.CODEC).nullableFieldOf(TAGKEY_BOUNDS, TriggerHolderState::corners),
                 Codec.STRING.nullableFieldOf(TAGKEY_NAME, TriggerHolderState::itemName)
             ).apply(
                 it,
