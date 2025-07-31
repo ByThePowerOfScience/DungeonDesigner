@@ -153,18 +153,17 @@ class BlockTriggerHolder(
 		// Pop out trigger item into world if it exists
 		if (pPlayer.isShiftKeyDown) {
             return pLevel.runOnServer {
-                if (ourEnt.dropItem()) {
-                    // idk man
-                }
+				ourEnt.dropItem()
+				ourEnt.triggerItem = ItemStack.EMPTY
             }.sidedResult
 		}
 		
 		// Else add it to the block
 		if (itemInHand.`is`(ModItems.TRIGGER_ITEM) && !ourEnt.hasTrigger()) {
 			return pLevel.runOnServer {
-				ourEnt.setTriggerFromitem(itemInHand)
-				if (ourEnt.hasTrigger())
+				if (ourEnt.setItemWithFeedback(itemInHand)) {
 					itemInHand.shrink(1)
+				}
 			}.sidedResult
 		}
 		
@@ -220,19 +219,11 @@ class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TR
 	
 	private val state = TriggerHolderState(pOnChange=this::setChanged)
     
-    val triggerCorners by state::corners
+    var triggerCorners by state::corners
     val triggerBoundingBox get() = state.aabb?.bb
     
-	var triggerItem: ItemStack
-        get() = state.triggerDelegate.asItem
-		set(value) {
-            state.triggerDelegate.asItem = value
-        }
+	var triggerItem: ItemStack by state.triggerDelegate::asItem
 	
-    fun setTriggerFromitem(stack: ItemStack) {
-        state.triggerDelegate.asItem = stack
-    }
-    
     fun hasTrigger() = state.hasTrigger()
     
     /**
@@ -246,6 +237,10 @@ class TileTriggerHolder(p0: BlockPos, p1: BlockState) : BlockEntity(ModBlocks.TR
 		
 		return (level as ServerLevel).dropItemAboveBlock(triggerItem, blockPos)
     }
+	
+	fun setItemWithFeedback(stack: ItemStack): Boolean {
+		return state.triggerDelegate.setItemWithFeedback(stack)
+	}
 	
 	override fun saveAdditional(tag: CompoundTag) {
 		super.saveAdditional(tag)
@@ -279,9 +274,9 @@ class TriggerHolderState(
     
     val triggerDelegate = TriggerVarItemConverter(pTrigger, pItemName, pOnChange)
     
-    val corners get() = triggerDelegate.value
-    val itemName get() = triggerDelegate.name
-    val aabb get() = triggerDelegate.cachedInclusiveAABB
+    var corners by triggerDelegate::value
+    val itemName by triggerDelegate::name
+    val aabb by triggerDelegate::cachedInclusiveAABB
     
     
     companion object {
@@ -339,27 +334,38 @@ class TriggerVarItemConverter(triggerIn: Pair<BlockPos, BlockPos>? = null, nameI
     var name: String? = nameIn
         private set
     
-    override fun CompoundTag.readFromTag() {
+    override fun CompoundTag.readFromTag(): Boolean {
         // Reject if trigger bounds is incomplete on this stack
-        val tagData = ItemTriggerVariable.getTriggerBoundsNbt(this)?.let(ItemTriggerVariable::NbtAdapter)?.takeIf { it.isComplete() } ?: return
+        val tagData = ItemTriggerVariable.getTriggerBoundsNbt(this)?.let(ItemTriggerVariable::NbtAdapter)?.takeIf { it.isComplete() } ?: return false
         val nameJson = DisplayNameGetter(this).nameJson
         
         value = Pair(tagData.first!!, tagData.second!!)
         name = nameJson
+		
+		return true
     }
     
-    override fun CompoundTag.writeToTag() {
+    override fun CompoundTag.writeToTag(): Boolean {
         DisplayNameGetter(this).nameJson = name
         
-        val (vFirst, vSecond) = value!!
+        val (vFirst, vSecond) = value ?: return false
         ItemTriggerVariable.getOrCreateTriggerNbt(this).let(ItemTriggerVariable::NbtAdapter).run {
             first = vFirst
             second = vSecond
         }
+		
+		return true
     }
     
     fun copyFrom(other: TriggerVarItemConverter) {
         this.name = other.name
         this.value = other.value
     }
+	
+	override fun onEmptyItemStack(): Boolean {
+		this.name = null
+		this.value = null
+		
+		return true
+	}
 }
