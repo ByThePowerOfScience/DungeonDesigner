@@ -1,12 +1,12 @@
 pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        maven("https://maven.minecraftforge.net/")
-        maven("https://maven.parchmentmc.org")
-        
-    }
+	repositories {
+		maven(url="https://maven.fabricmc.net/")
+		maven(url="https://maven.architectury.dev/")
+		maven(url="https://files.minecraftforge.net/maven/")
+		gradlePluginPortal()
+	}
 }
 
-plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.5.0"
-}
+rootProject.name = "dungeondesigner"
+
+include("common", "fabric", "neoforge")

@@ -1,7 +1,0 @@
-{
-  "parent": "minecraft:block/cube_column",
-  "textures": {
-    "end": "dungeondesigner:block/redstone/receiver/receiver_top_unpowered",
-    "side": "dungeondesigner:block/redstone/receiver/receiver_sides_unpowered"
-  }
-}
