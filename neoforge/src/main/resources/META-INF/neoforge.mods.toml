@@ -1,0 +1,38 @@
+modLoader = "javafml"
+loaderVersion = "[2,)"
+#issueTrackerURL = ""
+license = "MIT"
+
+[[mods]]
+modId = "dungeondesignerarch"
+version = "${version}"
+displayName = "DungeonDesignerArch"
+authors = ""
+description = '''
+
+'''
+#logoFile = ""
+
+[[dependencies.dungeondesignerarch]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.dungeondesignerarch]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.8,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.dungeondesignerarch]]
+modId = "architectury"
+type = "required"
+versionRange = "[17.0.8,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[mixins]]
+config = "dungeondesignerarch.mixins.json"
