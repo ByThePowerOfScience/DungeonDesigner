@@ -1,7 +1,11 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
 	id("dev.architectury.loom") version "1.10-SNAPSHOT" apply false
 	id("architectury-plugin") version "3.4-SNAPSHOT"
 	id("com.github.johnrengelman.shadow") version "8.1.1" apply false
+	id("dungeondesigner-preprocessor") apply false
 	kotlin("jvm") version "2.1.21"
 }
 
@@ -26,6 +30,9 @@ subprojects {
 	apply(plugin="dev.architectury.loom")
 	apply(plugin="architectury-plugin")
 	apply(plugin="maven-publish")
+	
+	if (project.name != "common")
+		apply(plugin="dungeondesigner-preprocessor")
 	
 	base {
 		// Set up a suffixed format for the mod jar names, e.g. `example-fabric`.
@@ -54,6 +61,8 @@ subprojects {
 			officialMojangMappings()
 			parchment("org.parchmentmc.data:parchment-1.21.8:2025.07.20@zip")
 		})
+		
+		implementation(rootProject.libs.kotlin.reflect)
 	}
 	
 	java {
@@ -71,12 +80,13 @@ subprojects {
 		options.encoding = "UTF-8"
 	}
 	
-//	tasks.withType<KotlinCompile> {
-//		compilerOptions {
-//			jvmTarget.set(JvmTarget.JVM_17)
-//			freeCompilerArgs.add("-Xcontext-receivers")
-//		}
-//	}
+	tasks.withType<KotlinCompile> {
+		compilerOptions {
+			jvmTarget.set(JvmTarget.JVM_21)
+			freeCompilerArgs.add("-Xcontext-receivers")
+		}
+	}
+	
 	
 	tasks.withType<Test> {
 		useJUnitPlatform()

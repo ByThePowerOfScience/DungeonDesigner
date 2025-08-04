@@ -2,6 +2,7 @@
 
 package btpos.mcmods.devutil.common.ext.vanilla.world
 
+import btpos.mcmods.devutil.common.kfflib.forge.vectorutil.v3d.toVec3
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.resources.ResourceKey
@@ -18,7 +19,6 @@ import net.minecraft.world.level.SignalGetter
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.chunk.ChunkAccess
 import net.minecraft.world.phys.Vec3
-import thedarkcolour.kotlinforforge.forge.vectorutil.v3d.toVec3
 
 inline fun LevelAccessor.getChunk(pos: ChunkPos): ChunkAccess = this.getChunk(pos.x, pos.z)
 
@@ -85,7 +85,7 @@ inline fun SignalGetter.getSignalReceivedFrom(ourPos: BlockPos, checkingDir: Dir
 @JvmInline
 value class AfterSidedRun(val level: LevelReader) {
 	inline val sidedResult: InteractionResult
-		get() = InteractionResult.sidedSuccess(level.isClientSide)
+		get() = sidedSuccess(level.isClientSide)
 }
 
 inline fun LevelReader.runOnServer(action: () -> Unit): AfterSidedRun {

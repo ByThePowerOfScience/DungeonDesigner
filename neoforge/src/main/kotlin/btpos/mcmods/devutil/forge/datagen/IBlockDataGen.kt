@@ -2,44 +2,41 @@
 
 package btpos.mcmods.devutil.forge.datagen
 
+import btpos.mcmods.devutil.common.structure.blocks.IObjectData
 import net.minecraft.resources.ResourceLocation
-import net.minecraftforge.client.model.generators.BlockStateProvider
-import net.minecraftforge.client.model.generators.ItemModelProvider
-import net.minecraftforge.client.model.generators.ModelProvider
+
+typealias BlockStateProvider = Unit
 
 interface IBlockDataGen : IObjectData {
 	fun getStatesAndModels(provider: BlockStateProvider) {
 		provider.buildModelsAndStates()
 	}
-	
+
 	fun BlockStateProvider.buildModelsAndStates()
 	
-	fun BlockStateProvider.blockLoc(path: String): ResourceLocation {
-		return modLoc("${ModelProvider.BLOCK_FOLDER}/$path")
-	}
-	
+
 	fun String.powered(isPowered: Boolean): String {
 		return this + if (isPowered) "_powered" else "_unpowered"
 	}
 }
 
-context(BlockStateProvider)
+context(IObjectData)
 fun String.blockLoc(): ResourceLocation {
-	return modLoc("${ModelProvider.BLOCK_FOLDER}/$this")
+	return modLoc("block/$this")
 }
 
-context(ItemModelProvider)
+context(IObjectData)
 fun String.itemLoc(): ResourceLocation {
-	return modLoc("${ModelProvider.ITEM_FOLDER}/$this")
+	return modLoc("item/$this")
 }
 
 interface IItemDataGen : IObjectData {
 	fun getModels(provider: ItemModelProvider) {
 		provider.buildModels()
 	}
-	
+
 	fun ItemModelProvider.buildModels()
-	
+
 	fun ItemModelProvider.basicItem() {
 		this.basicItem(modLoc(id))
 	}

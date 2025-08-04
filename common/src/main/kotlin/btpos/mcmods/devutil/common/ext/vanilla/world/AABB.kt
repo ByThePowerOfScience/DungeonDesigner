@@ -4,8 +4,6 @@ import net.minecraft.core.BlockPos
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
 import org.jetbrains.annotations.Contract
-import thedarkcolour.kotlinforforge.forge.vectorutil.v3d.unaryMinus
-import kotlin.math.sign
 
 fun AABB.getMinCorner(): Vec3 {
 	return Vec3(minX, minY, minZ)
@@ -56,3 +54,6 @@ value class BlockInclusiveAABB private constructor(val bb: AABB) {
 	}
 }
 
+fun AABB(pos1: BlockPos, pos2: BlockPos): AABB {
+	return AABB(pos1.x.toDouble(), pos1.y.toDouble(), pos1.z.toDouble(), pos2.x.toDouble(), pos2.y.toDouble(), pos2.z.toDouble())
+}

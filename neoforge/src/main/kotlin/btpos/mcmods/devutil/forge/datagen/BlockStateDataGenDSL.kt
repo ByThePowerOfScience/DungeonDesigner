@@ -1,13 +1,28 @@
 package btpos.mcmods.devutil.forge.datagen
 
-import btpos.mcmods.devutil.forge.datagen.BlockStateMacros.BaseVariantBuilder
-import btpos.mcmods.devutil.forge.datagen.BlockStateMacros.MultipartBuilder
+import com.mojang.math.Quadrant
+import com.mojang.serialization.MapCodec
+import net.minecraft.client.data.models.BlockModelGenerators
+import net.minecraft.client.data.models.MultiVariant
+import net.minecraft.client.data.models.blockstates.BlockModelDefinitionGenerator
+import net.minecraft.client.data.models.blockstates.MultiVariantGenerator
+import net.minecraft.client.data.models.blockstates.PropertyDispatch
+import net.minecraft.client.renderer.block.model.BlockModelDefinition
+import net.minecraft.client.renderer.block.model.BlockStateModel
+import net.minecraft.client.renderer.block.model.Variant
+import net.minecraft.client.renderer.block.model.VariantMutator
 import net.minecraft.core.Direction
 import net.minecraft.resources.ResourceLocation
-import net.minecraft.util.random.Weighted
 import net.minecraft.util.random.WeightedList
 import net.minecraft.world.level.block.Block
+import net.minecraft.world.level.block.state.BlockState
+import net.minecraft.world.level.block.state.StateDefinition
+import net.minecraft.world.level.block.state.properties.BlockStateProperties
 import net.minecraft.world.level.block.state.properties.Property
+import net.neoforged.neoforge.client.model.block.CustomBlockModelDefinition
+import java.util.Optional
+import java.util.function.Function
+import java.util.function.Supplier
 import kotlin.collections.iterator
 
 
@@ -137,16 +152,112 @@ class BlockStateBuilder(val mod_id: String) {
 	}
 }
 
-class ModelData {
-	lateinit var modelFile: String
-	var weight: Int = 1
-	var yRot: Int? = null
-	var xRot: Int? = null
-	var uv_lock: Boolean? = null
+/**
+ * Interface for any platform-specific blockstate JSON's "model" block
+ */
+interface IPlatformBlockStateModel {
+	fun setModelFile(value: ResourceLocation)
+	fun setXRotation(angle: Int)
+	fun setYRotation(angle: Int)
+	fun setUVLock(value: Boolean)
+	fun setWeight(value: Int)
 }
 
-data class PartialBlockstate(private val propertyValues: MutableMap<Property<*>, Comparable<*>> = mutableMapOf(), val models: MutableList<ModelData> = mutableListOf()) {
-	fun <T : Comparable<T>> withProperty(prop: Property<T>, value: T): PartialBlockstate {
+interface IPlatformBlockStateVariantBuilder {
+	fun build(partials: List<PartialBlockState>)
+}
+
+class NeoForgePlatformBlockStateBuilder(val block: Block, val builder: BlockModelGenerators) : IPlatformBlockStateVariantBuilder {
+	class VariantModelTransformer : VariantMutator, IPlatformBlockStateModel {
+		var transformer: Function<Variant, Variant> = Function { it }
+		
+		override fun apply(t: Variant): Variant {
+			return transformer.apply(t)
+		}
+		
+		//region IPlatformBSVB
+		fun Int.toQuadrant(): Quadrant {
+			return when (this % 360) {
+				0 -> Quadrant.R0
+				90 -> Quadrant.R90
+				180 -> Quadrant.R180
+				270 -> Quadrant.R270
+				else -> throw IllegalArgumentException("Invalid angle: $this. Only multiples of 90 are allowed in NeoForge Datagen.")
+			}
+		}
+		
+		override fun setModelFile(value: ResourceLocation) {
+			// NO-OP
+		}
+		
+		override fun setXRotation(angle: Int) {
+			transformer = transformer.andThen { it.withXRot(angle.toQuadrant()) }
+		}
+		
+		override fun setYRotation(angle: Int) {
+			transformer = transformer.andThen { it.withYRot(angle.toQuadrant()) }
+		}
+		
+		override fun setUVLock(value: Boolean) {
+			transformer = transformer.andThen { it.withUvLock(value) }
+		}
+		
+		override fun setWeight(value: Int) {
+			// NO-OP
+		}
+		//endregion
+	}
+	
+	fun PartialBlockState.toVariants(): List<Pair<Int?, Variant>> {
+		return this.models.map {
+			it.weight to Variant(it.modelLoc).with(VariantModelTransformer().apply(it::build))
+		}
+	}
+	
+	
+	override fun build(partials: List<PartialBlockState>) {
+		partials.forEach { it ->
+		
+		}
+		val variantsForDispatch = partials[0].models.let {
+			val newArr = arrayOfNulls<Variant>(it.size)
+			for (i in it.indices) {
+				newArr[i] = Variant(it[i].modelLoc)
+			}
+			BlockModelGenerators.variants(*newArr)
+		}
+	}
+}
+
+
+fun variantDsl(block: Block, action: BaseVariantBuilder.() -> Unit) {
+	val rootBuilder = BlockStateVariantBuilder()
+	BaseVariantBuilder({ PartialBlockState() }, rootBuilder::addPartialState).also {
+		it.action()
+	}
+	
+}
+
+class ModelData {
+	lateinit var modelLoc: ResourceLocation
+	var weight: Int? = null
+	var xRot: Int? = null
+	var yRot: Int? = null
+	var uv_lock: Boolean? = null
+	
+	internal fun build(platformModel: IPlatformBlockStateModel) {
+		with (platformModel) {
+			setModelFile(modelLoc)
+			xRot?.let { setXRotation(it) }
+			yRot?.let { setYRotation(it) }
+			uv_lock?.let { setUVLock(it) }
+			weight?.let { setWeight(it) }
+		}
+	}
+}
+
+data class PartialBlockState(internal val propertyValues: MutableMap<Property<*>, Comparable<*>> = mutableMapOf(), internal val models: MutableList<ModelData> = mutableListOf()) {
+	fun <T : Comparable<T>> withProperty(prop: Property<T>, value: T): PartialBlockState {
 		propertyValues[prop] = value
 		return this
 	}
@@ -154,221 +265,224 @@ data class PartialBlockstate(private val propertyValues: MutableMap<Property<*>,
 	fun addModel(data: ModelData) {
 		this.models += data
 	}
+}
+
+class BlockStateVariantBuilder {
+	internal val partialStates = mutableListOf<PartialBlockState>()
 	
-	fun build(): Pair<Map<Property<*>, Comparable<*>>, WeightedList<ModelData>> {
-		
-		return propertyValues to WeightedList.of(models.map { Weighted(it, it.weight) })
+	fun addPartialState(state: PartialBlockState) {
+		partialStates += state
 	}
 }
 
-object BlockStateMacros {
+/**
+ * Only allows for selecting a block's property, like AXIS
+ */
+@BlockStateDataGen
+class BaseVariantBuilder internal constructor(
 	/**
-	 * Only allows for selecting a block's property, like AXIS
+	 * Assemble the partial state up to this point from scratch, with all of the built-up blockstate properties tacked on.
 	 */
-	@BlockStateDataGen
-	class BaseVariantBuilder(
-		/**
-		 * Get the partial state for this branch, made fresh from the base builder with all previous properties applied.
-		 *
-		 * Identical to tacking on every property yourself.
-		 */
-		val getPartialState: () -> PartialBlockstate
-	) {
-		/**
-		 * AXIS {
-		 *  ...
-		 * }
-		 */
-		operator fun <U : Comparable<U>> Property<U>.invoke(action: VariantBuilderPropertySwitch<U>.() -> Unit) {
-			VariantBuilderPropertySwitch(this, getPartialState).action()
-		}
-		
-		/**
-		 * This function calls [ConfiguredModel.Builder.addModel]. Don't call it unless you want to register this twice.
-		 * Unlike the standard builder, this keeps you at the nested blockstate after being invoked.
-		 */
-		fun model(action: ModelData.() -> Unit) {
-			
-			getPartialState().addModel()
-			
-			currentModelBuilder = modelBuilder // save it for the next model block
-		}
-		
-		fun build() {
-			currentModelBuilder?.addModel() // delay calling addModel so we don't call it early
-		}
+	private val getPartialState: () -> PartialBlockState,
+	/**
+	 * Called with this partial state so we add it to the main builder
+	 */
+	private val onFinishPartial: (PartialBlockState) -> Unit
+) {
+	/**
+	 * AXIS {
+	 *  ...
+	 * }
+	 */
+	operator fun <U : Comparable<U>> Property<U>.invoke(action: VariantBuilderPropertySwitch<U>.() -> Unit) {
+		VariantBuilderPropertySwitch(this, getPartialState, onFinishPartial).action()
 	}
+	
+	var currentPartial: PartialBlockState? = null
 	
 	/**
-	 * Only allows for selecting a property value, like Axis.Y
+	 * Add a model for this set of properties
 	 */
-	@BlockStateDataGen
-	class VariantBuilderPropertySwitch<T : Comparable<T>>(
-		private val prop: Property<T>,
-		private val stateRestorer: () -> PartialBlockstate
-	) {
-		/**
-		 * ```
-		 * Axis.Y {
-		 *
-		 * }
-		 * ```
-		 */
-		operator fun T.invoke(action: BaseVariantBuilder.() -> Unit) {
-			BaseVariantBuilder({ stateRestorer().withProperty(prop, this) }).run {
-				action()
-				build()
-			}
-		}
+	fun model(action: ModelData.() -> Unit) {
+		if (currentPartial == null)
+			currentPartial = getPartialState()
+		
+		currentPartial!!.addModel(ModelData().apply(action))
 	}
 	
-	
-	
-	@MultiPartDataGenDsl
-	class MultipartBuilder {
-		private val parts = mutableListOf<MultipartPartBuilder>()
+	internal fun build() {
+		if (currentPartial == null)
+			return
 		
-		fun part(action: MultipartPartBuilder.() -> Unit) {
-			parts += MultipartPartBuilder().apply(action)
-		}
-		
-		internal fun build(forgeBuilder: MultiPartBlockStateBuilder) {
-			var partBuilder = forgeBuilder
-			for (part in parts) {
-				partBuilder = partBuilder.apply(part::build)
-			}
-		}
-	}
-	
-	@MultiPartDataGenDsl
-	class MultipartPartBuilder {
-		private val modelConfigs = mutableListOf<ConfiguredModel.Builder<*>.() -> Unit>()
-		
-		fun model(modelConfig: ConfiguredModel.Builder<*>.() -> Unit) {
-			this.modelConfigs += modelConfig
-		}
-		
-		lateinit var condition: ConditionBlock
-		
-		fun or(action: ConditionBlock.() -> Unit): ConditionBlock {
-			return ConditionBlock(true).apply(action)
-		}
-		
-		fun and(action: ConditionBlock.() -> Unit): ConditionBlock {
-			return ConditionBlock(false).apply(action)
-		}
-		
-		internal fun build(builder: MultiPartBlockStateBuilder): MultiPartBlockStateBuilder { // end() SHOULD return `this`, but just to be safe:
-			require(modelConfigs.isNotEmpty()) { "Cannot have a part with no model!" }
-			require(::condition.isInitialized) { "Multipart model must have a condition." }
-			
-			var modelBuilder = builder.part() // init part
-			
-			modelBuilder.let(modelConfigs.first()) // do first model
-			
-			if (modelConfigs.size > 1) { // call nextmodel instead of addmodel
-				for (i in 1..<modelConfigs.size) {
-					modelBuilder = modelBuilder.nextModel()
-					modelBuilder.apply(modelConfigs[i])
-				}
-			}
-			
-			var conditionBuilder = modelBuilder.addModel()
-			
-			if (condition.isOr)
-				conditionBuilder = conditionBuilder.useOr()
-			
-			for (cond in condition.listOfConditions) {
-				@Suppress("UNCHECKED_CAST") // If I don't explicitly cast this, the _Kotlin compiler itself_ will freeze.
-				conditionBuilder = when (cond) {
-					is ConditionType.NestedCondBlock -> {
-						val block = cond.block
-						val nested = conditionBuilder.nestedGroup()
-						block.applyToCondGroup(nested)
-						nested.endNestedGroup().end()
-					}
-					is ConditionType.CondPair<*> -> conditionBuilder.condition(cond.property as Property<Comparable<Any>>, *(cond.values as Array<Comparable<Any>>))
-				}
-			}
-			
-			return conditionBuilder.end()
-		}
-	}
-	
-	internal sealed class ConditionType {
-		class CondPair<T : Comparable<T>>(val property: Property<T>, vararg val values: T) : ConditionType()
-		
-		class NestedCondBlock(val block: ConditionBlock) : ConditionType()
-	}
-	
-	@MultiPartDataGenDsl
-	class ConditionBlock(internal var isOr: Boolean = false) {
-		internal val listOfConditions = mutableListOf<ConditionType>()
-		
-		operator fun <T : Comparable<T>> Property<T>.invoke(vararg condition: T) {
-			listOfConditions += ConditionType.CondPair(this, *condition)
-		}
-		
-		/**
-		 * Allows `WEST_REDSTONE in arrayOf(NONE, LEFT, RIGHT, UP)`
-		 * but without needing inline reified so we can keep listOfConditions private
-		 */
-		operator fun <T : Comparable<T>> Array<T>.contains(property: Property<T>): Boolean {
-			listOfConditions += ConditionType.CondPair(property, *this)
-			return true
-		}
-		
-		fun or(action: ConditionBlock.() -> Unit) {
-			listOfConditions += ConditionType.NestedCondBlock(ConditionBlock(true).apply(action))
-		}
-		
-		fun and(action: ConditionBlock.() -> Unit) {
-			listOfConditions += ConditionType.NestedCondBlock(ConditionBlock(false).apply(action))
-		}
-		
-		
-		internal fun applyToCondGroup(group: ForgeCondGroup) {
-			var group = group
-			if (isOr) {
-				group = group.useOr()
-			}
-			
-			for (cond in listOfConditions) {
-				@Suppress("UNCHECKED_CAST")
-				group = when (cond) {
-					is ConditionType.CondPair<*> -> group.condition(cond.property as Property<Comparable<Any>>, *(cond.values as Array<Comparable<Any>>))
-					is ConditionType.NestedCondBlock -> {
-						val nested = group.nestedGroup()
-						cond.block.applyToCondGroup(nested)
-						nested.endNestedGroup()
-					}
-				}
-			}
-		}
+		onFinishPartial(currentPartial!!)
 	}
 }
 
-fun BlockStateProvider.variantDsl(block: Block, action: BaseVariantBuilder.() -> Unit) {
-	val builder = this.getVariantBuilder(block)
-	BaseVariantBuilder({ builder.partialState() }).action()
-}
-
-fun BlockStateProvider.multipartDsl(block: Block, configuration: MultipartBuilder.() -> Unit) {
-	val dslBuilder = MultipartBuilder().apply(configuration)
-	this.getMultipartBuilder(block).apply(dslBuilder::build)
-}
-
-private typealias ForgeCondGroup = MultiPartBlockStateBuilder.PartBuilder.ConditionGroup
-
-fun BlockStateMacros.VariantBuilderPropertySwitch<Direction>.rotateForEachHorizontal(model: BlockModelBuilder, additionalAction:  ConfiguredModel.Builder<*>.(Int, Direction) -> Unit = { idx, dir ->}) {
-	for ((i, dir) in listOf(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST).iterator().withIndex()) {
-		dir {
-			model {
-				modelFile(model)
-				if (i != 0)
-					rotationY(i * 90)
-				additionalAction(i, dir)
-			}
-		}
+/**
+ * Only allows for selecting a property value, like Axis.Y
+ */
+@BlockStateDataGen
+class VariantBuilderPropertySwitch<T : Comparable<T>> internal constructor(
+	private val prop: Property<T>,
+	private val stateRestorer: () -> PartialBlockState,
+	private val build: (PartialBlockState) -> Unit
+) {
+	/**
+	 * ```
+	 * Axis.Y {
+	 *
+	 * }
+	 * ```
+	 */
+	operator fun T.invoke(action: BaseVariantBuilder.() -> Unit) {
+		val new = BaseVariantBuilder({ stateRestorer().withProperty(prop, this) }, build)
+		new.action()
+		new.build()
 	}
 }
+
+//object BlockStateMacros {
+//
+//	@MultiPartDataGenDsl
+//	class MultipartBuilder {
+//		private val parts = mutableListOf<MultipartPartBuilder>()
+//
+//		fun part(action: MultipartPartBuilder.() -> Unit) {
+//			parts += MultipartPartBuilder().apply(action)
+//		}
+//
+//		internal fun build(forgeBuilder: MultiPartBlockStateBuilder) {
+//			var partBuilder = forgeBuilder
+//			for (part in parts) {
+//				partBuilder = partBuilder.apply(part::build)
+//			}
+//		}
+//	}
+//
+//	@MultiPartDataGenDsl
+//	class MultipartPartBuilder {
+//		private val modelConfigs = mutableListOf<ConfiguredModel.Builder<*>.() -> Unit>()
+//
+//		fun model(modelConfig: ConfiguredModel.Builder<*>.() -> Unit) {
+//			this.modelConfigs += modelConfig
+//		}
+//
+//		lateinit var condition: ConditionBlock
+//
+//		fun or(action: ConditionBlock.() -> Unit): ConditionBlock {
+//			return ConditionBlock(true).apply(action)
+//		}
+//
+//		fun and(action: ConditionBlock.() -> Unit): ConditionBlock {
+//			return ConditionBlock(false).apply(action)
+//		}
+//
+//		internal fun build(builder: MultiPartBlockStateBuilder): MultiPartBlockStateBuilder { // end() SHOULD return `this`, but just to be safe:
+//			require(modelConfigs.isNotEmpty()) { "Cannot have a part with no model!" }
+//			require(::condition.isInitialized) { "Multipart model must have a condition." }
+//
+//			var modelBuilder = builder.part() // init part
+//
+//			modelBuilder.let(modelConfigs.first()) // do first model
+//
+//			if (modelConfigs.size > 1) { // call nextmodel instead of addmodel
+//				for (i in 1..<modelConfigs.size) {
+//					modelBuilder = modelBuilder.nextModel()
+//					modelBuilder.apply(modelConfigs[i])
+//				}
+//			}
+//
+//			var conditionBuilder = modelBuilder.addModel()
+//
+//			if (condition.isOr)
+//				conditionBuilder = conditionBuilder.useOr()
+//
+//			for (cond in condition.listOfConditions) {
+//				@Suppress("UNCHECKED_CAST") // If I don't explicitly cast this, the _Kotlin compiler itself_ will freeze.
+//				conditionBuilder = when (cond) {
+//					is ConditionType.NestedCondBlock -> {
+//						val block = cond.block
+//						val nested = conditionBuilder.nestedGroup()
+//						block.applyToCondGroup(nested)
+//						nested.endNestedGroup().end()
+//					}
+//					is ConditionType.CondPair<*> -> conditionBuilder.condition(cond.property as Property<Comparable<Any>>, *(cond.values as Array<Comparable<Any>>))
+//				}
+//			}
+//
+//			return conditionBuilder.end()
+//		}
+//	}
+//
+//	internal sealed class ConditionType {
+//		class CondPair<T : Comparable<T>>(val property: Property<T>, vararg val values: T) : ConditionType()
+//
+//		class NestedCondBlock(val block: ConditionBlock) : ConditionType()
+//	}
+//
+//	@MultiPartDataGenDsl
+//	class ConditionBlock(internal var isOr: Boolean = false) {
+//		internal val listOfConditions = mutableListOf<ConditionType>()
+//
+//		operator fun <T : Comparable<T>> Property<T>.invoke(vararg condition: T) {
+//			listOfConditions += ConditionType.CondPair(this, *condition)
+//		}
+//
+//		/**
+//		 * Allows `WEST_REDSTONE in arrayOf(NONE, LEFT, RIGHT, UP)`
+//		 * but without needing inline reified so we can keep listOfConditions private
+//		 */
+//		operator fun <T : Comparable<T>> Array<T>.contains(property: Property<T>): Boolean {
+//			listOfConditions += ConditionType.CondPair(property, *this)
+//			return true
+//		}
+//
+//		fun or(action: ConditionBlock.() -> Unit) {
+//			listOfConditions += ConditionType.NestedCondBlock(ConditionBlock(true).apply(action))
+//		}
+//
+//		fun and(action: ConditionBlock.() -> Unit) {
+//			listOfConditions += ConditionType.NestedCondBlock(ConditionBlock(false).apply(action))
+//		}
+//
+//
+//		internal fun applyToCondGroup(group: ForgeCondGroup) {
+//			var group = group
+//			if (isOr) {
+//				group = group.useOr()
+//			}
+//
+//			for (cond in listOfConditions) {
+//				@Suppress("UNCHECKED_CAST")
+//				group = when (cond) {
+//					is ConditionType.CondPair<*> -> group.condition(cond.property as Property<Comparable<Any>>, *(cond.values as Array<Comparable<Any>>))
+//					is ConditionType.NestedCondBlock -> {
+//						val nested = group.nestedGroup()
+//						cond.block.applyToCondGroup(nested)
+//						nested.endNestedGroup()
+//					}
+//				}
+//			}
+//		}
+//	}
+//}
+//
+//fun BlockStateProvider.multipartDsl(block: Block, configuration: MultipartBuilder.() -> Unit) {
+//	val dslBuilder = MultipartBuilder().apply(configuration)
+//	this.getMultipartBuilder(block).apply(dslBuilder::build)
+//}
+//
+//private typealias ForgeCondGroup = MultiPartBlockStateBuilder.PartBuilder.ConditionGroup
+//
+//fun BlockStateMacros.VariantBuilderPropertySwitch<Direction>.rotateForEachHorizontal(model: BlockModelBuilder, additionalAction:  ConfiguredModel.Builder<*>.(Int, Direction) -> Unit = { idx, dir ->}) {
+//	for ((i, dir) in listOf(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST).iterator().withIndex()) {
+//		dir {
+//			model {
+//				modelLoc(model)
+//				if (i != 0)
+//					rotationY(i * 90)
+//				additionalAction(i, dir)
+//			}
+//		}
+//	}
+//}

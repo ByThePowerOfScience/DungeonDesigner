@@ -3,7 +3,11 @@
 package btpos.mcmods.devutil.common.ext.vanilla.world
 
 import net.minecraft.world.InteractionResult
-import net.minecraft.world.InteractionResultHolder
 
-inline fun <T : Any> InteractionResult.holder(held: T): InteractionResultHolder<T> = InteractionResultHolder(this, held)
-
+fun sidedSuccess(isClientSide: Boolean): InteractionResult {
+	return if (isClientSide) {
+		InteractionResult.SUCCESS
+	} else {
+		InteractionResult.SUCCESS_SERVER
+	}
+}

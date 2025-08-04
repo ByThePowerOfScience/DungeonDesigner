@@ -89,95 +89,95 @@ interface IItemRepresentable<T> {
 	}
 }
 
-/**
- * Wraps some value, and provides functions converting it to and from an [net.minecraft.world.item.ItemStack]'s CompoundTag.
- */
-@KotlinAssignmentOverloadTarget
-interface IItemRepresentable_Tag<T> : IItemRepresentable<T> {
-	/**
-	 * This will only perform ItemStack deserialization if the stack wraps this item.
-	 */
-	val defaultItem: Item
-	
-	override fun acceptsItem(stack: ItemStack): Boolean {
-		return stack.`is`(defaultItem)
-	}
-	
-	override fun writeToItem(): ItemStack? {
-		if (value == null)
-			return null
-		val newTag = CompoundTag()
-		if (!newTag.writeToTag()) {
-			return null
-		}
-		
-		return ItemStack(defaultItem).apply {
-			tag = newTag
-		}
-	}
-	
-	override fun setFromItem(stack: ItemStack): Boolean {
-		return stack.tag?.readFromTag() ?: false
-	}
-	
-	/**
-	 * Deserialization function. Returns the value read from the ItemStack's root tag, or null if it's not present.
-	 *
-	 * Called in [asItem]'s setter.
-	 *
-	 * @return True if this object's state was modified by the method, false otherwise.
-	 */
-	fun CompoundTag.readFromTag(): Boolean
-	
-	/**
-	 * Serialization function. Puts the value into the ItemStack's root tag.
-	 *
-	 * Called in [asItem]'s getter.
-	 *
-	 * @return False if the item-giving action should be canceled, true otherwise.
-	 */
-	fun CompoundTag.writeToTag(): Boolean
-	
-	
-	
-	// Assignment Overloading
-	@Suppress("UNUSED")
-	fun assign(stack: ItemStack) {
-		this.asItem = stack
-	}
-	@Suppress("UNUSED")
-	fun assign(t: T?) {
-		this.value = t
-	}
-	
-	companion object {
-		
-		/**
-		 * Returns a default dynamic implementation of [IItemRepresentable_Tag].
-		 */
-		operator fun <T> invoke(
-			initialValue: T?,
-			defaultItem: Item,
-			tagReader: CompoundTag.() -> T?,
-			tagWriter: CompoundTag.(T?) -> Boolean,
-			defaultItemStack: ItemStack = ItemStack.EMPTY
-		) : IItemRepresentable_Tag<T> {
-			return object : IItemRepresentable_Tag<T> {
-				override var value: T? = initialValue
-				override val defaultItem = defaultItem
-				override val itemForNull: ItemStack = defaultItemStack
-				
-				override fun CompoundTag.readFromTag(): Boolean {
-					value = tagReader() ?: return false
-					return true
-				}
-				
-				override fun CompoundTag.writeToTag(): Boolean {
-                    return tagWriter(initialValue)
-                }
-			}
-		}
-	}
-}
+///**
+// * Wraps some value, and provides functions converting it to and from an [net.minecraft.world.item.ItemStack]'s CompoundTag.
+// */
+//@KotlinAssignmentOverloadTarget
+//interface IItemRepresentable_Tag<T> : IItemRepresentable<T> {
+//	/**
+//	 * This will only perform ItemStack deserialization if the stack wraps this item.
+//	 */
+//	val defaultItem: Item
+//
+//	override fun acceptsItem(stack: ItemStack): Boolean {
+//		return stack.`is`(defaultItem)
+//	}
+//
+//	override fun writeToItem(): ItemStack? {
+//		if (value == null)
+//			return null
+//		val newTag = CompoundTag()
+//		if (!newTag.writeToTag()) {
+//			return null
+//		}
+//
+//		return ItemStack(defaultItem).apply {
+//			tag = newTag
+//		}
+//	}
+//
+//	override fun setFromItem(stack: ItemStack): Boolean {
+//		return stack.tag?.readFromTag() ?: false
+//	}
+//
+//	/**
+//	 * Deserialization function. Returns the value read from the ItemStack's root tag, or null if it's not present.
+//	 *
+//	 * Called in [asItem]'s setter.
+//	 *
+//	 * @return True if this object's state was modified by the method, false otherwise.
+//	 */
+//	fun CompoundTag.readFromTag(): Boolean
+//
+//	/**
+//	 * Serialization function. Puts the value into the ItemStack's root tag.
+//	 *
+//	 * Called in [asItem]'s getter.
+//	 *
+//	 * @return False if the item-giving action should be canceled, true otherwise.
+//	 */
+//	fun CompoundTag.writeToTag(): Boolean
+//
+//
+//
+//	// Assignment Overloading
+//	@Suppress("UNUSED")
+//	fun assign(stack: ItemStack) {
+//		this.asItem = stack
+//	}
+//	@Suppress("UNUSED")
+//	fun assign(t: T?) {
+//		this.value = t
+//	}
+//
+//	companion object {
+//
+//		/**
+//		 * Returns a default dynamic implementation of [IItemRepresentable_Tag].
+//		 */
+//		operator fun <T> invoke(
+//			initialValue: T?,
+//			defaultItem: Item,
+//			tagReader: CompoundTag.() -> T?,
+//			tagWriter: CompoundTag.(T?) -> Boolean,
+//			defaultItemStack: ItemStack = ItemStack.EMPTY
+//		) : IItemRepresentable_Tag<T> {
+//			return object : IItemRepresentable_Tag<T> {
+//				override var value: T? = initialValue
+//				override val defaultItem = defaultItem
+//				override val itemForNull: ItemStack = defaultItemStack
+//
+//				override fun CompoundTag.readFromTag(): Boolean {
+//					value = tagReader() ?: return false
+//					return true
+//				}
+//
+//				override fun CompoundTag.writeToTag(): Boolean {
+//                    return tagWriter(initialValue)
+//                }
+//			}
+//		}
+//	}
+//}
 
 

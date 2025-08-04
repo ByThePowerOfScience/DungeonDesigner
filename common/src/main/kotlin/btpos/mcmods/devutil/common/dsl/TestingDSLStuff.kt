@@ -120,16 +120,16 @@ public static final Codec<SpawnData> CODEC = RecordCodecBuilder.create(
  */
 
 
-fun foo() {
-	with (CodecBuilderMacros) {
-		codec<SpawnData> {
-			group(
-					"entity" `=` CompoundTag.CODEC `for getter` SpawnData::entityToSpawn,
-					opt("custom_spawn_rules") to SpawnData.CustomSpawnRules.CODEC gets SpawnData::customSpawnRules,
-			).apply(this, ::SpawnData)
-		}
-	}
-}
+//fun foo() {
+//	with (CodecBuilderMacros) {
+//		codec<SpawnData> {
+//			group(
+//					"entity" `=` CompoundTag.CODEC `for getter` SpawnData::entityToSpawn,
+//					opt("custom_spawn_rules") to SpawnData.CustomSpawnRules.CODEC gets SpawnData::customSpawnRules,
+//			).apply(this, ::SpawnData)
+//		}
+//	}
+//}
 
 // region Object Method :(
 class Builder<SUPER, T> {

@@ -5,6 +5,7 @@ package btpos.mcmods.devutil.common.macros
 import net.minecraft.ChatFormatting
 import net.minecraft.core.Vec3i
 import net.minecraft.network.chat.Component
+import net.minecraft.network.chat.ComponentContents
 import net.minecraft.network.chat.MutableComponent
 import net.minecraft.network.chat.Style
 import net.minecraft.world.phys.Vec3
@@ -16,12 +17,6 @@ object ChatUtils {
 			return Component.literal("[null]")
 		}
 		return Component.literal("[$x, $y, $z]")
-	}
-	
-	fun toComponent(pos: Vec3): MutableComponent {
-		return with (pos) {
-            Component.literal("[$x, $y, $z]")
-		}
 	}
     
     //region unaryMinus String to Component Macros

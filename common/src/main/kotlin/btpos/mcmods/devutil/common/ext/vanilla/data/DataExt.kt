@@ -50,17 +50,19 @@ inline operator fun CompoundTag.set(key: String, value: Tag) = this.put(key, val
 
 
 //region BlockPos
-inline fun BlockPos.toCompoundTag() = NbtUtils.writeBlockPos(this)
+inline fun BlockPos.toCompoundTag(): CompoundTag {
+	return CompoundTag().apply {
+		putInt("X", x)
+		putInt("Y", y)
+		putInt("Z", z)
+	}
+}
 
 fun CompoundTag.asBlockPos(): BlockPos? {
-	if (this.contains("X", CompoundTag.TAG_INT.toInt())
-	    && this.contains("Y", CompoundTag.TAG_INT.toInt())
-	    && this.contains("Z", CompoundTag.TAG_INT.toInt()))
-	{
-		return NbtUtils.readBlockPos(this)
-	} else {
-		return null
-	}
+	val x = this.getInt("X").getOrNull() ?: return null
+	val y = this.getInt("Y").getOrNull() ?: return null
+	val z = this.getInt("Z").getOrNull() ?: return null
+	return BlockPos(x, y, z)
 }
 
 fun CompoundTag.getBlockPos(key: String): BlockPos? {
@@ -73,24 +75,27 @@ fun CompoundTag.getBlockPos(key: String): BlockPos? {
  * Get a compound tag, *without* creating it if it doesn't exist.
  */
 fun CompoundTag.getCompoundOrNull(key: String): CompoundTag? {
-	if (!this.contains(key, CompoundTag.TAG_COMPOUND.toInt())) {
-		return null
-	}
-	return this.getCompound(key)
+	return this.getCompound(key).getOrNull()
+//	if (!this.contains(key, CompoundTag.TAG_COMPOUND.toInt())) {
+//		return null
+//	}
+//	return this.getCompound(key)
 }
 
 fun CompoundTag.getStringOrNull(key: String): String? {
-	if (!this.contains(key, CompoundTag.TAG_STRING.toInt())) {
-		return null
-	}
-	return this.getString(key)
+	return this.getString(key).getOrNull()
+//	if (!this.contains(key, CompoundTag.TAG_STRING.toInt())) {
+//		return null
+//	}
+//	return this.getString(key)
 }
 
 fun CompoundTag.getIntOrNull(key: String): Int? {
-	if (!this.contains(key, CompoundTag.TAG_INT.toInt())) {
-		return null
-	}
-	return this.getInt(key)
+	return this.getInt(key).getOrNull()
+//	if (!this.contains(key, CompoundTag.TAG_INT.toInt())) {
+//		return null
+//	}
+//	return this.getInt(key)
 }
 //endregion
 
@@ -100,12 +105,20 @@ fun CompoundTag.getIntOrNull(key: String): Int? {
  * Otherwise, creates a new CompoundTag and adds it to this object, then returns the newly-created tag.
  */
 fun CompoundTag.getOrCreateCompound(key: String): CompoundTag {
-	if (!this.contains(key, CompoundTag.TAG_COMPOUND.toInt())) {
-		return CompoundTag().also {
+	val fromTag = this.getCompound(key)
+	return if (fromTag.isEmpty) {
+		CompoundTag().also {
 			this.put(key, it)
 		}
+	} else {
+		fromTag.get()
 	}
-	return this.get(key)!! as CompoundTag
+//	if (!this.contains(key, CompoundTag.TAG_COMPOUND.toInt())) {
+//		return CompoundTag().also {
+//			this.put(key, it)
+//		}
+//	}
+//	return this.get(key)!! as CompoundTag
 }
 
 /**
