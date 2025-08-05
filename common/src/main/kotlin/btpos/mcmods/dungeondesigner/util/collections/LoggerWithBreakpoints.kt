@@ -1,5 +1,5 @@
 package btpos.mcmods.dungeondesigner.util.collections
-
+/*
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.LogBuilder
 import org.apache.logging.log4j.Logger
@@ -10,16 +10,20 @@ import org.apache.logging.log4j.message.MessageFactory
 import org.apache.logging.log4j.util.MessageSupplier
 import org.apache.logging.log4j.util.Supplier
 
+*/
 /**
  * Just a logger that delegates to another logger in a place where I can personally set breakpoints
- */
+ *//*
+
 class LoggerWithBreakpoints(val internal: Logger) : Logger {
     
-    /**
+    */
+/**
      * Place to set a breakpoint whenever an error message is called, specifically to diagnose a single issue happening at runtime.
      *
      * Attempting to set a breakpoint on a field access is a recipe for a LAGGY game...
-     */
+     *//*
+
     fun onError() {
         println("Hit breakpoint!")
     }
@@ -4162,3 +4166,4 @@ class LoggerWithBreakpoints(val internal: Logger) : Logger {
         )
     }
 }
+*/

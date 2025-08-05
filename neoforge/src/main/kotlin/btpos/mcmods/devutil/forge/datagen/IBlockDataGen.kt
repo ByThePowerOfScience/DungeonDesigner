@@ -30,14 +30,14 @@ fun String.itemLoc(): ResourceLocation {
 	return modLoc("item/$this")
 }
 
-interface IItemDataGen : IObjectData {
-	fun getModels(provider: ItemModelProvider) {
-		provider.buildModels()
-	}
-
-	fun ItemModelProvider.buildModels()
-
-	fun ItemModelProvider.basicItem() {
-		this.basicItem(modLoc(id))
-	}
-}
+//interface IItemDataGen : IObjectData {
+//	fun getModels(provider: ItemModelProvider) {
+//		provider.buildModels()
+//	}
+//
+//	fun ItemModelProvider.buildModels()
+//
+//	fun ItemModelProvider.basicItem() {
+//		this.basicItem(modLoc(id))
+//	}
+//}

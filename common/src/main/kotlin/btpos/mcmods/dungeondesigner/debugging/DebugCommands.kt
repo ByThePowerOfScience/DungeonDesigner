@@ -43,7 +43,7 @@ object DebugCommands : CommandHandler {
                         val data = level.dataStorage.dungeonBuilderData
                         val flagName = StringArgumentType.getString(ctx, "name")
                         
-                        if (flagName in data.state.flagStates) {
+                        if (flagName in data.flagStates) {
                             ctx.source.sendSuccess(
                                 { "Flag ${flagName}: ${data.getFlag(flagName)}".asComponent() },
                                 true
@@ -78,7 +78,7 @@ object DebugCommands : CommandHandler {
                 executes { ctx ->
                     val data = ctx.source.level.dataStorage.dungeonBuilderData
                     val out = buildString {
-                        for ((k, v) in data.state.flagStates) {
+                        for ((k, v) in data.flagStates) {
                             append(k).append(": ").append(v).append("\n")
                         }
                     }.asComponent()
@@ -90,7 +90,7 @@ object DebugCommands : CommandHandler {
             "clear" {
                 executes { ctx ->
                     val data = ctx.source.level.dataStorage.dungeonBuilderData
-                    data.state.flagStates.clear()
+                    data.flagStates.clear()
                     ctx.source.sendSuccess({ "Cleared flags.".asComponent() }, true)
                     return@executes 1
                 }

@@ -4,6 +4,7 @@ import btpos.mcmods.devutil.common.ext.vanilla.world.modifyBlockAndUpdate
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.util.serialization.ICodecSerializable
 import btpos.mcmods.devutil.common.structure.composition.IOnChange
+import btpos.mcmods.devutil.common.util.serialization.ICodecSerializableMutable
 import btpos.mcmods.dungeondesigner.MOD_LOGGER
 import btpos.mcmods.dungeondesigner.POWERED
 import btpos.mcmods.dungeondesigner.builder.redstone.IWirelessRedstone.Companion.NO_CHANNEL
@@ -26,7 +27,7 @@ class WirelessRedstoneController(
 	 * @see btpos.mcmods.dungeondesigner.builder.redstone.IWirelessRedstone.channel
 	 */
     pChannels: ArrayList<WirelessRedstoneChannel> = ArrayList()
-) : ICodecSerializable<WirelessRedstoneController>, IOnChange {
+) : ICodecSerializableMutable<WirelessRedstoneController>, IOnChange {
     //region ICodecSerializable
     override fun codec() = CODEC
 	override fun copyFrom(other: WirelessRedstoneController) {
@@ -34,10 +35,10 @@ class WirelessRedstoneController(
 	}
     //endregion
 	companion object {
-		val CODEC = RecordCodecBuilder.create {
-			it.group(
+		val CODEC = RecordCodecBuilder.create { inst ->
+			inst.group(
 				Codec.list(WirelessRedstoneChannel.CODEC).fieldOf("channels").forGetter(WirelessRedstoneController::channels),
-			).apply(it) { WirelessRedstoneController(ArrayList(it)) }
+			).apply(inst) { WirelessRedstoneController(ArrayList(it)) }
         }
 	}
 	

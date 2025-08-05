@@ -6,13 +6,13 @@ import btpos.mcmods.devutil.common.ext.java.invoke
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
 import btpos.mcmods.devutil.common.ext.vanilla.data.getCompoundOrNull
 import btpos.mcmods.devutil.common.ext.vanilla.data.getOrCreateCompound
-import btpos.mcmods.devutil.common.ext.vanilla.data.nullableFieldOf
+import btpos.mcmods.devutil.common.ext.vanilla.data.nullSafeFieldOf
 import btpos.mcmods.devutil.common.ext.vanilla.plus
 import btpos.mcmods.devutil.common.ext.vanilla.sendSystemMessage
 import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
 import btpos.mcmods.devutil.common.macros.ChatUtils.toComponent
 import btpos.mcmods.devutil.common.structure.blocks.IObjectData
-import btpos.mcmods.dungeondesigner.registry.ModDataAttachments
+import btpos.mcmods.dungeondesigner.registry.ModItemComponents
 import com.mojang.serialization.Codec
 import com.mojang.serialization.codecs.RecordCodecBuilder
 import net.minecraft.ChatFormatting
@@ -25,8 +25,8 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.TooltipFlag
 import net.minecraft.world.item.component.TooltipDisplay
 import net.minecraft.world.item.context.UseOnContext
-import net.minecraft.world.level.Level
 import java.util.function.Consumer
+import kotlin.jvm.optionals.getOrNull
 
 /**
  * Draws a trigger in the world.
@@ -47,32 +47,19 @@ class ItemTriggerVariable(props: Properties) : Item(props) {
 //			this.basicItem()
 //		}
 		
-		/**
-		 * Gets the trigger bounds section from the root tag of one of our itemstacks. Returns null if the subtag is absent.
-		 */
-        fun getTriggerBoundsNbt(tag: CompoundTag): CompoundTag? {
-			return tag.getCompoundOrNull(TAGKEY_STATE)
-		}
-		/**
-		 * Gets or creates the trigger bounds section from the root tag of one of our itemstacks.
-		 */
-		fun getOrCreateTriggerNbt(tag: CompoundTag): CompoundTag {
-			return tag.getOrCreateCompound(TAGKEY_STATE)
-		}
-		
 		
 		fun getData(stack: ItemStack): InternalData? {
-			return stack.get(ModDataAttachments.TRIGGER_VARIABLE_DATA)
+			return stack.get(ModItemComponents.TRIGGER_VARIABLE_DATA)
 //			return stack.tag?.let(::getTriggerBoundsNbt)?.let(::NbtAdapter)
 		}
 		
-		fun getOrCreateData(stack: ItemStack): InternalData {
-			return stack.get(ModDataAttachments.TRIGGER_VARIABLE_DATA) ?: run {
-				InternalData().also {
-					stack.set(ModDataAttachments.TRIGGER_VARIABLE_DATA, it)
-				}
-			}
-//			return getOrCreateTriggerNbt(stack.orCreateTag).let(::NbtAdapter)
+		/**
+		 * Functional transformation of immutable objects, except it's janky and bad because I'm tired
+		 */
+		inline fun modifyOrCreateData(stack: ItemStack, mutator: InternalData.Mutable.() -> Unit) {
+			val current: InternalData.Mutable = stack.get(ModItemComponents.TRIGGER_VARIABLE_DATA)?.let(InternalData::Mutable) ?: InternalData.Mutable()
+			current.mutator()
+			stack.set(ModItemComponents.TRIGGER_VARIABLE_DATA, current)
 		}
 	}
 	
@@ -87,19 +74,23 @@ class ItemTriggerVariable(props: Properties) : Item(props) {
 		
 		return ctx.level.runOnServer {
 			if (!player.isShiftKeyDown) {
-				getOrCreateData(ctx.itemInHand).first = ctx.clickedPos
+				modifyOrCreateData(ctx.itemInHand) {
+					first = ctx.clickedPos
+				}
 				player.sendSystemMessage(
 					Component.literal("Set first corner to ")
 						.append(ctx.clickedPos.toComponent().withStyle(ChatFormatting.YELLOW))
 				)
 			} else {
-				getOrCreateData(ctx.itemInHand).second = ctx.clickedPos
+				modifyOrCreateData(ctx.itemInHand) {
+					second = ctx.clickedPos
+				}
 				player.sendSystemMessage(
 					Component.literal("Set second corner to ")
 						.append(ctx.clickedPos.toComponent().withStyle(ChatFormatting.YELLOW))
 				)
 			}
-		}.sidedResult
+		}.sidedSuccess
 	}
 	
 	override fun appendHoverText(pStack: ItemStack, context: TooltipContext, tooltipDisplay: TooltipDisplay, tooltipAdder: Consumer<Component>, pIsAdvanced: TooltipFlag) {
@@ -135,8 +126,8 @@ class ItemTriggerVariable(props: Properties) : Item(props) {
 //	}
 	
 	interface InternalData {
-		var first: BlockPos?
-		var second: BlockPos?
+		val first: BlockPos?
+		val second: BlockPos?
 		
 		fun isComplete(): Boolean {
 			return first != null && second != null
@@ -146,15 +137,21 @@ class ItemTriggerVariable(props: Properties) : Item(props) {
 		companion object {
 			val CODEC: Codec<InternalData> = RecordCodecBuilder.create {
 				it.group(
-						BlockPos.CODEC.nullableFieldOf("first").forGetter(InternalData::first),
-						BlockPos.CODEC.nullableFieldOf("second").forGetter(InternalData::second),
-				).apply(it, ::Impl)
+						BlockPos.CODEC.nullSafeFieldOf("first", InternalData::first),
+						BlockPos.CODEC.nullSafeFieldOf("second", InternalData::second),
+				).apply(it) { i, j ->
+					Mutable(i.getOrNull(), j.getOrNull())
+				}
 			}
 			
 			operator fun invoke(first: BlockPos? = null, second: BlockPos? = null): InternalData {
 				return Impl(first, second)
 			}
 		}
-		data class Impl(override var first: BlockPos? = null, override var second: BlockPos? = null) : InternalData
+		
+		data class Mutable(override var first: BlockPos? = null, override var second: BlockPos? = null) : InternalData {
+			constructor(other: InternalData) : this(other.first, other.second)
+		}
+		data class Impl(override val first: BlockPos?, override val second: BlockPos?) : InternalData
 	}
 }

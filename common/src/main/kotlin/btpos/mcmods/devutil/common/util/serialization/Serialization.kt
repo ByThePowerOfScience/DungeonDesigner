@@ -30,11 +30,11 @@ object Serialization {
 	}
 	
 	fun <T> Codec<T>.decodeTag(tag: Tag): T {
-		return this.decode(NbtOps.INSTANCE, tag).getOrThrow(false, {LOGGER.error("Fail codec decode: {}", it)}).first
+		return this.decode(NbtOps.INSTANCE, tag).getOrThrow().first
 	}
 	
 	fun <T> Codec<T>.encodeToTag(item: T): Tag {
-		return this.encodeStart(NbtOps.INSTANCE, item).getOrThrow(false, { LOGGER.error("Fail codec encode: {}", it) })
+		return this.encodeStart(NbtOps.INSTANCE, item).getOrThrow()
 	}
 	
 	// TODO figure out if all of the codec use is causing performance issues
@@ -42,5 +42,5 @@ object Serialization {
 	/**
 	 * A pair codec that actually supports "primitive" values (e.g. BlockPos). Idk why it only supports compounds natively.
 	 */
-	fun <A, B> pairCodec(first: Codec<A>, second: Codec<B>) = FixedPairCodec(first, second)
+	fun <A, B> pairCodec(first: Codec<A>, second: Codec<B>) = PrimitiveAblePairCodec(first, second)
 }

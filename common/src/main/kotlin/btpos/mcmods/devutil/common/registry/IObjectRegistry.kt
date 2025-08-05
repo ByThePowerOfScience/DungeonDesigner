@@ -2,12 +2,16 @@ package btpos.mcmods.devutil.common.registry
 
 import btpos.mcmods.devutil.common.ext.kotlin.safeGetDelegate
 import btpos.mcmods.dungeondesigner.MODID
+import btpos.mcmods.dungeondesigner.builder.redstone.IWirelessRedstone
 import com.mojang.datafixers.types.Type
+import com.mojang.serialization.Codec
 import dev.architectury.registry.registries.DeferredRegister
 import dev.architectury.registry.registries.RegistrySupplier
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Registry
 import net.minecraft.core.component.DataComponentType
+import net.minecraft.network.RegistryFriendlyByteBuf
+import net.minecraft.network.codec.StreamCodec
 import net.minecraft.resources.ResourceKey
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.BlockItem
@@ -92,10 +96,6 @@ interface IObjectRegistry<T : Any> {
 	fun registering(name: String, generator: () -> T): ObjectHolderDelegate<T> {
 		return REGISTRY.registerObject(name, generator)
 	}
-	
-	fun <T : Any> PlatformRegistry<DataComponentType<*>>.component(name: String, generator: () -> DataComponentType<T>): ObjectHolderDelegate<DataComponentType<T>> {
-		return this.registerObject(name, generator)
-	}
 }
 
 interface IBlockRegistry : IObjectRegistry<Block> {
@@ -173,4 +173,25 @@ interface IBlockRegistry : IObjectRegistry<Block> {
 	*/
 	
 	
+}
+
+/**
+ * Helper methods for any registry that handles 1.20.6+ data components
+ */
+interface IDataComponentRegistry<T : Any> : IObjectRegistry<T> {
+	fun <T : Any> PlatformRegistry<DataComponentType<*>>.component(name: String, generator: () -> DataComponentType<T>): ObjectHolderDelegate<DataComponentType<T>> {
+		return this.registerObject(name, generator)
+	}
+	
+	fun <T> buildPersistentComponent(codec: Codec<T>, networkSynchronizer: StreamCodec<in RegistryFriendlyByteBuf, T>? = null, cacheEncoding: Boolean = false): DataComponentType<T> {
+		return DataComponentType.builder<T>().persistent(codec).let { bld ->
+			networkSynchronizer?.let { bld.networkSynchronized(it) } ?: bld
+		}.let {
+			if (cacheEncoding) {
+				it.cacheEncoding()
+			} else {
+				it
+			}
+		}.build()
+	}
 }

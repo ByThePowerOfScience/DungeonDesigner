@@ -16,7 +16,7 @@ const val MODID = "dungeondesigner"
 val MOD_LOGGER: Logger = LogManager.getLogger(MODID)
 
 object CommonEntry {
-    init {
+    fun init() {
         MOD_LOGGER.log(Level.INFO, "$MODID has started!")
         
 

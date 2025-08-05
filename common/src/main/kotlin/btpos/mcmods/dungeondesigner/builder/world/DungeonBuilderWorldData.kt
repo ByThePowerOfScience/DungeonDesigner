@@ -55,9 +55,6 @@ class DungeonBuilderState(
 ) : ICodecSerializable<DungeonBuilderState>, IOnChange {
     //region ICodecSerializable
     override fun codec() = CODEC
-	override fun copyFrom(other: DungeonBuilderState) {
-		throw IllegalStateException("This method should never be called. All states are made anew every time the wrapper SavedData is constructed.")
-	}
     //endregion
 	
 	override var onChange = {}

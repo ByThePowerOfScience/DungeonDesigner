@@ -84,7 +84,7 @@ inline fun SignalGetter.getSignalReceivedFrom(ourPos: BlockPos, checkingDir: Dir
 
 @JvmInline
 value class AfterSidedRun(val level: LevelReader) {
-	inline val sidedResult: InteractionResult
+	inline val sidedSuccess: InteractionResult
 		get() = sidedSuccess(level.isClientSide)
 }
 

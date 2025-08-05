@@ -17,14 +17,14 @@ fun CompoundTag.putNbtSerializable(key: String, serializable: INbtSerializable) 
 	this.put(key, tag)
 }
 
-fun <T: ICodecSerializable<T>> ValueOutput.putCodecSerializable(key: String, serializable: T) {
+fun <T : ICodecSerializable<T>> ValueOutput.putCodecSerializable(key: String, serializable: T) {
 	this.store(key, serializable.codec(), serializable)
 }
 
 /**
  * Reads the tag and populates an existing item with its state.
  */
-fun <T: ICodecSerializable<T>> ValueInput.readCodecSerializableToExisting(key: String, serializable: ICodecSerializable<T>): Boolean {
+fun <T : ICodecSerializableMutable<T>> ValueInput.readCodecSerializableToExisting(key: String, serializable: T): Boolean {
 	val fromTag = this.read(key, serializable.codec()).getOrNull() ?: return false
 	serializable.copyFrom(fromTag)
 	return true

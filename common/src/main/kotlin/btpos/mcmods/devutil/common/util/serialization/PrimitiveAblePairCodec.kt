@@ -12,11 +12,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.stream.Stream
 
 /**
- * An implementation of [com.mojang.serialization.codecs.PairCodec] that actually works when using two "primitive" values (e.g. Pair<BlockPos, BlockPos> becoming "Do not know how to append primitive value [I; 1,2,3] to [I; 4,5,6]")
+ * An implementation of [com.mojang.serialization.codecs.PairCodec] that actually works when using two "primitive" values.
  *
- *
+ * (e.g. Pair<BlockPos, BlockPos> becoming "Do not know how to append primitive value [I; 1,2,3] to [I; 4,5,6]")
  */
-class FixedPairCodec<A, B>(val first: Codec<A>, val second: Codec<B>) : Codec<Pair<A, B>> {
+class PrimitiveAblePairCodec<A, B>(val first: Codec<A>, val second: Codec<B>) : Codec<Pair<A, B>> {
     override fun <T : Any> encode(value: Pair<A, B>, ops: DynamicOps<T>, prefix: T): DataResult<T> {
         val builder = ops.listBuilder()
         builder.add(first.encodeStart(ops, value.first))
@@ -75,7 +75,7 @@ class FixedPairCodec<A, B>(val first: Codec<A>, val second: Codec<B>) : Codec<Pa
     override fun equals(other: Any?): Boolean {
         if (this == other)
             return true
-        if (other == null || other !is FixedPairCodec<*, *>) {
+        if (other == null || other !is PrimitiveAblePairCodec<*, *>) {
             return false
         }
         return this.first == other.first && this.second == other.second
@@ -86,6 +86,6 @@ class FixedPairCodec<A, B>(val first: Codec<A>, val second: Codec<B>) : Codec<Pa
     }
     
     override fun toString(): String {
-        return "FixedPairCodec[$first, $second]"
+        return "PrimitiveAblePairCodec[$first, $second]"
     }
 }

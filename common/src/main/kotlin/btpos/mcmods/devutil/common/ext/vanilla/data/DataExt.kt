@@ -3,15 +3,11 @@
 package btpos.mcmods.devutil.common.ext.vanilla.data
 
 import btpos.mcmods.devutil.common.ext.java.cast
-import com.mojang.datafixers.kinds.App
-import com.mojang.datafixers.kinds.Applicative
-import com.mojang.datafixers.kinds.K1
 import com.mojang.serialization.Codec
 import com.mojang.serialization.MapCodec
 import com.mojang.serialization.codecs.RecordCodecBuilder
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.nbt.NbtUtils
 import net.minecraft.nbt.Tag
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
@@ -21,10 +17,6 @@ fun <T> MapCodec<Optional<T>>.optionalToNull(): MapCodec<T?> {
 	return this.xmap<T?>({ it.orElse(null) }, { Optional.ofNullable(it).cast() })
 }
 
-
-fun <T : Any> Codec<T>.nullableFieldOf(name: String): MapCodec<T?> {
-	return this.optionalFieldOf(name).optionalToNull()
-}
 
 
 /**
@@ -39,11 +31,13 @@ fun <T : Any> Codec<T>.nullableFieldOf(name: String): MapCodec<T?> {
 inline fun <ENCL, T> MapCodec<Optional<T>>.forNullableGetter(crossinline getter: (ENCL) -> T?): RecordCodecBuilder<ENCL, Optional<T>> {
     return this.forGetter<ENCL> { encl -> Optional.ofNullable(getter(encl)).cast() }
 }
-//endregion
 
-inline fun <ENCL, T> Codec<T>.nullableFieldOf(name: String, crossinline getter: (ENCL) -> T?): RecordCodecBuilder<ENCL, Optional<T>> {
+inline fun <ENCL, T> Codec<T>.nullSafeFieldOf(name: String, crossinline getter: (ENCL) -> T?): RecordCodecBuilder<ENCL, Optional<T>> {
     return this.optionalFieldOf(name).forGetter { Optional.ofNullable(getter(it)).cast() }
 }
+//endregion
+
+
 
 inline operator fun CompoundTag.set(key: String, value: Tag) = this.put(key, value)
 

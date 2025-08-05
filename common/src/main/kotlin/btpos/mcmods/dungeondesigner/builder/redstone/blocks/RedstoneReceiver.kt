@@ -2,27 +2,30 @@
 
 package btpos.mcmods.dungeondesigner.builder.redstone.blocks
 
+import btpos.mcmods.devutil.common.ext.java.invoke
 import btpos.mcmods.devutil.common.ext.vanilla.isClientSide
 import btpos.mcmods.devutil.common.ext.vanilla.targetBlockEntity
 import btpos.mcmods.devutil.common.ext.vanilla.world.get
+import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServerLevel
+import btpos.mcmods.devutil.common.ext.vanilla.world.sidedSuccess
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.structure.blocks.BlockWithEntity
-import btpos.mcmods.devutil.forge.datagen.IBlockDataGen
-import btpos.mcmods.devutil.forge.datagen.blockLoc
-import btpos.mcmods.devutil.forge.datagen.variantDsl
-import btpos.mcmods.dungeondesigner.MOD_LOGGER
+import btpos.mcmods.devutil.common.structure.blocks.IObjectData
+import btpos.mcmods.devutil.common.util.serialization.putCodecSerializable
+import btpos.mcmods.devutil.common.util.serialization.readCodecSerializableToExisting
+import btpos.mcmods.devutil.multiplatform.api.IPlatformConnectRedstone
 import btpos.mcmods.dungeondesigner.POWERED
 import btpos.mcmods.dungeondesigner.builder.redstone.IWirelessRedstone
 import btpos.mcmods.dungeondesigner.builder.redstone.IWirelessRedstone.Companion.NO_CHANNEL
-import btpos.mcmods.dungeondesigner.builder.redstone.blocks.WirelessRedstoneItem.Companion.getData
 import btpos.mcmods.dungeondesigner.builder.world.dungeonBuilderData
 import btpos.mcmods.dungeondesigner.registry.ModBlocks
+import btpos.mcmods.dungeondesigner.registry.ModItemComponents
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
-import net.minecraft.nbt.CompoundTag
+import net.minecraft.core.component.DataComponentGetter
+import net.minecraft.core.component.DataComponentMap
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerLevel
-import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
@@ -30,6 +33,7 @@ import net.minecraft.world.item.BlockItem
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.TooltipFlag
+import net.minecraft.world.item.component.TooltipDisplay
 import net.minecraft.world.item.context.BlockPlaceContext
 import net.minecraft.world.item.context.UseOnContext
 import net.minecraft.world.level.BlockGetter
@@ -38,18 +42,20 @@ import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.block.state.StateDefinition
+import net.minecraft.world.level.storage.ValueInput
+import net.minecraft.world.level.storage.ValueOutput
 import net.minecraft.world.phys.BlockHitResult
-import net.minecraftforge.client.model.generators.BlockStateProvider
+import java.util.function.Consumer
 
 /**
  * In the builder phase, this stores the channel of an emitter that's linked to it, or otherwise can be linked to an emitter.  Think "RFTools Redstone Receiver".
  * When compiled, this is literally just a block that can be powered, and the wireless emitter powers it directly.
  */
-class BlockRedstoneReceiver(props: Properties) : Block(props), BlockWithEntity<TileRedstoneReceiver>, WirelessRedstoneBlock {
-    companion object : IBlockDataGen {
+class BlockRedstoneReceiver(props: Properties) : Block(props), BlockWithEntity<TileRedstoneReceiver>, WirelessRedstoneBlock, IPlatformConnectRedstone {
+    companion object : IObjectData {
         override val id: String
             get() = "redstone_receiver"
-        
+        /*
         override fun BlockStateProvider.buildModelsAndStates() {
             val txBase = "redstone/receiver/receiver"
             
@@ -72,7 +78,7 @@ class BlockRedstoneReceiver(props: Properties) : Block(props), BlockWithEntity<T
             }
             
             simpleBlockItem(ModBlocks.REDSTONE_RECEIVER, off)
-        }
+        }*/
     }
     
     //region Setup
@@ -101,38 +107,21 @@ class BlockRedstoneReceiver(props: Properties) : Block(props), BlockWithEntity<T
         if (pStack.item !== ModBlocks.REDSTONE_RECEIVER_ITEM)
             return
         
-        if (!pLevel.isClientSide) {
-            pLevel.getOurEntity(pPos)?.let {
-                val redstoneHandler = (pLevel as ServerLevel).dataStorage.dungeonBuilderData.state.redstoneHandler
-                it.channel = redstoneHandler.registerWirelessReceiver(pStack.getData()?.channel ?: NO_CHANNEL, pPos)
-                if (redstoneHandler.isChannelPowered(it.channel)) {
-                    pLevel.setBlockAndUpdate(pPos, pState.with(POWERED, true))
-                }
-            } ?: return MOD_LOGGER.error("No block entity found at pos $pPos!", Throwable())
-            
-        }
+//        if (!pLevel.isClientSide) {
+//            pLevel.getOurEntity(pPos)?.let {
+//                val redstoneHandler = (pLevel as ServerLevel).dataStorage.dungeonBuilderData.redstoneHandler
+//                it.channel = redstoneHandler.registerWirelessReceiver(pStack.getData()?.channel ?: NO_CHANNEL, pPos)
+//                if (redstoneHandler.isChannelPowered(it.channel)) {
+//                    pLevel.setBlockAndUpdate(pPos, pState.with(POWERED, true))
+//                }
+//            } ?: return MOD_LOGGER.error("No block entity found at pos $pPos!", Throwable())
+//
+//        }
     }
     
-    override fun use(pState: BlockState, pLevel: Level, pPos: BlockPos, pPlayer: Player, pHand: InteractionHand, pHit: BlockHitResult): InteractionResult {
+    override fun useWithoutItem(pState: BlockState, pLevel: Level, pPos: BlockPos, pPlayer: Player, pHit: BlockHitResult): InteractionResult {
         super<WirelessRedstoneBlock>.onRightClick(pLevel, pPos, pPlayer)
-        return super.use(pState, pLevel, pPos, pPlayer, pHand, pHit)
-    }
-    
-    
-    override fun onRemove(
-        pState: BlockState,
-        pLevel: Level,
-        pPos: BlockPos,
-        pNewState: BlockState,
-        pMovedByPiston: Boolean
-    ) {
-        super.onRemove(pState, pLevel, pPos, pNewState, pMovedByPiston)
-        
-        if (!pLevel.isClientSide && pNewState.block != pState.block) {
-            pLevel.getOurEntity(pPos)?.let {
-                (pLevel as ServerLevel).dataStorage.dungeonBuilderData.state.redstoneHandler.unregisterWirelessReceiver(it.channel, pPos)
-            }
-        }
+        return super.useWithoutItem(pState, pLevel, pPos, pPlayer, pHit)
     }
     //endregion
     
@@ -149,24 +138,37 @@ class BlockRedstoneReceiver(props: Properties) : Block(props), BlockWithEntity<T
     }
 }
 
-class TileRedstoneReceiver(pPos: BlockPos, pState: BlockState)
-    : BlockEntity(ModBlocks.REDSTONE_RECEIVER_ENTITY, pPos, pState), IWirelessRedstone by IWirelessRedstone.make(NO_CHANNEL)
+class TileRedstoneReceiver(pPos: BlockPos, pState: BlockState, val redstone: IWirelessRedstone.Mutable = IWirelessRedstone.Mutable(NO_CHANNEL))
+    : BlockEntity(ModBlocks.REDSTONE_RECEIVER_ENTITY, pPos, pState), IWirelessRedstone by redstone
 {
-    override fun saveAdditional(pTag: CompoundTag) {
-        super.saveAdditional(pTag)
-        pTag.putInt("channel", channel)
+    override fun loadAdditional(input: ValueInput) {
+        super.loadAdditional(input)
+        input.readCodecSerializableToExisting("wireless_redstone", redstone)
     }
     
-    override fun load(pTag: CompoundTag) {
-        super.load(pTag)
-        channel = pTag.getInt("channel")
+    override fun saveAdditional(output: ValueOutput) {
+        super.saveAdditional(output)
+        output.putCodecSerializable("wireless_redstone", redstone)
     }
     
-    override fun saveToItem(pStack: ItemStack) {
-        super.saveToItem(pStack)
+    override fun applyImplicitComponents(componentGetter: DataComponentGetter) {
+        super.applyImplicitComponents(componentGetter)
+        val channel = componentGetter.get(ModItemComponents.WIRELESS_REDSTONE)?.channel ?: (level as? ServerLevel)?.run {
+            dataStorage.dungeonBuilderData.redstoneHandler.makeNewChannel()
+        } ?: throw IllegalStateException("applying components on client!")
         
-        with(WirelessRedstoneItem) {
-            pStack.getOrCreateData().channel = channel // for display
+        redstone.channel = channel
+    }
+    
+    override fun collectImplicitComponents(components: DataComponentMap.Builder) {
+        super.collectImplicitComponents(components)
+        components.set(ModItemComponents.WIRELESS_REDSTONE, redstone)
+    }
+    
+    override fun preRemoveSideEffects(pos: BlockPos, state: BlockState) {
+        super.preRemoveSideEffects(pos, state)
+        level?.runOnServerLevel {
+            dataStorage.dungeonBuilderData.redstoneHandler.unregisterWirelessReceiver(channel, pos)
         }
     }
 }
@@ -174,30 +176,25 @@ class TileRedstoneReceiver(pPos: BlockPos, pState: BlockState)
 /**
  * Allows us to right-click on a transmitter or receiver in the world and copy its channel
  */
-class ItemBlockRedstoneReceiver(props: Properties) : BlockItem(ModBlocks.REDSTONE_RECEIVER, props), WirelessRedstoneItem {
+class ItemBlockRedstoneReceiver(props: Properties) : BlockItem(ModBlocks.REDSTONE_RECEIVER, props) {
     
     @Suppress("DuplicatedCode")
     override fun useOn(pContext: UseOnContext): InteractionResult {
         val target = pContext.targetBlockEntity
         
-        if (super<WirelessRedstoneItem>.useOn(target, pContext)) {
-            return InteractionResult.sidedSuccess(pContext.isClientSide)
+        if (WirelessRedstoneItem.useOn(target, pContext)) {
+            return sidedSuccess(pContext.isClientSide)
         }
         
-        return super<BlockItem>.useOn(pContext)
+        return super.useOn(pContext)
     }
     
     override fun placeBlock(pContext: BlockPlaceContext, pState: BlockState): Boolean {
         return super.placeBlock(pContext, pState)
     }
     
-    override fun appendHoverText(
-        pStack: ItemStack,
-        pLevel: Level?,
-        pTooltip: MutableList<Component>,
-        pFlag: TooltipFlag
-    ) {
-        super<BlockItem>.appendHoverText(pStack, pLevel, pTooltip, pFlag)
-        super<WirelessRedstoneItem>.appendHoverText(pStack, pLevel, pTooltip, pFlag)
+    override fun appendHoverText(stack: ItemStack, context: TooltipContext, tooltipDisplay: TooltipDisplay, tooltipAdder: Consumer<Component>, flag: TooltipFlag) {
+        super.appendHoverText(stack, context, tooltipDisplay, tooltipAdder, flag)
+        WirelessRedstoneItem.appendHoverText(stack) { tooltipAdder(it) }
     }
 }

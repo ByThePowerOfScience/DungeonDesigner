@@ -3,7 +3,7 @@
 package btpos.mcmods.dungeondesigner.builder.blocks.actors
 
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
-import btpos.mcmods.devutil.common.ext.vanilla.data.nullableFieldOf
+import btpos.mcmods.devutil.common.ext.vanilla.data.nullSafeFieldOf
 import btpos.mcmods.devutil.common.ext.vanilla.plus
 import btpos.mcmods.devutil.common.ext.vanilla.sendSystemMessage
 import btpos.mcmods.devutil.common.ext.vanilla.stack
@@ -12,10 +12,9 @@ import btpos.mcmods.devutil.common.ext.vanilla.world.dropItemAboveBlock
 import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
 import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServerLevel
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
-import btpos.mcmods.devutil.common.macros.ChatUtils
 import btpos.mcmods.devutil.common.structure.blocks.IObjectData
 import btpos.mcmods.devutil.common.structure.composition.IOnChange
-import btpos.mcmods.devutil.common.util.serialization.ICodecSerializable
+import btpos.mcmods.devutil.common.util.serialization.ICodecSerializableMutable
 import btpos.mcmods.devutil.common.util.serialization.putCodecSerializable
 import btpos.mcmods.devutil.common.util.serialization.readCodecSerializableToExisting
 import btpos.mcmods.devutil.multiplatform.api.IPlatformConnectRedstone
@@ -78,7 +77,7 @@ abstract class AbstractFlagHolderBlock(props: Properties) : Block(props), Entity
 		if (pPlayer.isShiftKeyDown && ourEnt.hasFlag()) {
 			return pLevel.runOnServerLevel {
 				dropItemAboveBlock(ourEnt.flagItem, pPos)
-			}.sidedResult
+			}.sidedSuccess
 		}
 		
 		// Else add it to the block
@@ -87,7 +86,7 @@ abstract class AbstractFlagHolderBlock(props: Properties) : Block(props), Entity
 				ourEnt.flagItem = itemInHand
 				if (ourEnt.hasFlag())
 					itemInHand.shrink(1)
-			}.sidedResult
+			}.sidedSuccess
 		}
 		
 		
@@ -100,7 +99,7 @@ abstract class AbstractFlagHolderBlock(props: Properties) : Block(props), Entity
 						Component.literal("Flag: ") + (ourEnt.flagName.asComponent()).withStyle(ChatFormatting.BLUE)
 				)
 			}
-		}.sidedResult
+		}.sidedSuccess
 	}
 	//endregion
 }
@@ -319,7 +318,7 @@ class TileFlagHolder(pPos: BlockPos, pState: BlockState) : BlockEntity(ModBlocks
 		pFlagName: FlagName? = null,
 		override var onChange: () -> Unit = {},
 		pAddFlagFunc: (String) -> Unit = {}
-	) : IOnChange, ICodecSerializable<State> {
+	) : IOnChange, ICodecSerializableMutable<State> {
 		override fun codec() = CODEC
 		override fun copyFrom(other: State) {
 			this.flagName.value = other.flagName.value
@@ -328,7 +327,7 @@ class TileFlagHolder(pPos: BlockPos, pState: BlockState) : BlockEntity(ModBlocks
 		companion object {
 			val CODEC = RecordCodecBuilder.create { inst ->
 				inst.group(
-						Codec.STRING.nullableFieldOf("flag_name") { it: State -> it.flagName.value }
+						Codec.STRING.nullSafeFieldOf("flag_name") { it: State -> it.flagName.value }
 				).apply(inst, { pFlagName-> State(pFlagName.getOrNull()) })
 			}
 		}

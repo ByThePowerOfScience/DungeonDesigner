@@ -17,18 +17,18 @@
     "main": [
       {
         "adapter": "kotlin",
-        "value": "btpos.mcmods.dungeondesigner.fabric.CommonEntryFabric"
+        "value": "btpos.mcmods.dungeondesigner.fabric.FabricEntry"
       }
     ],
     "client": [
       {
         "adapter": "kotlin",
-        "value": "btpos.mcmods.dungeondesigner.fabric.client.CommonEntryFabricClient"
+        "value": "btpos.mcmods.dungeondesigner.fabric.client.FabricClientEntry"
       }
     ]
   },
   "mixins": [
-    "dungeondesignerarch.mixins.json"
+    "dungeondesigner.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.17.0",

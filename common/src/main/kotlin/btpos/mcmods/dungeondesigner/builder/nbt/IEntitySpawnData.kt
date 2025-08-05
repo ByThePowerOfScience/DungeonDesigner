@@ -1,22 +1,16 @@
 package btpos.mcmods.dungeondesigner.builder.nbt
 
-import btpos.mcmods.devutil.common.ext.vanilla.data.getBlockPos
-import btpos.mcmods.devutil.common.ext.vanilla.data.getCompoundOrNull
-import btpos.mcmods.devutil.common.ext.vanilla.data.setOrRemove
-import btpos.mcmods.devutil.common.ext.vanilla.data.toCompoundTag
+import btpos.mcmods.devutil.common.ext.vanilla.data.nullSafeFieldOf
 import btpos.mcmods.devutil.common.ext.vanilla.plus
 import btpos.mcmods.devutil.common.kfflib.forge.vectorutil.v3d.toVec3
 import btpos.mcmods.devutil.common.macros.ChatUtils
-import btpos.mcmods.devutil.common.util.serialization.Serialization.decodeTag
-import btpos.mcmods.devutil.common.util.serialization.Serialization.encodeToTag
-import btpos.mcmods.dungeondesigner.builder.blocks.actors.TAGKEY_SPAWNED_BY_FIGHT_CONTROLLER
-import btpos.mcmods.dungeondesigner.builder.blocks.actors.TileFightController
+import com.mojang.serialization.Codec
+import com.mojang.serialization.codecs.RecordCodecBuilder
 import net.minecraft.ChatFormatting
 import net.minecraft.core.BlockPos
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NbtUtils
-import net.minecraft.nbt.NumericTag
 import net.minecraft.network.chat.Component
 import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.network.syncher.SynchedEntityData
@@ -31,17 +25,17 @@ sealed interface IEntitySpawnData {
 	/**
 	 * The spawn position of the entity.
 	 */
-	var pos: BlockPos?
+	val pos: BlockPos?
 	
 	/**
 	 * The X rotation of the spawned entity.
 	 */
-	var rotation: Float?
+	val rotation: Float?
 	
 	/**
 	 * The entity type to spawn. Copied from the template entity.
 	 */
-	var type: EntityType<*>?
+	val type: EntityType<*>?
 	
 	/**
 	 * The NBT to give the entity when spawning it, e.g. inventory, weapons, max health, potion effects, etc.
@@ -53,7 +47,7 @@ sealed interface IEntitySpawnData {
 	 *
 	 * @see net.minecraft.client.KeyboardHandler.copyCreateEntityCommand
 	 */
-	var nbt: CompoundTag?
+	val nbt: CompoundTag?
 	
 	operator fun component1() = pos
 	operator fun component2() = rotation
@@ -61,21 +55,27 @@ sealed interface IEntitySpawnData {
 	operator fun component4() = nbt
 	
 	
-	/**
-	 * Proper Java object for use in a BlockEntity
-	 */
+	data class Mutable(
+		override var pos: BlockPos? = null,
+		override var rotation: Float? = null,
+		override var type: EntityType<*>? = null,
+		override var nbt: CompoundTag? = null
+	) : IEntitySpawnData {
+		constructor(other: IEntitySpawnData) : this(other.pos, other.rotation, other.type, other.nbt)
+	}
+	
 	data class Impl(
-		override var pos: BlockPos?,
-		override var rotation: Float?,
-		override var type: EntityType<*>?,
-		override var nbt: CompoundTag? = null,
+		override val pos: BlockPos?,
+		override val rotation: Float?,
+		override val type: EntityType<*>?,
+		override val nbt: CompoundTag? = null,
 	) : IEntitySpawnData
 	
 	/**
 	 * Structured access directly to item NBT.
 	 */
 	// I really want to use an interface here, but it also means the value class can't get this conversion for free...
-	@JvmInline
+	/*@JvmInline
 	value class AsTag(val tag: CompoundTag) : IEntitySpawnData {
 		companion object {
 			const val SPAWN_POS = "pos"
@@ -83,7 +83,7 @@ sealed interface IEntitySpawnData {
 			const val ENT_TYPE = "ent_type"
 			const val ENT_NBT = "ent_nbt"
 		}
-		
+
 		override var pos: BlockPos?
 			get() = tag.getBlockPos(SPAWN_POS)
 			set(value) {
@@ -91,7 +91,7 @@ sealed interface IEntitySpawnData {
 					put(SPAWN_POS, it.toCompoundTag())
 				}
 			}
-		
+
 		override var type: EntityType<*>?
 			get() {
 				return tag.get(ENT_TYPE)?.let { BuiltInRegistries.ENTITY_TYPE.byNameCodec().decodeTag(it) }
@@ -101,11 +101,11 @@ sealed interface IEntitySpawnData {
 					put(ENT_TYPE, BuiltInRegistries.ENTITY_TYPE.byNameCodec().encodeToTag(it))
 				}
 			}
-		
+
 		override var nbt: CompoundTag?
 			get() = tag.getCompoundOrNull(ENT_NBT)
 			set(value) = tag.setOrRemove(ENT_NBT, value) { put(ENT_NBT, it) }
-		
+
 		override var rotation: Float?
 			get() = (tag[SPAWN_ROT] as? NumericTag)?.asFloat()?.getOrNull()
 			set(value) {
@@ -113,16 +113,29 @@ sealed interface IEntitySpawnData {
 					putFloat(SPAWN_ROT, it)
 				}
 			}
-		
+
 		fun copyFrom(other: IEntitySpawnData) {
 			pos = other.pos
 			type = other.type
 			nbt = other.nbt
 			rotation = other.rotation
 		}
-		
+
 		override fun toString(): String {
 			return "Pos: $pos\nRot: $rotation\nType: $type\nNBT: ${nbt?.let(NbtUtils::prettyPrint)}"
+		}
+	}*/
+	
+	companion object {
+		val CODEC: Codec<IEntitySpawnData> = RecordCodecBuilder.create {
+			it.group(
+					BlockPos.CODEC.nullSafeFieldOf("pos", IEntitySpawnData::pos),
+					Codec.FLOAT.nullSafeFieldOf("rot", IEntitySpawnData::rotation),
+					BuiltInRegistries.ENTITY_TYPE.byNameCodec().nullSafeFieldOf("type", IEntitySpawnData::type),
+					CompoundTag.CODEC.nullSafeFieldOf("nbt", IEntitySpawnData::nbt),
+			).apply(it) { i, j, k, l ->
+				Impl(i.getOrNull(), j.getOrNull(), k.getOrNull(), l.getOrNull())
+			}
 		}
 	}
 }
@@ -166,13 +179,6 @@ fun IEntitySpawnData.trySpawnEntity(level: ServerLevel): UUID? {
 		return newEntity.uuid
 	else
 		return null
-}
-
-fun IEntitySpawnData.serialize(): CompoundTag {
-	return when (this) {
-		is IEntitySpawnData.AsTag -> this.tag
-		else -> IEntitySpawnData.AsTag(CompoundTag()).also { it.copyFrom(this) }.tag
-	}
 }
 
 fun IEntitySpawnData.toComponent(): Component {

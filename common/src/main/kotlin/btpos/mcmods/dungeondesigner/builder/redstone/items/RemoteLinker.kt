@@ -1,14 +1,21 @@
 package btpos.mcmods.dungeondesigner.builder.redstone.items
 
+import btpos.mcmods.devutil.common.ext.java.invoke
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
 import btpos.mcmods.devutil.common.ext.vanilla.data.getBlockPos
 import btpos.mcmods.devutil.common.ext.vanilla.data.getCompoundOrNull
+import btpos.mcmods.devutil.common.ext.vanilla.data.nullSafeFieldOf
 import btpos.mcmods.devutil.common.ext.vanilla.data.setOrRemove
 import btpos.mcmods.devutil.common.ext.vanilla.data.toCompoundTag
 import btpos.mcmods.devutil.common.ext.vanilla.isClientSide
 import btpos.mcmods.devutil.common.ext.vanilla.plus
+import btpos.mcmods.devutil.common.ext.vanilla.sendSystemMessage
+import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
 import btpos.mcmods.devutil.common.macros.ChatUtils.toComponent
-import btpos.mcmods.devutil.forge.datagen.IItemDataGen
+import btpos.mcmods.devutil.common.structure.blocks.IObjectData
+import btpos.mcmods.dungeondesigner.registry.ModItemComponents
+import com.mojang.serialization.Codec
+import com.mojang.serialization.codecs.RecordCodecBuilder
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.chat.Component
@@ -16,9 +23,11 @@ import net.minecraft.world.InteractionResult
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.TooltipFlag
+import net.minecraft.world.item.component.TooltipDisplay
 import net.minecraft.world.item.context.UseOnContext
 import net.minecraft.world.level.Level
-import net.minecraftforge.client.model.generators.ItemModelProvider
+import java.util.function.Consumer
+import kotlin.jvm.optionals.getOrNull
 
 /**
  * This is an item that allows you to link a transmitter to an arbitrary redstone component in the world
@@ -27,18 +36,20 @@ import net.minecraftforge.client.model.generators.ItemModelProvider
  * Use a chest on top of it like usual
  */
 class ItemRemoteLinker(props: Properties) : Item(props) {
-    companion object : IItemDataGen {
-        fun getData(stack: ItemStack): NbtAdapter? {
-            return stack.tag?.getCompoundOrNull("dungeondesigner")?.let(::NbtAdapter)
+    companion object : IObjectData {
+        fun getData(stack: ItemStack): InternalData? {
+            return stack.get(ModItemComponents.REMOTE_LINKER)
         }
         
-        fun getOrCreateData(stack: ItemStack): NbtAdapter {
-            return stack.getOrCreateTagElement("dungeondesigner").let(::NbtAdapter)
+        inline fun modifyOrCreateData(stack: ItemStack, mutator: InternalData.Mutable.() -> Unit) {
+            val current = stack.get(ModItemComponents.REMOTE_LINKER)?.let(InternalData::Mutable) ?: InternalData.Mutable()
+            current.mutator()
+            stack.set(ModItemComponents.REMOTE_LINKER, current)
         }
         
-        override fun ItemModelProvider.buildModels() {
-            basicItem()
-        }
+//        override fun ItemModelProvider.buildModels() {
+//            basicItem()
+//        }
         
         override val id: String
             get() = "remote_linker"
@@ -55,18 +66,36 @@ class ItemRemoteLinker(props: Properties) : Item(props) {
         val player = pContext.player ?: return InteractionResult.PASS
         
         // Add target pos
-        if (!pContext.isClientSide) {
+        return pContext.level.runOnServer {
             val targetPos = pContext.clickedPos
-            getOrCreateData(pContext.itemInHand).target = targetPos
+            modifyOrCreateData(pContext.itemInHand) {
+                target = targetPos
+            }
             player.sendSystemMessage("Added pos: ".asComponent() + targetPos.toComponent())
-        }
-        
-        return InteractionResult.sidedSuccess(pContext.isClientSide)
+        }.sidedSuccess
     }
     
-    override fun appendHoverText(pStack: ItemStack, pLevel: Level?, pTooltipComponents: MutableList<Component>, pIsAdvanced: TooltipFlag) {
-        super.appendHoverText(pStack, pLevel, pTooltipComponents, pIsAdvanced)
-        val pos = getData(pStack)?.target ?: return
-        pTooltipComponents += "Target: ".asComponent() + pos.toComponent()
+    override fun appendHoverText(stack: ItemStack, context: TooltipContext, tooltipDisplay: TooltipDisplay, tooltipAdder: Consumer<Component?>, flag: TooltipFlag) {
+        super.appendHoverText(stack, context, tooltipDisplay, tooltipAdder, flag)
+        val pos = getData(stack)?.target ?: return
+        tooltipAdder("Target: ".asComponent() + pos.toComponent())
+    }
+    
+    interface InternalData {
+        val target: BlockPos?
+        
+        data class Impl(override val target: BlockPos?) : InternalData
+        data class Mutable(override var target: BlockPos? = null) : InternalData {
+            constructor(other: InternalData) : this(other.target)
+        }
+        
+        companion object {
+            val CODEC: Codec<InternalData> = RecordCodecBuilder.create { inst ->
+	            inst.group(
+                        BlockPos.CODEC.nullSafeFieldOf("target", InternalData::target)
+                ).apply(inst) { Impl(it.getOrNull()) }
+            }
+        }
     }
 }
+

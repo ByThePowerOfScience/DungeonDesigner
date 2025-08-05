@@ -1,18 +1,21 @@
+@file:Suppress("OVERRIDE_DEPRECATION")
+
 package btpos.mcmods.dungeondesigner.builder.items
 
 
+import btpos.mcmods.devutil.common.ext.java.invoke
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
 import btpos.mcmods.devutil.common.ext.vanilla.plus
 import btpos.mcmods.devutil.common.ext.vanilla.sendSystemMessage
+import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
 import btpos.mcmods.devutil.common.ext.vanilla.world.sidedSuccess
 import btpos.mcmods.devutil.common.macros.ChatUtils.toComponent
 import btpos.mcmods.devutil.common.structure.blocks.IObjectData
 import btpos.mcmods.devutil.common.util.EntityUtils.getTargetedEntity
 import btpos.mcmods.dungeondesigner.builder.nbt.IEntitySpawnData
+import btpos.mcmods.dungeondesigner.registry.ModItemComponents
 import btpos.mcmods.dungeondesigner.registry.ModItems
-import net.minecraft.ChatFormatting
 import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.chat.Component
 import net.minecraft.util.ProblemReporter
 import net.minecraft.world.InteractionHand
@@ -23,10 +26,11 @@ import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.TooltipFlag
+import net.minecraft.world.item.component.TooltipDisplay
 import net.minecraft.world.item.context.UseOnContext
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.storage.TagValueOutput
-import net.minecraft.world.level.storage.ValueOutput
+import java.util.function.Consumer
 
 /**
  * Holds a spawn egg and a spawn position. Used to configure the FightController.
@@ -65,14 +69,14 @@ class ItemEntityPipette(pProps: Properties) : Item(pProps) {
 			
 //			val data = stack.getTagElement(TAGKEY_DATA) ?: return null
 			
-			return IEntitySpawnData.AsTag(data)
+			return stack.get(ModItemComponents.ENTITY_PIPETTE)
 		}
 		
-		fun getOrCreateData(stack: ItemStack): IEntitySpawnData {
-			if (stack.item != ModItems.PIPETTE_ITEM)
-				btpos.mcmods.dungeondesigner.MOD_LOGGER.warn("Expected item {}, got {}", resourceLocation, ForgeRegistries.ITEMS.getKey(stack.item))
+		inline fun modifyOrSetData(stack: ItemStack, mutator: IEntitySpawnData.Mutable.() -> Unit) {
+			val current = stack.get(ModItemComponents.ENTITY_PIPETTE)?.let(IEntitySpawnData::Mutable) ?: IEntitySpawnData.Mutable()
+			current.mutator()
 			
-//			return IEntitySpawnData.AsTag(stack.getOrCreateTagElement(TAGKEY_DATA))
+			stack.set(ModItemComponents.ENTITY_PIPETTE, current)
 		}
 	}
 	
@@ -118,33 +122,32 @@ class ItemEntityPipette(pProps: Properties) : Item(pProps) {
 			val tag = TagValueOutput.createWithoutContext(ProblemReporter.DISCARDING).also {
 				lookedAtEntity.saveWithoutId(it)
 				it.apply {
-					remove("UUID");
-					remove("Pos");
-					remove("Dimension");
+					discard("UUID");
+					discard("Pos");
+					discard("Dimension");
 				}
 			}.buildResult()
 			
 			val type = lookedAtEntity.type
 			
-			getOrCreateData(heldStack).run {
+			modifyOrSetData(heldStack) {
 				this.nbt = tag
 				@Suppress("UNCHECKED_CAST")
 				this.type = type as EntityType<LivingEntity>
 			}
 			
 			pPlayer.sendSystemMessage("Saved ${BuiltInRegistries.ENTITY_TYPE.getKey(type)} to pipette.".asComponent())
-		}.sidedResult
+		}.sidedSuccess
 	}
 	
-	override fun appendHoverText(pStack: ItemStack, pLevel: Level?, pTooltipComponents: MutableList<Component>, pIsAdvanced: TooltipFlag) {
-		super.appendHoverText(pStack, pLevel, pTooltipComponents, pIsAdvanced)
-		val data = getDataOrNull(pStack) ?: return
-		with (pTooltipComponents) {
-			with (data) {
-				type?.let { add("Mob: ${ForgeRegistries.ENTITY_TYPES.getKey(type)}".asComponent()) }
-				pos?.let { add("Position: ".asComponent() + it.toComponent()) }
-				rotation?.let { add("Rotation: $it".asComponent()) }
-			}
+	override fun appendHoverText(stack: ItemStack, context: TooltipContext, tooltipDisplay: TooltipDisplay, tooltipAdder: Consumer<Component?>, flag: TooltipFlag) {
+		super.appendHoverText(stack, context, tooltipDisplay, tooltipAdder, flag)
+		
+		val data = getDataOrNull(stack) ?: return
+		with (data) {
+			type?.let { tooltipAdder("Mob: ${BuiltInRegistries.ENTITY_TYPE.getKey(it)}".asComponent()) }
+			pos?.let { tooltipAdder("Position: ".asComponent() + it.toComponent()) }
+			rotation?.let { tooltipAdder("Rotation: $it".asComponent()) }
 		}
 	}
 }
