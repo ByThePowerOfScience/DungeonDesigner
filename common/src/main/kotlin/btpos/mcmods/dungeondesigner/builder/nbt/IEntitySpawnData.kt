@@ -71,60 +71,6 @@ sealed interface IEntitySpawnData {
 		override val nbt: CompoundTag? = null,
 	) : IEntitySpawnData
 	
-	/**
-	 * Structured access directly to item NBT.
-	 */
-	// I really want to use an interface here, but it also means the value class can't get this conversion for free...
-	/*@JvmInline
-	value class AsTag(val tag: CompoundTag) : IEntitySpawnData {
-		companion object {
-			const val SPAWN_POS = "pos"
-			const val SPAWN_ROT = "rotation"
-			const val ENT_TYPE = "ent_type"
-			const val ENT_NBT = "ent_nbt"
-		}
-
-		override var pos: BlockPos?
-			get() = tag.getBlockPos(SPAWN_POS)
-			set(value) {
-				tag.setOrRemove(SPAWN_POS, value) {
-					put(SPAWN_POS, it.toCompoundTag())
-				}
-			}
-
-		override var type: EntityType<*>?
-			get() {
-				return tag.get(ENT_TYPE)?.let { BuiltInRegistries.ENTITY_TYPE.byNameCodec().decodeTag(it) }
-			}
-			set(value) {
-				tag.setOrRemove(ENT_TYPE, value) {
-					put(ENT_TYPE, BuiltInRegistries.ENTITY_TYPE.byNameCodec().encodeToTag(it))
-				}
-			}
-
-		override var nbt: CompoundTag?
-			get() = tag.getCompoundOrNull(ENT_NBT)
-			set(value) = tag.setOrRemove(ENT_NBT, value) { put(ENT_NBT, it) }
-
-		override var rotation: Float?
-			get() = (tag[SPAWN_ROT] as? NumericTag)?.asFloat()?.getOrNull()
-			set(value) {
-				tag.setOrRemove(SPAWN_ROT, value) {
-					putFloat(SPAWN_ROT, it)
-				}
-			}
-
-		fun copyFrom(other: IEntitySpawnData) {
-			pos = other.pos
-			type = other.type
-			nbt = other.nbt
-			rotation = other.rotation
-		}
-
-		override fun toString(): String {
-			return "Pos: $pos\nRot: $rotation\nType: $type\nNBT: ${nbt?.let(NbtUtils::prettyPrint)}"
-		}
-	}*/
 	
 	companion object {
 		val CODEC: Codec<IEntitySpawnData> = RecordCodecBuilder.create {
@@ -178,16 +124,6 @@ fun IEntitySpawnData.trySpawnEntity(level: ServerLevel): UUID? {
 		setMobTemporary(it)
 		it
 	} ?: return null
-	
-//	val consumer: (Entity) -> Unit = {
-//		it.deserializeNBT(nbt)
-//		it.persistentData.putBoolean(TAGKEY_SPAWNED_BY_FIGHT_CONTROLLER, true)
-//		if (rot != null)
-//			it.yRot = rot
-//		it.setPos(pos.above().toVec3())
-//
-//	}
-//	val newEntity = type.create(level, consumer, pos, MobSpawnType.MOB_SUMMONED, true, false) ?: return null
 	
 	if (level.tryAddFreshEntityWithPassengers(newEntity))
 		return newEntity.uuid
