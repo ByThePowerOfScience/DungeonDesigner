@@ -1,11 +1,12 @@
+
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-	id("dev.architectury.loom") version "1.10-SNAPSHOT" apply false
-	id("architectury-plugin") version "3.4-SNAPSHOT"
+	id("dev.architectury.loom") apply false
+	id("architectury-plugin")
 	id("com.github.johnrengelman.shadow") version "8.1.1" apply false
-	id("dungeondesigner-preprocessor") apply false
+//	id("dungeondesigner-preprocessor") apply false
 	kotlin("jvm") version "2.1.21"
 }
 
@@ -28,13 +29,13 @@ val Project.loom: net.fabricmc.loom.api.LoomGradleExtensionAPI
 val generatedResources = project(":common").file("src/generated")
 
 subprojects {
-	apply(plugin="org.jetbrains.kotlin.jvm")
-	apply(plugin="dev.architectury.loom")
-	apply(plugin="architectury-plugin")
-	apply(plugin="maven-publish")
+	apply(plugin = "org.jetbrains.kotlin.jvm")
+	apply(plugin = "dev.architectury.loom")
+	apply(plugin = "architectury-plugin")
+	apply(plugin = "maven-publish")
 	
-	if (project.name != "common")
-		apply(plugin="dungeondesigner-preprocessor")
+//	if (project.name != "common")
+//		apply(plugin = "dungeondesigner-preprocessor")
 	
 	base {
 		// Set up a suffixed format for the mod jar names, e.g. `example-fabric`.
@@ -68,6 +69,9 @@ subprojects {
 		})
 		
 		implementation(rootProject.libs.kotlin.reflect)
+		
+		testImplementation(kotlin("test"))
+		testImplementation("org.hamcrest:hamcrest:3.0")
 	}
 	
 	java {
@@ -95,6 +99,7 @@ subprojects {
 	
 	tasks.withType<Test> {
 		useJUnitPlatform()
+		this@withType.testClassesDirs + project(":common").file("build/classes/")
 	}
 	
 	// Configure Maven publishing.
@@ -115,3 +120,18 @@ subprojects {
 //		}
 //	}
 }
+
+//// Make the rootproject "test" task only run the tests in NeoForge
+////      and not execute any tests in common where they're doomed to fail.
+//tasks.replace("test", Test::class.java).configure<Task> {
+//	dependsOn(project(":neoforge").tasks.test)
+//}
+//
+//// Create a testAll task that runs the unit tests for every platform
+//tasks.register<DefaultTask>("testAll").configure<DefaultTask> {
+//	subprojects.filter { "common" !in it.name }
+//		.map { it.tasks.test }
+//		.forEach {
+//			this@configure.dependsOn(it)
+//		}
+//}

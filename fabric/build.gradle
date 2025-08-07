@@ -1,10 +1,15 @@
+import btpos.gradle.preprocessor.MultiplatformPreTransformer_Fabric
+import dev.architectury.transformer.Transform
+
 plugins {
 	id 'com.github.johnrengelman.shadow'
 }
 
 architectury {
 	platformSetupLoomIde()
-	fabric()
+	fabric { Transform tf ->
+	
+	}
 }
 
 configurations {

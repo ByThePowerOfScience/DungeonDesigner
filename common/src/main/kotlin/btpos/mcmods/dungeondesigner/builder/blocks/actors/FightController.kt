@@ -42,6 +42,7 @@ import net.minecraft.world.level.block.state.properties.EnumProperty
 import net.minecraft.world.level.redstone.Orientation
 import net.minecraft.world.level.storage.ValueInput
 import org.jetbrains.annotations.VisibleForTesting
+import java.io.Serializable
 import java.util.UUID
 import kotlin.math.roundToInt
 
@@ -57,7 +58,7 @@ enum class FightStatus : StringRepresentable {
 
 
 
-class BlockFightController(props: Properties) : Block(props), BlockWithEntity<TileFightController>, IPlatformConnectRedstone {
+class BlockFightController(props: Properties) : Block(props), BlockWithEntity<TileFightController>, IPlatformConnectRedstone, Serializable {
 	companion object : IObjectData {
 		override val id: String
 			get() = "fight_controller"
