@@ -1,4 +1,5 @@
 
+import btpos.gradle.architectury.loom
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -22,9 +23,6 @@ allprojects {
 	group = rootProject.prop("maven_group")
 	version = rootProject.prop("mod_version")
 }
-
-val Project.loom: net.fabricmc.loom.api.LoomGradleExtensionAPI
-	get() = this.extensions.getByType()
 
 val generatedResources = project(":common").file("src/generated")
 
