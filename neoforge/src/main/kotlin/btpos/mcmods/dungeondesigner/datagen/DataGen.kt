@@ -54,24 +54,24 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 		itemModels.registerItemModels()
 	}
 	
-//	private val EXAMPLE_TEMPLATE: ModelTemplate = ModelTemplate( // The parent model location
-//			Optional.of(
-//					ModelLocationUtils.decorateBlockModelLocation("examplemod:example_template")
-//			),  // The suffix to apply to the end of any model that uses this template
-//			Optional.of("_example"),  // All texture slots that must be defined
-//			// Should be as specific as possible based on what's undefined in the parent model
-//			TextureSlot.PARTICLE,
-//			TextureSlot.SOUTH
-//	)
-//
-//	private val test = TexturedModel.createDefault( // Block to texture mapping
-//			{ block: Block ->
-//				TextureMapping()
-//					.put(TextureSlot.PARTICLE, TextureMapping.getBlockTexture(block))
-//					.put(TextureSlot.TOP, TextureMapping.getBlockTexture(block, "_base"))
-//			},  // The template to generate from
-//			EXAMPLE_TEMPLATE
-//	);
+/*	private val EXAMPLE_TEMPLATE: ModelTemplate = ModelTemplate( // The parent model location
+			Optional.of(
+					ModelLocationUtils.decorateBlockModelLocation("examplemod:example_template")
+			),  // The suffix to apply to the end of any model that uses this template
+			Optional.of("_example"),  // All texture slots that must be defined
+			// Should be as specific as possible based on what's undefined in the parent model
+			TextureSlot.PARTICLE,
+			TextureSlot.SOUTH
+	)
+
+	private val test = TexturedModel.createDefault( // Block to texture mapping
+			{ block: Block ->
+				TextureMapping()
+					.put(TextureSlot.PARTICLE, TextureMapping.getBlockTexture(block))
+					.put(TextureSlot.TOP, TextureMapping.getBlockTexture(block, "_base"))
+			},  // The template to generate from
+			EXAMPLE_TEMPLATE
+	);*/
 	
 	
 	private fun BlockModelGenerators.registerBlockModels() {
@@ -100,13 +100,14 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 		val TEXTURE_TOP_BOTTOM_ON = "logic_programmer_top_on"
 		val TEXTURE_SIDES_ON = "logic_programmer_side_on"
 		
-		val off = columnModel(BlockTriggerHolder.resourceLocation, blockLoc(TEXTURE_SIDES), blockLoc(TEXTURE_TOP_BOTTOM))
-		val on = columnModel(BlockTriggerHolder.resourceLocation.withSuffix("_on"), blockLoc(TEXTURE_SIDES_ON), blockLoc(TEXTURE_TOP_BOTTOM_ON))
+		val off = columnModel(BlockTriggerHolder.id.powered(false), blockLoc(TEXTURE_SIDES), blockLoc(TEXTURE_TOP_BOTTOM))
+		val on = columnModel(BlockTriggerHolder.id.powered(true), blockLoc(TEXTURE_SIDES_ON), blockLoc(TEXTURE_TOP_BOTTOM_ON))
 		
 		MultiVariantGenerator.dispatch(ModBlocks.TRIGGER_BLOCK)
-			.with(
-					poweredInitialVariants(off, on)
-			).submit()
+			.with(poweredInitialVariants(off, on))
+			.submit()
+		
+		registerSimpleItemModel(ModBlocks.TRIGGER_BLOCK, off)
 	}
 	
 	private fun BlockModelGenerators.makeFightController() {
@@ -130,6 +131,8 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 					FightStatus.IN_PROGRESS to plainVariant(in_progress),
 					FightStatus.COMPLETE to plainVariant(com)
 			)).with(ROTATION_HORIZONTAL_FACING).submit()
+		
+		registerSimpleItemModel(ModBlocks.FIGHT_CONTROLLER, off)
 	}
 	
 	private fun BlockModelGenerators.makeFlagReader() {
@@ -138,12 +141,14 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 		val TXT_TOP = "logic_programmer_top"
 		val TXT_TOP_ON = "logic_programmer_top_on"
 		
-		val off = columnModel(BlockFlagReader.resourceLocation.powered(false), blockLoc(TXT_SIDES), blockLoc(TXT_TOP))
-		val on = columnModel(BlockFlagReader.resourceLocation.powered(true), blockLoc(TXT_SIDES_ON), blockLoc(TXT_TOP_ON))
+		val off = columnModel(BlockFlagReader.id.powered(false), blockLoc(TXT_SIDES), blockLoc(TXT_TOP))
+		val on = columnModel(BlockFlagReader.id.powered(true), blockLoc(TXT_SIDES_ON), blockLoc(TXT_TOP_ON))
 		
 		MultiVariantGenerator.dispatch(ModBlocks.FLAG_READER)
 			.with(poweredInitialVariants(off, on))
 			.submit()
+		
+		registerSimpleItemModel(ModBlocks.FLAG_READER, off)
 	}
 	
 	@Suppress("DuplicatedCode")
@@ -176,6 +181,8 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 				.with(poweredInitialVariants(setter_off, setter_on))
 				.with(ROTATION_HORIZONTAL_FACING)
 				.submit()
+			
+			registerSimpleItemModel(ModBlocks.FLAG_SETTER, setter_off)
 		}
 
 		fun BlockModelGenerators.forResetter() {
@@ -194,6 +201,8 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 				.with(poweredInitialVariants(setter_off, setter_on))
 				.with(ROTATION_HORIZONTAL_FACING)
 				.submit()
+			
+			registerSimpleItemModel(ModBlocks.FLAG_RESETTER, setter_off)
 		}
 	}
 	
@@ -202,22 +211,27 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 		
 		fun BlockModelGenerators.forTransmitter() {
 			val txSpecific = txBase + "transmitter"
-			val off = columnModel(BlockRedstoneTransmitter.resourceLocation.powered(false), blockLoc("${txSpecific}_sides").powered(false), blockLoc("${txSpecific}_top").powered(false))
-			val on = columnModel(BlockRedstoneTransmitter.resourceLocation.powered(true), blockLoc("${txSpecific}_sides").powered(true), blockLoc("${txSpecific}_top").powered(true))
+			val off = columnModel(BlockRedstoneTransmitter.id.powered(false), blockLoc("${txSpecific}_sides").powered(false), blockLoc("${txSpecific}_top").powered(false))
+			val on = columnModel(BlockRedstoneTransmitter.id.powered(true), blockLoc("${txSpecific}_sides").powered(true), blockLoc("${txSpecific}_top").powered(true))
 			
 			MultiVariantGenerator.dispatch(ModBlocks.REDSTONE_TRANSMITTER)
 				.with(poweredInitialVariants(off, on))
 				.submit()
+			
+			registerSimpleItemModel(ModBlocks.REDSTONE_TRANSMITTER, off)
 		}
 		
 		fun BlockModelGenerators.forReceiver() {
 			val txSpecific = txBase + "receiver"
-			val off = columnModel(BlockRedstoneReceiver.resourceLocation.powered(false), blockLoc("${txSpecific}_sides").powered(false), blockLoc("${txSpecific}_top").powered(false))
-			val on = columnModel(BlockRedstoneReceiver.resourceLocation.powered(true), blockLoc("${txSpecific}_sides").powered(true), blockLoc("${txSpecific}_top").powered(true))
+			val off = columnModel(BlockRedstoneReceiver.id.powered(false), blockLoc("${txSpecific}_sides").powered(false), blockLoc("${txSpecific}_top").powered(false))
+			val on = columnModel(BlockRedstoneReceiver.id.powered(true), blockLoc("${txSpecific}_sides").powered(true), blockLoc("${txSpecific}_top").powered(true))
 			
 			MultiVariantGenerator.dispatch(ModBlocks.REDSTONE_RECEIVER)
 				.with(poweredInitialVariants(off, on))
 				.submit()
+			
+			
+			registerSimpleItemModel(ModBlocks.REDSTONE_RECEIVER, off)
 		}
 	}
 	//endregion
@@ -264,7 +278,6 @@ private fun blockFaces(top: ResourceLocation, bottom: ResourceLocation, north: R
 		.put(TextureSlot.SOUTH, south)
 		.put(TextureSlot.WEST, west)
 }
-
 //endregion
 
 
@@ -284,8 +297,8 @@ private fun sidedBlock(id: String, rest: ResourceLocation, top: ResourceLocation
 	return sidedBlock(id, top, bottom, north, south, east, west, particle)
 }
 
-private fun BlockModelGenerators.columnModel(loc: ResourceLocation, side: ResourceLocation, updown: ResourceLocation): ResourceLocation {
-	return ModelTemplates.CUBE_COLUMN.create(loc, TextureMapping.column(side, updown), modelOutput)
+private fun BlockModelGenerators.columnModel(id: String, side: ResourceLocation, updown: ResourceLocation): ResourceLocation {
+	return ModelTemplates.CUBE_COLUMN.create(blockLoc(id), TextureMapping.column(side, updown), modelOutput)
 }
 //endregion
 

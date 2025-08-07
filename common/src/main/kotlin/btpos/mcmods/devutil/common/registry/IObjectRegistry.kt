@@ -120,9 +120,8 @@ interface IBlockRegistry : IItemRegistry {
 	val ENTITIES: PlatformRegistry<BlockEntityType<*>>
 	
 	override fun register() {
-		super.register()
-		
 		BLOCKS.register()
+		super.register() // load items AFTER blocks!!!
 		ENTITIES.register()
 	}
 	

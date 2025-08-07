@@ -1,6 +1,6 @@
 package btpos.mcmods.dungeondesigner.fabric
 
-import btpos.mcmods.dungeondesigner.CommonEntry.init
+import btpos.mcmods.dungeondesigner.CommonEntry
 import net.fabricmc.api.ModInitializer
 
 class FabricEntry : ModInitializer {
@@ -11,6 +11,6 @@ class FabricEntry : ModInitializer {
 		
 		// Run our common setup.
 		
-		init()
+		CommonEntry.init()
 	}
 }

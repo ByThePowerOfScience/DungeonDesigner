@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "powered=false": {
+      "model": "dungeondesigner:block/trigger_holder_unpowered"
+    },
+    "powered=true": {
+      "model": "dungeondesigner:block/trigger_holder_powered"
+    }
+  }
+}
