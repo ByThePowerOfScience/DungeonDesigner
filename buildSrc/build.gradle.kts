@@ -12,9 +12,9 @@ repositories {
 
 dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-gradle-plugin-api:2.1.21")
-	implementation("org.ow2.asm:asm:9.4")
-	implementation("org.ow2.asm:asm-commons:9.4")
-	implementation("org.ow2.asm:asm-tree:9.4")
+	implementation("org.ow2.asm:asm:9.8")
+	implementation("org.ow2.asm:asm-commons:9.8")
+	implementation("org.ow2.asm:asm-tree:9.8")
 }
 
 gradlePlugin {

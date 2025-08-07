@@ -54,6 +54,17 @@ processResources {
 	}
 }
 
+loom {
+	runs {
+		clientData {
+			clientData()
+			programArgs "--all", "--mod", "dungeondesigner"
+			programArgs "--output", project.rootProject.file("src/generated").absolutePath
+			programArgs "--existing", project.rootProject.file("src/main/resources").absolutePath
+		}
+	}
+}
+
 shadowJar {
 	configurations = [project.configurations.shadowBundle]
 	archiveClassifier = 'dev-shadow'

@@ -29,52 +29,55 @@ object ModBlocks : IBlockRegistry {
 	override val ITEMS = createRegistry(Registries.ITEM)
 	override val ENTITIES = createRegistry(Registries.BLOCK_ENTITY_TYPE)
 	
-	val logicBlockProperties = BlockBehaviour.Properties.of()
+	val logicBlockProperties = { BlockBehaviour.Properties.of()
 		.pushReaction(PushReaction.IGNORE)
 		.mapColor(MapColor.COLOR_MAGENTA)
 		.strength(-1.0F, 3600000.0F)
 		.noLootTable()
-		.isValidSpawn { _, _, _, _ -> false }
+		.isValidSpawn { _, _, _, _ -> false } }
 	
-	val logicItemProperties = Item.Properties().fireResistant()
+	val logicItemProperties = { Item.Properties().fireResistant() }
 	
-	val DUNGEON_NEXUS by block(BlockDungeonNexus.id, withItem=true) { BlockDungeonNexus(logicBlockProperties) }
+	
+	
+	
+	val DUNGEON_NEXUS by block(BlockDungeonNexus.id, logicBlockProperties, withItem=true) { BlockDungeonNexus(it) }
 	val DUNGEON_NEXUS_ENTITY by ent(::DUNGEON_NEXUS, ::TileDungeonNexus)
 	
-	val TRIGGER_BLOCK by block(BlockTriggerHolder.id, withItem=true) { BlockTriggerHolder(logicBlockProperties) }
+	val TRIGGER_BLOCK by block(BlockTriggerHolder.id, logicBlockProperties, withItem=true) { BlockTriggerHolder(it) }
 	val TRIGGER_BLOCK_ENTITY by ent(::TRIGGER_BLOCK, ::TileTriggerHolder)
     
     //region Flag Blocks
     /**
 	 * Emits signal when the flag is on
 	 */
-	val FLAG_READER by block("flag_reader", withItem=true) { BlockFlagReader(logicBlockProperties) }
+	val FLAG_READER by block("flag_reader", logicBlockProperties, withItem=true) { BlockFlagReader(it) }
 	
 	/**
 	 * Turns the flag ON
 	 */
-	val FLAG_SETTER by block("flag_setter", withItem=true) { BlockFlagWriter(logicBlockProperties, true) }
+	val FLAG_SETTER by block(BlockFlagWriter.id_setter, logicBlockProperties, withItem=true) { BlockFlagWriter(it, true) }
 	
 	/**
 	 * Turns the flag OFF
 	 */
-	val FLAG_RESETTER by block("flag_resetter", withItem=true) { BlockFlagWriter(logicBlockProperties, false) }
+	val FLAG_RESETTER by block(BlockFlagWriter.id_resetter, logicBlockProperties, withItem=true) { BlockFlagWriter(it, false) }
 	
 	val FLAG_BLOCK_ENTITY by ent("flag_block") { BlockEntityType(::TileFlagHolder, FLAG_READER, FLAG_SETTER, FLAG_RESETTER) }
     //endregion
 	
 	
 	
-	val FIGHT_CONTROLLER by block(BlockFightController.id, withItem=true) { BlockFightController(logicBlockProperties) }
+	val FIGHT_CONTROLLER by block(BlockFightController.id, logicBlockProperties, withItem=true) { BlockFightController(it) }
 	val FIGHT_CONTROLLER_ENTITY by ent(::FIGHT_CONTROLLER, ::TileFightController)
 	
 	
 	
-	val REDSTONE_RECEIVER by block(BlockRedstoneReceiver.id, withItem=false) { BlockRedstoneReceiver(logicBlockProperties) }
+	val REDSTONE_RECEIVER by block(BlockRedstoneReceiver.id, logicBlockProperties, withItem=false) { BlockRedstoneReceiver(it) }
 	val REDSTONE_RECEIVER_ENTITY by ent(::REDSTONE_RECEIVER, ::TileRedstoneReceiver)
-	val REDSTONE_RECEIVER_ITEM by item(::REDSTONE_RECEIVER) { ItemBlockRedstoneReceiver(logicItemProperties) }
+	val REDSTONE_RECEIVER_ITEM by item(::REDSTONE_RECEIVER, logicItemProperties) { ItemBlockRedstoneReceiver(it) }
 	
-	val REDSTONE_TRANSMITTER by block(BlockRedstoneTransmitter.id, withItem=false) { BlockRedstoneTransmitter(logicBlockProperties) }
+	val REDSTONE_TRANSMITTER by block(BlockRedstoneTransmitter.id, logicBlockProperties, withItem=false) { BlockRedstoneTransmitter(it) }
 	val REDSTONE_TRANSMITTER_ENTITY by ent(::REDSTONE_TRANSMITTER, ::TileRedstoneTransmitter)
-	val REDSTONE_TRANSMITTER_ITEM by item(::REDSTONE_TRANSMITTER) { ItemBlockRedstoneTransmitter(logicItemProperties) }
+	val REDSTONE_TRANSMITTER_ITEM by item(::REDSTONE_TRANSMITTER, logicItemProperties) { ItemBlockRedstoneTransmitter(it) }
 }

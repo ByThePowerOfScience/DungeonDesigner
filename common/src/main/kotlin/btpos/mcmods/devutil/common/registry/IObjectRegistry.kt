@@ -2,7 +2,7 @@ package btpos.mcmods.devutil.common.registry
 
 import btpos.mcmods.devutil.common.ext.kotlin.safeGetDelegate
 import btpos.mcmods.dungeondesigner.MODID
-import btpos.mcmods.dungeondesigner.builder.redstone.IWirelessRedstone
+import btpos.mcmods.dungeondesigner.MOD_LOGGER
 import com.mojang.datafixers.types.Type
 import com.mojang.serialization.Codec
 import dev.architectury.registry.registries.DeferredRegister
@@ -10,6 +10,7 @@ import dev.architectury.registry.registries.RegistrySupplier
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Registry
 import net.minecraft.core.component.DataComponentType
+import net.minecraft.core.registries.Registries
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.resources.ResourceKey
@@ -19,7 +20,10 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.entity.BlockEntityType
+import net.minecraft.world.level.block.state.BlockBehaviour
 import net.minecraft.world.level.block.state.BlockState
+import org.jetbrains.annotations.NotNull
+import org.lwjgl.system.Platform
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import kotlin.properties.ReadOnlyProperty
@@ -44,13 +48,12 @@ fun <REG : Any, T : REG> DeferredRegister<REG>.registerObject(id: String, suppli
 
 //region BlockEntityType Reflection
 /**
- * Arch doesn't have [BlockEntityType] public, so this unreflects it and caches the method handle for performance.
+ * Arch doesn't have [BlockEntityType]'s constructor public, so this unreflects it and caches the method handle for performance.
  */
 @JvmInline
 private value class BlockEntityTypeConstructor private constructor(val handle: MethodHandle) {
 	constructor() : this(Unit.run {
-		val constructor = BlockEntityType::class.java.declaredConstructors.getOrNull(0)
-		requireNotNull(constructor) { "Failed to get BlockEntityType constructor!!!" }
+		val constructor = BlockEntityType::class.java.declaredConstructors.first { it.parameterTypes.contentEquals(arrayOf(BlockEntityType.BlockEntitySupplier::class.java, Set::class.java)) }
 		constructor.isAccessible = true
 		MethodHandles.lookup().unreflectConstructor(constructor)
 	})
@@ -71,16 +74,12 @@ fun <T : BlockEntity> BlockEntityType(factory: (BlockPos, BlockState) -> T, vara
 
 typealias PlatformRegistry<T> = DeferredRegister<T>
 
-interface IObjectRegistry<T : Any> {
-	val REGISTRY: PlatformRegistry<T>
-	
+interface IObjectRegistry {
 	fun <T> createRegistry(key: ResourceKey<Registry<T>>): PlatformRegistry<T> {
 		return DeferredRegister.create(MODID, key)
 	}
 	
-	fun register() {
-		REGISTRY.register()
-	}
+	fun register()
 	
 	fun getId(prop: KProperty0<*>): ResourceLocation {
 		prop.isAccessible = true
@@ -89,49 +88,71 @@ interface IObjectRegistry<T : Any> {
 		       ?: throw IllegalStateException("Property $prop is not a registry delegate!")
 	}
 	
-	fun <T : BlockEntity> PlatformRegistry<BlockEntityType<*>>.regBE(name: String, generator: () -> BlockEntityType<T>): ObjectHolderDelegate<BlockEntityType<T>> {
-		return this.registerObject(name, generator)
-	}
+	val PlatformRegistry<*>.modid
+		get() = this.registrarManager.modId
 	
-	fun registering(name: String, generator: () -> T): ObjectHolderDelegate<T> {
-		return REGISTRY.registerObject(name, generator)
+	fun PlatformRegistry<*>.modLoc(path: String) = ResourceLocation.fromNamespaceAndPath(modid, path)
+	
+	fun <T> PlatformRegistry<T>.getKeyForPath(path: String): ResourceKey<T> {
+		return ResourceKey.create(this.registrar.key(), this.modLoc(path))
 	}
 }
 
-interface IBlockRegistry : IObjectRegistry<Block> {
-	@Deprecated("Unused in IBlockRegistry")
-	override val REGISTRY: PlatformRegistry<Block>
-		get() = BLOCKS
-	
-	val BLOCKS: PlatformRegistry<Block>
+interface IItemRegistry : IObjectRegistry {
 	val ITEMS: PlatformRegistry<Item>
+	
+	override fun register() {
+		ITEMS.register()
+	}
+	
+	fun <T : Item> item(name: String, props: () -> Item.Properties = { Item.Properties() }, supplier: (Item.Properties) -> T): ObjectHolderDelegate<T> {
+		return ITEMS.registerObject(name, { supplier(props().setId(ITEMS.getKeyForPath(name))) })
+	}
+	
+	fun <T : Item> item(bprop: KProperty0<*>, props: () -> Item.Properties, factory: (Item.Properties) -> T): ObjectHolderDelegate<T> {
+		val name = getId(bprop).path
+		return item(name, props, factory)
+	}
+}
+
+interface IBlockRegistry : IItemRegistry {
+	val BLOCKS: PlatformRegistry<Block>
 	val ENTITIES: PlatformRegistry<BlockEntityType<*>>
 	
 	override fun register() {
+		super.register()
+		
 		BLOCKS.register()
-		ITEMS.register()
 		ENTITIES.register()
 	}
 	
-	fun <T : Block> block(name: String,  withItem: Boolean = false, props: Item.Properties = Item.Properties(), supplier: () -> T): ObjectHolderDelegate<T> {
-		return BLOCKS.registerObject(name, supplier).also {
+	
+	fun <B : Block> blockItem(bprop: KProperty0<B>, props: () -> Item.Properties = Item::Properties): ObjectHolderDelegate<BlockItem> {
+		return item(bprop, props) { BlockItem(bprop.get(), it) }
+	}
+	
+	/**
+	 * Registers this block, with optional [BlockItem].
+	 *
+	 * @param id The id of the block.
+	 * @param propertiesFactory Properties require the id of the block now, so we can't just use the same object for all of them anymore.  We have to make a new instance each time, hence the factory.
+	 * @param withItem If true, also register a standard BlockItem for this block with the same ID.
+	 * @param itemProps The BlockItem's properties. Only matters if [withItem] is set. Should not be `null`; it's only nullable so we can prevent an object allocation on the default value.
+	 * @param supplier The factory to create the block instance. Accepts the properties supplied by [propertiesFactory].
+	 */
+	fun <T : Block> block(id: String, propertiesFactory: () -> BlockBehaviour.Properties, withItem: Boolean = false, itemProps: () -> Item.Properties = Item::Properties, supplier: (BlockBehaviour.Properties) -> T): ObjectHolderDelegate<T> {
+		val propsInst = propertiesFactory().setId(BLOCKS.getKeyForPath(id))
+		
+		return BLOCKS.registerObject(id, { supplier(propsInst) }).also { bDelegate ->
 			if (withItem)
-				item(name) { BlockItem(it.get(), props) }
+				item(id, itemProps) { BlockItem(bDelegate.get(), it) }
 		}
 	}
 	
-	fun <T : Item> item(bprop: KProperty0<*>, factory: () -> T): ObjectHolderDelegate<T> {
-		val name = getId(bprop).path
-		return item(name, factory)
-	}
 	
-	fun <T : Item> item(name: String, supplier: () -> T): ObjectHolderDelegate<T> {
-		return ITEMS.registerObject(name, supplier)
-	}
 	
-	fun <B : Block> blockItem(bprop: KProperty0<B>, props: Item.Properties = Item.Properties()): ObjectHolderDelegate<BlockItem> {
-		return item(bprop) { BlockItem(bprop.get(), props) }
-	}
+	
+	
 	
 	fun <T : BlockEntity> ent(name: String, supplier: () -> BlockEntityType<T>): ObjectHolderDelegate<BlockEntityType<T>> {
 		return ENTITIES.registerObject(name, supplier)
@@ -178,9 +199,11 @@ interface IBlockRegistry : IObjectRegistry<Block> {
 /**
  * Helper methods for any registry that handles 1.20.6+ data components
  */
-interface IDataComponentRegistry<T : Any> : IObjectRegistry<T> {
-	fun <T : Any> PlatformRegistry<DataComponentType<*>>.component(name: String, generator: () -> DataComponentType<T>): ObjectHolderDelegate<DataComponentType<T>> {
-		return this.registerObject(name, generator)
+interface IDataComponentRegistry : IObjectRegistry {
+	val COMPONENTS: PlatformRegistry<DataComponentType<*>>
+	
+	fun <T : Any> component(name: String, generator: () -> DataComponentType<T>): ObjectHolderDelegate<DataComponentType<T>> {
+		return COMPONENTS.registerObject(name, generator)
 	}
 	
 	fun <T> buildPersistentComponent(codec: Codec<T>, networkSynchronizer: StreamCodec<in RegistryFriendlyByteBuf, T>? = null, cacheEncoding: Boolean = false): DataComponentType<T> {

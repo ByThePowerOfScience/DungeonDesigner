@@ -25,6 +25,8 @@ allprojects {
 val Project.loom: net.fabricmc.loom.api.LoomGradleExtensionAPI
 	get() = this.extensions.getByType()
 
+val generatedResources = file("src/generated")
+
 subprojects {
 	apply(plugin="org.jetbrains.kotlin.jvm")
 	apply(plugin="dev.architectury.loom")
@@ -52,6 +54,9 @@ subprojects {
 		}
 	}
 	
+	sourceSets.forEach {
+		it.resources.srcDir(generatedResources)
+	}
 	
 	
 	dependencies {

@@ -177,97 +177,15 @@ class BlockFlagReader(props: Properties) : AbstractFlagHolderBlock(props), IPlat
 
 
 class BlockFlagWriter(props: Properties, /** True = is a "setter", false = is a "resetter" */ val isSetter: Boolean) : AbstractFlagHolderBlock(props), IPlatformConnectRedstone {
-	companion object : IObjectData {
+	companion object {
 		val FACING = BlockStateProperties.HORIZONTAL_FACING
 		
-		override val id: String
-			get() = "flag_writer"
-//
-//		//region DataGen
-//		// TODO: Replace dev textures with something we actually own
-//		private const val TEXTURE_SIDES = "logic_programmer_side"
-//		private const val TEXTURE_ON_SIDES = "logic_programmer_side_on"
-//
-//		private const val TEXTURE_SIDES_INPUT = "logic_programmer_side_input"
-//		private const val TEXTURE_ON_SIDES_INPUT = "logic_programmer_side_input_on"
-//
-//		private const val TXT_SETTER_TOP = "logic_programmer_top_setter"
-//		private const val TXT_SETTER_TOP_ON = "logic_programmer_top_on_setter"
-//
-//		private const val TXT_RESETTER_TOP = "logic_programmer_top_resetter"
-//		private const val TXT_RESETTER_TOP_ON = "logic_programmer_top_on_resetter"
-//
-//		@Suppress("DuplicatedCode")
-//		override fun BlockStateProvider.buildModelsAndStates() {
-//			this.forSetter()
-//			this.forResetter()
-//		}
-//
-//		@Suppress("DuplicatedCode")
-//		private fun BlockStateProvider.forSetter() {
-//			val tx_caps_off = blockLoc(TXT_SETTER_TOP)
-//			val tx_caps_on = blockLoc(TXT_SETTER_TOP_ON)
-//			val tx_side_off = blockLoc(TEXTURE_SIDES)
-//			val tx_side_on = blockLoc(TEXTURE_ON_SIDES)
-//			val tx_side_off_input = blockLoc(TEXTURE_SIDES_INPUT)
-//			val tx_side_on_input = blockLoc(TEXTURE_ON_SIDES_INPUT)
-//
-//			val setter_off = models().cube("flag_setter", tx_caps_off, tx_caps_off, tx_side_off_input, tx_side_off, tx_side_off, tx_side_off)
-//			val setter_on = models().cube("flag_setter_on", tx_caps_on, tx_caps_on, tx_side_on_input, tx_side_on, tx_side_on, tx_side_on)
-//
-//			variantDsl(ModBlocks.FLAG_SETTER) {
-//				POWERED {
-//					false {
-//						FACING {
-//							rotateForEachHorizontal(setter_off)
-//						}
-//					}
-//					true {
-//						FACING {
-//							rotateForEachHorizontal(setter_on)
-//						}
-//					}
-//				}
-//			}
-//
-//			simpleBlockItem(ModBlocks.FLAG_SETTER, setter_off)
-//		}
-//
-//		@Suppress("DuplicatedCode")
-//		private fun BlockStateProvider.forResetter() {
-//			val tx_caps_off = blockLoc(TXT_RESETTER_TOP)
-//			val tx_caps_on = blockLoc(TXT_RESETTER_TOP_ON)
-//			val tx_side_off = blockLoc(TEXTURE_SIDES)
-//			val tx_side_on = blockLoc(TEXTURE_ON_SIDES)
-//			val tx_side_off_input = blockLoc(TEXTURE_SIDES_INPUT)
-//			val tx_side_on_input = blockLoc(TEXTURE_ON_SIDES_INPUT)
-//
-//			val off = models().cube("flag_resetter", tx_caps_off, tx_caps_off, tx_side_off_input, tx_side_off, tx_side_off, tx_side_off)
-//			val on = models().cube("flag_resetter_on", tx_caps_on, tx_caps_on, tx_side_on_input, tx_side_on, tx_side_on, tx_side_on)
-//
-//			variantDsl(ModBlocks.FLAG_RESETTER) {
-//				POWERED {
-//					false {
-//						FACING {
-//							rotateForEachHorizontal(off)
-//						}
-//					}
-//					true {
-//						FACING {
-//							rotateForEachHorizontal(on)
-//						}
-//					}
-//				}
-//			}
-//
-//			simpleBlockItem(ModBlocks.FLAG_RESETTER, off)
-//		}
-//		//endregion
-//
+		const val id_setter = "flag_setter"
+		const val id_resetter = "flag_resetter"
 	}
 	
 	init {
-		registerDefaultState(stateDefinition.any().with(FACING, Direction.NORTH).with(POWERED, false))
+		registerDefaultState(stateDefinition.any().with(FACING, Direction.NORTH))
 	}
 	
 	override fun createBlockStateDefinition(pBuilder: StateDefinition.Builder<Block, BlockState>) {

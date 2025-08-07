@@ -2,6 +2,7 @@ package btpos.mcmods.dungeondesigner
 
 import btpos.mcmods.dungeondesigner.debugging.DebugCommands
 import btpos.mcmods.dungeondesigner.registry.ModBlocks
+import btpos.mcmods.dungeondesigner.registry.ModItemComponents
 import btpos.mcmods.dungeondesigner.registry.ModItems
 import com.mojang.brigadier.CommandDispatcher
 import dev.architectury.event.events.common.CommandRegistrationEvent
@@ -19,12 +20,11 @@ object CommonEntry {
     fun init() {
         MOD_LOGGER.log(Level.INFO, "$MODID has started!")
         
-
-        
         CommandRegistrationEvent.EVENT.register(::registerCommands)
         
         ModBlocks.register()
         ModItems.register()
+        ModItemComponents.register()
     }
     
     fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>, registry: CommandBuildContext, selection: Commands.CommandSelection) {

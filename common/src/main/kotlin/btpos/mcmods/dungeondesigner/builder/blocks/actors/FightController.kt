@@ -65,46 +65,14 @@ class BlockFightController(props: Properties) : Block(props), BlockWithEntity<Ti
 	companion object : IObjectData {
 		override val id: String
 			get() = "fight_controller"
-//
-//		override fun BlockStateProvider.buildModelsAndStates() {
-//			val t_off = blockLoc("fight_controller/${id}_inactive")
-//			val t_ip = blockLoc("fight_controller/${id}_ip")
-//			val t_com = blockLoc("fight_controller/${id}_complete")
-//			val out_off = blockLoc("fight_controller/${id}_inactive_out")
-//			val out_ip = blockLoc("fight_controller/${id}_ip_out")
-//			val out_com = blockLoc("fight_controller/${id}_complete_out")
-//			val off = models().cube(id + "_inactive", t_off, t_off, out_off, t_off, t_off, t_off)
-//			val com = models().cube(id + "_complete", t_com, t_com, out_com, t_com, t_com, t_com)
-//			val in_progress = models().cube(id + "_ip", t_ip, t_ip, out_ip, t_ip, t_ip, t_ip)
-//
-//			variantDsl(ModBlocks.FIGHT_CONTROLLER) {
-//				STATUS {
-//					FightStatus.INACTIVE {
-//						FACING {
-//							rotateForEachHorizontal(off)
-//						}
-//					}
-//					FightStatus.IN_PROGRESS {
-//						FACING {
-//							rotateForEachHorizontal(in_progress)
-//						}
-//					}
-//					FightStatus.COMPLETE {
-//						FACING {
-//							rotateForEachHorizontal(com)
-//						}
-//					}
-//				}
-//			}
-//
-//			simpleBlockItem(ModBlocks.FIGHT_CONTROLLER, models().cubeAll(id, t_off))
-//		}
-//
+		
+		@JvmField
 		val STATUS = EnumProperty.create("status", FightStatus::class.java)
 		
 		/**
 		 * Side to output redstone signal when the fight is complete.
 		 */
+		@JvmField
 		val FACING = BlockStateProperties.HORIZONTAL_FACING
 	}
 	

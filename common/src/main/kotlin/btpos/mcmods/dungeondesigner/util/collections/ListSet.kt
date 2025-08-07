@@ -15,8 +15,7 @@ class ListSet<T>(private val internal: MutableList<T> = mutableListOf()) : Mutab
         internal.addAll(set)
     }
     
-    @Suppress("OVERRIDE_DEPRECATION")
-    @SuppressWarnings("all")
+    @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION", "RedundantOverride")
     override fun <T : Any?> toArray(generator: IntFunction<Array<out T?>?>) = super.toArray(generator)
     
     override fun add(element: T): Boolean {

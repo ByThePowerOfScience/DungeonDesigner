@@ -7,6 +7,7 @@ pluginManagement {
 	}
 }
 
+
 rootProject.name = "dungeondesigner"
 
 include("common", "fabric", "neoforge")
