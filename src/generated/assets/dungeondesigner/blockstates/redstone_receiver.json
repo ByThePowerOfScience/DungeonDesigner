@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "powered=false": {
+      "model": "dungeondesigner:redstone_receiver_unpowered"
+    },
+    "powered=true": {
+      "model": "dungeondesigner:redstone_receiver_powered"
+    }
+  }
+}

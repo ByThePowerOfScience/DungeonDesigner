@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube_directional",
+  "textures": {
+    "down": "dungeondesigner:block/fight_controller/fight_controller_ip",
+    "east": "dungeondesigner:block/fight_controller/fight_controller_ip",
+    "north": "dungeondesigner:block/fight_controller/fight_controller_ip_out",
+    "particle": "dungeondesigner:block/fight_controller/fight_controller_ip",
+    "south": "dungeondesigner:block/fight_controller/fight_controller_ip",
+    "up": "dungeondesigner:block/fight_controller/fight_controller_ip",
+    "west": "dungeondesigner:block/fight_controller/fight_controller_ip"
+  }
+}

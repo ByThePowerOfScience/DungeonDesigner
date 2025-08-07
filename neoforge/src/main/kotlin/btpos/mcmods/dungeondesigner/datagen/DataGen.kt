@@ -12,6 +12,7 @@ import btpos.mcmods.dungeondesigner.builder.blocks.actors.FightStatus
 import btpos.mcmods.dungeondesigner.builder.redstone.blocks.BlockRedstoneReceiver
 import btpos.mcmods.dungeondesigner.builder.redstone.blocks.BlockRedstoneTransmitter
 import btpos.mcmods.dungeondesigner.registry.ModBlocks
+import btpos.mcmods.dungeondesigner.registry.ModItems
 import net.minecraft.client.data.models.BlockModelGenerators
 import net.minecraft.client.data.models.BlockModelGenerators.plainVariant
 import net.minecraft.client.data.models.ItemModelGenerators
@@ -50,27 +51,27 @@ object DataGenConstants {
 class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 	override fun registerModels(blockModels: BlockModelGenerators, itemModels: ItemModelGenerators) {
 		blockModels.registerBlockModels()
-//		itemModels.registerItemModels()
+		itemModels.registerItemModels()
 	}
 	
-	private val EXAMPLE_TEMPLATE: ModelTemplate = ModelTemplate( // The parent model location
-			Optional.of(
-					ModelLocationUtils.decorateBlockModelLocation("examplemod:example_template")
-			),  // The suffix to apply to the end of any model that uses this template
-			Optional.of("_example"),  // All texture slots that must be defined
-			// Should be as specific as possible based on what's undefined in the parent model
-			TextureSlot.PARTICLE,
-			TextureSlot.SOUTH
-	)
-	
-	private val test = TexturedModel.createDefault( // Block to texture mapping
-			{ block: Block ->
-				TextureMapping()
-					.put(TextureSlot.PARTICLE, TextureMapping.getBlockTexture(block))
-					.put(TextureSlot.TOP, TextureMapping.getBlockTexture(block, "_base"))
-			},  // The template to generate from
-			EXAMPLE_TEMPLATE
-	);
+//	private val EXAMPLE_TEMPLATE: ModelTemplate = ModelTemplate( // The parent model location
+//			Optional.of(
+//					ModelLocationUtils.decorateBlockModelLocation("examplemod:example_template")
+//			),  // The suffix to apply to the end of any model that uses this template
+//			Optional.of("_example"),  // All texture slots that must be defined
+//			// Should be as specific as possible based on what's undefined in the parent model
+//			TextureSlot.PARTICLE,
+//			TextureSlot.SOUTH
+//	)
+//
+//	private val test = TexturedModel.createDefault( // Block to texture mapping
+//			{ block: Block ->
+//				TextureMapping()
+//					.put(TextureSlot.PARTICLE, TextureMapping.getBlockTexture(block))
+//					.put(TextureSlot.TOP, TextureMapping.getBlockTexture(block, "_base"))
+//			},  // The template to generate from
+//			EXAMPLE_TEMPLATE
+//	);
 	
 	
 	private fun BlockModelGenerators.registerBlockModels() {
@@ -88,6 +89,7 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 		}
 	}
 	
+	//region Block Models
 	private fun BlockModelGenerators.makeDungeonNexus() {
 		createTrivialCube(ModBlocks.DUNGEON_NEXUS)
 	}
@@ -217,6 +219,14 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 				.with(poweredInitialVariants(off, on))
 				.submit()
 		}
+	}
+	//endregion
+	
+	private fun ItemModelGenerators.registerItemModels() {
+		this.generateFlatItem(ModItems.REMOTE_LINKER, ModelTemplates.FLAT_ITEM)
+		this.generateFlatItem(ModItems.FLAG_ITEM, ModelTemplates.FLAT_ITEM)
+		this.generateFlatItem(ModItems.PIPETTE_ITEM, ModelTemplates.FLAT_ITEM)
+		this.generateFlatItem(ModItems.TRIGGER_ITEM, ModelTemplates.FLAT_ITEM)
 	}
 }
 

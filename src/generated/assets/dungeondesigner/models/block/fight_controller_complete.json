@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube_directional",
+  "textures": {
+    "down": "dungeondesigner:block/fight_controller/fight_controller_complete",
+    "east": "dungeondesigner:block/fight_controller/fight_controller_complete",
+    "north": "dungeondesigner:block/fight_controller/fight_controller_complete_out",
+    "particle": "dungeondesigner:block/fight_controller/fight_controller_complete",
+    "south": "dungeondesigner:block/fight_controller/fight_controller_complete",
+    "up": "dungeondesigner:block/fight_controller/fight_controller_complete",
+    "west": "dungeondesigner:block/fight_controller/fight_controller_complete"
+  }
+}
