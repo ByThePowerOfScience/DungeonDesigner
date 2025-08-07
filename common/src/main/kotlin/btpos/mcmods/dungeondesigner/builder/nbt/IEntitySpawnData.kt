@@ -8,16 +8,16 @@ import com.mojang.serialization.Codec
 import com.mojang.serialization.codecs.RecordCodecBuilder
 import net.minecraft.ChatFormatting
 import net.minecraft.core.BlockPos
+import net.minecraft.core.component.DataComponents
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NbtUtils
 import net.minecraft.network.chat.Component
-import net.minecraft.network.syncher.EntityDataSerializers
-import net.minecraft.network.syncher.SynchedEntityData
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntitySpawnReason
 import net.minecraft.world.entity.EntityType
+import net.minecraft.world.item.component.CustomData
 import java.util.UUID
 import kotlin.jvm.optionals.getOrNull
 
@@ -142,8 +142,22 @@ sealed interface IEntitySpawnData {
 
 typealias MobSpawnType = EntitySpawnReason
 
-@JvmField
-val TEMPORARY_MOB_KEY = SynchedEntityData.defineId(Entity::class.java, EntityDataSerializers.BOOLEAN);
+/**
+ * Put into entities' persistentdata to say they shouldn't be saved to the chunk.
+ * @see btpos.mcmods.dungeondesigner.mixin.MArenaDespawnOnUnload
+ */
+const val TAGKEY_TEMPORARY_MOB = "dungeondesigner:nosavemob"
+
+fun isMobTemporary(entity: Entity): Boolean {
+	val data = entity.get(DataComponents.CUSTOM_DATA) ?: return false
+	return data.contains(TAGKEY_TEMPORARY_MOB)
+}
+
+fun setMobTemporary(entity: Entity) {
+	val tag = entity.get(DataComponents.CUSTOM_DATA)?.copyTag() ?: CompoundTag()
+	tag.putBoolean(TAGKEY_TEMPORARY_MOB, true)
+	entity.setComponent(DataComponents.CUSTOM_DATA, CustomData.of(tag))
+}
 
 /**
  * Attempts to spawn the entity made by this data in the world. Entities spawned will not be saved to chunk NBT.
@@ -161,7 +175,7 @@ fun IEntitySpawnData.trySpawnEntity(level: ServerLevel): UUID? {
 	
 	val newEntity = EntityType.loadEntityRecursive(tag, level, MobSpawnType.MOB_SUMMONED) {
 		it.snapTo(pos.toVec3(), rot ?: 0f, 0f)
-		it.entityData.set(TEMPORARY_MOB_KEY, true)
+		setMobTemporary(it)
 		it
 	} ?: return null
 	

@@ -54,11 +54,7 @@ enum class FightStatus : StringRepresentable {
 	override fun getSerializedName(): String = name.lowercase()
 }
 
-/**
- * Put into entities' persistentdata to say they shouldn't be saved to the chunk.
- * @see btpos.mcmods.dungeondesigner.mixin.MArenaDespawnOnUnload
- */
-const val TAGKEY_SPAWNED_BY_FIGHT_CONTROLLER = "dungeondesigner_temporary"
+
 
 
 class BlockFightController(props: Properties) : Block(props), BlockWithEntity<TileFightController>, IPlatformConnectRedstone {
