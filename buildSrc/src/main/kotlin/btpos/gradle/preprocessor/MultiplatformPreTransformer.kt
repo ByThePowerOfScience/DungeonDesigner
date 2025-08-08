@@ -15,14 +15,14 @@ typealias Type = dev.architectury.transformer.shadowed.impl.org.objectweb.asm.Ty
 class MultiplatformPreTransformer_Forge : ClassEditTransformer {
 	override fun doEdit(name: String, node: ClassNode): ClassNode {
 		TConnectRedstoneForge(node)
-		JUnitExtendWithNeo(node)
+//		JUnitExtendWithNeo(node)
 		return node
 	}
 }
 
 class MultiplatformPreTransformer_Fabric : ClassEditTransformer {
 	override fun doEdit(name: String, node: ClassNode): ClassNode {
-		JUnitExtendWithFabric(node)
+//		JUnitExtendWithFabric(node)
 		return node
 	}
 }

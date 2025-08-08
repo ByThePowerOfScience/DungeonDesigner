@@ -21,7 +21,6 @@ object CommonEntry {
         MOD_LOGGER.log(Level.INFO, "$MODID has started!")
         
         CommandRegistrationEvent.EVENT.register(::registerCommands)
-        TestBlock().foo()
         ModBlocks.register()
         ModItems.register()
         ModItemComponents.register()

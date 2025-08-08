@@ -33,7 +33,7 @@ class TriggerVarItemConverterTest {
 	}
 	
     @Test
-    fun `Able to read values from an incoming item`(server: MinecraftServer) {
+    fun `Able to read values from an incoming item`() {
         // Expected values
         val testName = "bob marley"
         val firstPos = BlockPos(1, 2, 3); val secondPos = BlockPos(4, 5, 6)
@@ -58,7 +58,7 @@ class TriggerVarItemConverterTest {
     }
 
     @Test
-    fun `Able to write values to an outgoing item`(server: MinecraftServer) {
+    fun `Able to write values to an outgoing item`() {
         // Constants
         val testName = "bob marley"
         val firstPos = BlockPos(1,2,3); val secondPos = BlockPos(4,5,6)

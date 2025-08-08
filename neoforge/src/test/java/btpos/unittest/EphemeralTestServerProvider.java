@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -52,6 +53,8 @@ import net.minecraft.world.level.levelgen.WorldOptions;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.PrimaryLevelData;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.loading.LoadingModList;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.apache.logging.log4j.LogManager;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -85,7 +88,6 @@ import org.slf4j.Logger;
  */
 // @formatter:on
 public class EphemeralTestServerProvider implements ParameterResolver, Extension {
-	// Patched to actually do SharedConstants.tryDetectVersion
 	public static final AtomicReference<MinecraftServer> SERVER = new AtomicReference<>();
 	public static final AtomicBoolean IN_CONSTRUCTION = new AtomicBoolean();
 	
@@ -106,7 +108,10 @@ public class EphemeralTestServerProvider implements ParameterResolver, Extension
 		
 		if (IN_CONSTRUCTION.compareAndSet(false, true)) {
 			try {
+				// TODO get all of the random crap Forge requires in its static initializers
 				SharedConstants.tryDetectVersion();
+				LoadingModList.of(List.of(), List.of(), List.of(), List.of(), Map.of());
+				ModList.of(List.of(), List.of());
 				final var tempDir = Files.createTempDirectory("test-mc-server-");
 				LevelStorageSource storage = LevelStorageSource.createDefault(tempDir.resolve("world"));
 				LevelStorageSource.LevelStorageAccess storageAccess = storage.validateAndCreateAccess("main");

@@ -2,7 +2,6 @@ package btpos.mcmods.devutil.common.registry
 
 import btpos.mcmods.devutil.common.ext.kotlin.safeGetDelegate
 import btpos.mcmods.dungeondesigner.MODID
-import btpos.mcmods.dungeondesigner.MOD_LOGGER
 import com.mojang.datafixers.types.Type
 import com.mojang.serialization.Codec
 import dev.architectury.registry.registries.DeferredRegister
@@ -10,7 +9,6 @@ import dev.architectury.registry.registries.RegistrySupplier
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Registry
 import net.minecraft.core.component.DataComponentType
-import net.minecraft.core.registries.Registries
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.resources.ResourceKey
@@ -22,8 +20,6 @@ import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockBehaviour
 import net.minecraft.world.level.block.state.BlockState
-import org.jetbrains.annotations.NotNull
-import org.lwjgl.system.Platform
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import kotlin.properties.ReadOnlyProperty
