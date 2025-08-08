@@ -1,3 +1,5 @@
+@file:Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
+
 package btpos.mcmods.dungeondesigner.builder.world
 
 import btpos.mcmods.devutil.common.util.serialization.ICodecSerializable
@@ -33,6 +35,7 @@ class DungeonBuilderWorldData(val state: DungeonBuilderState = DungeonBuilderSta
 			).apply(it, ::DungeonBuilderWorldData)
 		}
 		
+		@Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 		val DATA_TYPE: SavedDataType<DungeonBuilderWorldData> = SavedDataType("dungeon_designer_builder", { ctx -> DungeonBuilderWorldData() }, { ctx -> CODEC }, null)
 	}
     

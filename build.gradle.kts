@@ -1,5 +1,8 @@
 
 import btpos.gradle.architectury.loom
+import btpos.gradle.preprocessor.MultiplatformPreTransformer_Fabric
+import btpos.gradle.preprocessor.MultiplatformPreTransformer_Forge
+import dev.architectury.plugin.TransformingTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -94,11 +97,39 @@ subprojects {
 		}
 	}
 	
-	
-	tasks.withType<Test> {
-		useJUnitPlatform()
-		this@withType.testClassesDirs + project(":common").file("build/classes/")
+	if (project.name != "common"){
+		val transformedCommonTest by configurations.creating {
+			isCanBeConsumed = false
+			isCanBeResolved = true
+			attributes {
+				attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named("${project.name}-test"))
+			}
+		}
+		
+		val transformedCommonMain by configurations.creating {
+			isCanBeConsumed = false
+			isCanBeResolved = true
+		}
+		
+		val loaderId = when (project.name) {
+			"neoforge" -> "NeoForge"
+			else -> project.name.capitalize()
+		}
+		
+		dependencies {
+			add("transformedCommonTest", project(":common"))
+			add("transformedCommonMain", project(path=":common", configuration="transformProduction$loaderId"))
+		}
+		
+		tasks.withType<Test> {
+			useJUnitPlatform()
+			testClassesDirs += zipTree(transformedCommonTest.resolve().first())
+			this@withType.classpath += transformedCommonMain
+		}
 	}
+	
+	
+	
 	
 	// Configure Maven publishing.
 //	publishing {

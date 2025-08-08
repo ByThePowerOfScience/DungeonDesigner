@@ -7,9 +7,7 @@ plugins {
 
 architectury {
 	platformSetupLoomIde()
-	fabric { 
-		this += MultiplatformPreTransformer_Fabric::class.java
-	}
+	fabric()
 }
 
 configurations {
@@ -21,6 +19,8 @@ configurations {
 	runtimeClasspath.get().extendsFrom(common)
 	getByName("developmentFabric").extendsFrom(common)
 	
+	testCompileClasspath.get().extendsFrom(common)
+	testRuntimeClasspath.get().extendsFrom(common)
 	// Files in this configuration will be bundled into your mod using the Shadow plugin.
 	// Don"t use the `shadow` configuration from the plugin itself as it"s meant for excluding files.
 	create("shadowBundle") {
@@ -38,7 +38,7 @@ dependencies {
 	
 	modImplementation("net.fabricmc:fabric-language-kotlin:1.13.3+kotlin.2.1.21")
 	
-	"common"(project(path= ":common", configuration= "namedElements")) { isTransitive = false }
+	"common"(project(path= ":common", configuration= "transformProductionFabric")) { isTransitive = false }
 	"shadowBundle" (project(path= ":common", configuration= "transformProductionFabric"))
 }
 

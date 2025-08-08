@@ -22,21 +22,29 @@ fun JUnitExtendWithFabric(node: ClassNode) {
 }
 
 private fun JUnitReplaceAgnostic(node: ClassNode, replaceWith: String) {
-	val extendWithAnnotation = node.invisibleAnnotations.firstOrNull() { it.desc == EXTENDWITH_DESC } ?: return
-	
+	println("Checking for ExtendWith annotation")
+	val extendWithAnnotation = node.visibleAnnotations?.takeIf { it.isNotEmpty() }?.firstOrNull() { it.desc == EXTENDWITH_DESC } ?: return
+	println("Found ExtendWith annotation on class ${node.name}")
 	for (i in extendWithAnnotation.values.indices step 2) {
 		val j = i + 1
 		val propName = extendWithAnnotation.values[i]
 		val propValue = extendWithAnnotation.values[j]
 		
+		println("Checking $propName - $propValue")
+		
 		if (propName != "value")
 			continue
 		
+		println("Prop name is value")
+		
 		if (propValue == null) {
+			println("Prop value was null")
 			return;
 		} else if (propValue !is MutableList<*>) {
+			println("Prop value was not mutablelist")
 			return
 		}
+		println("Prop value is mutablelist!")
 		
 		@Suppress("UNCHECKED_CAST")
 		val list = propValue as MutableList<Type>
@@ -44,9 +52,12 @@ private fun JUnitReplaceAgnostic(node: ClassNode, replaceWith: String) {
 		while (iter.hasNext()) {
 			val extender = iter.next()
 			val typeDesc = (extender).descriptor
+			println("Extender: $extender, typedesc: $typeDesc")
 			if (typeDesc == AGNOSTIC_TESTRUNNER_DESC) {
+				val touse = Type.getType(replaceWith)
+				println("Removing $typeDesc and replacing with $touse")
 				iter.remove()
-				iter.add(Type.getType(replaceWith))
+				iter.add(touse)
 			}
 			break
 		}

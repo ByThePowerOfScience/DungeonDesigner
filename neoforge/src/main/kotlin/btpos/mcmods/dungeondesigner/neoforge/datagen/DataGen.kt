@@ -1,6 +1,6 @@
 @file:Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 
-package btpos.mcmods.dungeondesigner.datagen
+package btpos.mcmods.dungeondesigner.neoforge.datagen
 
 import btpos.mcmods.devutil.common.ext.java.invoke
 import btpos.mcmods.dungeondesigner.MODID
@@ -20,24 +20,20 @@ import net.minecraft.client.data.models.ModelProvider
 import net.minecraft.client.data.models.MultiVariant
 import net.minecraft.client.data.models.blockstates.MultiVariantGenerator
 import net.minecraft.client.data.models.blockstates.PropertyDispatch
-import net.minecraft.client.data.models.model.ModelLocationUtils
 import net.minecraft.client.data.models.model.ModelTemplate
 import net.minecraft.client.data.models.model.ModelTemplates
 import net.minecraft.client.data.models.model.TextureMapping
 import net.minecraft.client.data.models.model.TextureSlot
-import net.minecraft.client.data.models.model.TexturedModel
 import net.minecraft.client.renderer.block.model.VariantMutator
 import net.minecraft.core.Direction
 import net.minecraft.data.PackOutput
 import net.minecraft.resources.ResourceLocation
-import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.state.properties.BlockStateProperties
 import net.minecraft.world.level.block.state.properties.Property
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.data.event.GatherDataEvent
-import java.util.Optional
 
 
 @EventBusSubscriber(modid=MODID, value=[Dist.CLIENT])

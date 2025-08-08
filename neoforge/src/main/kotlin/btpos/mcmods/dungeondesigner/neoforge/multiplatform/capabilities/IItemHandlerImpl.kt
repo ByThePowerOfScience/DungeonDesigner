@@ -7,7 +7,7 @@ import btpos.mcmods.dungeondesigner.multiplatform.capabilities.IItemHandler as D
 @JvmInline
 value class IItemHandlerImpl(val wrapped: IItemHandler) : DDHandler {
 	override val numSlots: Int
-		inline get() = wrapped.slots
+		get() = wrapped.slots
 	
 	override fun getStackInSlot(slot: Int): ItemStack {
 		return wrapped.getStackInSlot(slot)

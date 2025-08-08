@@ -1,3 +1,5 @@
+@file:Suppress("warnings")
+
 package btpos.unittest.fabric
 
 import com.google.common.base.Stopwatch
@@ -6,14 +8,12 @@ import com.mojang.authlib.yggdrasil.ServicesKeySet
 import com.mojang.logging.LogUtils
 import com.mojang.serialization.Lifecycle
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
-import net.minecraft.SharedConstants
 import net.minecraft.SystemReport
 import net.minecraft.Util
 import net.minecraft.commands.Commands
 import net.minecraft.core.LayeredRegistryAccess
 import net.minecraft.core.MappedRegistry
 import net.minecraft.core.registries.Registries
-import net.minecraft.server.Bootstrap
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.RegistryLayer
 import net.minecraft.server.ReloadableServerResources
@@ -41,7 +41,6 @@ import net.minecraft.world.level.levelgen.presets.WorldPresets
 import net.minecraft.world.level.storage.LevelStorageSource
 import net.minecraft.world.level.storage.PrimaryLevelData
 import org.apache.logging.log4j.LogManager
-import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.Extension
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ParameterContext
@@ -65,7 +64,7 @@ import kotlin.system.exitProcess
  * Copyright (c) NeoForged and contributors
  * SPDX-License-Identifier: LGPL-2.1-only
  */
-@Suppress("ALL")
+@Suppress("unused")
 class EphemeralTestServerProvider : ParameterResolver, Extension {
 	companion object {
 		val SERVER = AtomicReference<MinecraftServer?>()
@@ -226,6 +225,7 @@ class EphemeralTestServerProvider : ParameterResolver, Extension {
 		
 		companion object {
 			private val LOGGER: Logger = LogUtils.getLogger()
+			@Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 			private val NO_SERVICES = Services(null, ServicesKeySet.EMPTY, null, null)
 			private val TEST_GAME_RULES: GameRules = Util.make<GameRules>(GameRules(FeatureFlags.REGISTRY.allFlags()), Consumer { rules: GameRules ->
 				rules.getRule<GameRules.BooleanValue>(GameRules.RULE_DOMOBSPAWNING).set(false, null)

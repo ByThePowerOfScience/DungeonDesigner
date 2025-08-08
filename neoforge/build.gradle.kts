@@ -1,14 +1,10 @@
-import btpos.gradle.preprocessor.MultiplatformPreTransformer_Forge
-
 plugins {
-	id ("com.github.johnrengelman.shadow")
+	id("com.github.johnrengelman.shadow")
 }
 
 architectury {
 	platformSetupLoomIde()
-	neoForge {
-		this += MultiplatformPreTransformer_Forge::class.java
-	}
+	neoForge()
 }
 
 configurations {
@@ -40,33 +36,34 @@ repositories {
 }
 
 dependencies {
-	neoForge ("net.neoforged:neoforge:${rootProject.properties["neoforge_version"]}")
+	neoForge("net.neoforged:neoforge:${rootProject.properties["neoforge_version"]}")
 	
-	modImplementation ("dev.architectury:architectury-neoforge:${rootProject.properties["architectury_api_version"]}")
+	modImplementation("dev.architectury:architectury-neoforge:${rootProject.properties["architectury_api_version"]}")
 	
-	implementation ("thedarkcolour:kotlinforforge-neoforge:5.9.0")
+	implementation("thedarkcolour:kotlinforforge-neoforge:5.9.0")
 	
-	testImplementation ("net.neoforged:testframework:${rootProject.properties["neoforge_version"]}")
+	testImplementation("net.neoforged:testframework:${rootProject.properties["neoforge_version"]}")
 	
-	"common"(project(path=":common", configuration="namedElements")) { isTransitive=false }
-	"shadowBundle"(project(path=":common", configuration="transformProductionNeoForge"))
+	"common"(project(path = ":common", configuration = "transformProductionNeoForge")) { isTransitive = false }
+	"shadowBundle"(project(path = ":common", configuration = "transformProductionNeoForge"))
 }
 
 tasks.processResources {
-	inputs.property ("version", project.version)
+	inputs.property("version", project.version)
 	
 	filesMatching("META-INF/neoforge.mods.toml") {
-		expand ("version" to project.version)
+		expand("version" to project.version)
 	}
 }
 
 loom {
 	runs {
 		create("clientData") {
+			@Suppress("UnstableApiUsage")
 			clientData()
-			programArgs ("--all", "--mod", "dungeondesigner")
-			programArgs ("--output", project.rootProject.file("src/generated").absolutePath)
-			programArgs ("--existing", project.rootProject.file("src/main/resources").absolutePath)
+			programArgs("--all", "--mod", "dungeondesigner")
+			programArgs("--output", project.rootProject.file("src/generated").absolutePath)
+			programArgs("--existing", project.rootProject.file("src/main/resources").absolutePath)
 		}
 	}
 }
@@ -77,5 +74,5 @@ tasks.shadowJar {
 }
 
 tasks.remapJar {
-	input.set (tasks.shadowJar.get().archiveFile)
+	input.set(tasks.shadowJar.get().archiveFile)
 }

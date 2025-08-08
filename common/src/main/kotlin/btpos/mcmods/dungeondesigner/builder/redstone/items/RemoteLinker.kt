@@ -1,3 +1,5 @@
+@file:Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
+
 package btpos.mcmods.dungeondesigner.builder.redstone.items
 
 import btpos.mcmods.devutil.common.ext.java.invoke
