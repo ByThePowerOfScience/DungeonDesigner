@@ -8,7 +8,6 @@ import btpos.mcmods.devutil.common.ext.vanilla.asComponent
 import btpos.mcmods.devutil.common.ext.vanilla.world.modifyBlockAndUpdate
 import btpos.mcmods.devutil.common.ext.vanilla.world.get
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
-import btpos.mcmods.devutil.common.structure.blocks.IObjectData
 import btpos.mcmods.devutil.common.structure.blocks.BlockWithEntity
 import btpos.mcmods.devutil.multiplatform.api.IPlatformConnectRedstone
 import btpos.mcmods.dungeondesigner.MultiplatformHooks.getItemHandler
@@ -59,9 +58,8 @@ enum class FightStatus : StringRepresentable {
 
 
 class BlockFightController(props: Properties) : Block(props), BlockWithEntity<TileFightController>, IPlatformConnectRedstone, Serializable {
-	companion object : IObjectData {
-		override val id: String
-			get() = "fight_controller"
+	companion object {
+		const val id = "fight_controller"
 		
 		@JvmField
 		val STATUS = EnumProperty.create("status", FightStatus::class.java)

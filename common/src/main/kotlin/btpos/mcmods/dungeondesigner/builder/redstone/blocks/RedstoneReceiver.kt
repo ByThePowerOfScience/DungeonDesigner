@@ -10,7 +10,6 @@ import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServerLevel
 import btpos.mcmods.devutil.common.ext.vanilla.world.sidedSuccess
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.structure.blocks.BlockWithEntity
-import btpos.mcmods.devutil.common.structure.blocks.IObjectData
 import btpos.mcmods.devutil.common.util.serialization.putCodecSerializable
 import btpos.mcmods.devutil.common.util.serialization.readCodecSerializableToExisting
 import btpos.mcmods.devutil.multiplatform.api.IPlatformConnectRedstone
@@ -38,6 +37,7 @@ import net.minecraft.world.item.context.BlockPlaceContext
 import net.minecraft.world.item.context.UseOnContext
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.LevelReader
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
@@ -52,33 +52,8 @@ import java.util.function.Consumer
  * When compiled, this is literally just a block that can be powered, and the wireless emitter powers it directly.
  */
 class BlockRedstoneReceiver(props: Properties) : Block(props), BlockWithEntity<TileRedstoneReceiver>, WirelessRedstoneBlock, IPlatformConnectRedstone {
-    companion object : IObjectData {
-        override val id: String
-            get() = "redstone_receiver"
-        /*
-        override fun BlockStateProvider.buildModelsAndStates() {
-            val txBase = "redstone/receiver/receiver"
-            
-            val off = models().cubeColumn(id.powered(false), "${txBase}_sides".powered(false).blockLoc(), "${txBase}_top".powered(false).blockLoc())
-            val on = models().cubeColumn(id.powered(true), "${txBase}_sides".powered(true).blockLoc(), "${txBase}_top".powered(true).blockLoc())
-            
-            variantDsl(ModBlocks.REDSTONE_RECEIVER) {
-                POWERED {
-                    true {
-                        model {
-                            modelFile(on)
-                        }
-                    }
-                    false {
-                        model {
-                            modelFile(off)
-                        }
-                    }
-                }
-            }
-            
-            simpleBlockItem(ModBlocks.REDSTONE_RECEIVER, off)
-        }*/
+    companion object {
+        const val id = "redstone_receiver"
     }
     
     //region Setup

@@ -1,6 +1,5 @@
 package btpos.mcmods.dungeondesigner.builder.blocks
 
-import btpos.mcmods.devutil.common.structure.blocks.IObjectData
 import btpos.mcmods.dungeondesigner.registry.ModBlocks
 import net.minecraft.core.BlockPos
 import net.minecraft.world.level.block.Block
@@ -12,8 +11,8 @@ import net.minecraft.world.level.storage.ValueOutput
 class BlockDungeonNexus(props: Properties) : Block(props), EntityBlock {
 	override fun newBlockEntity(p0: BlockPos, p1: BlockState): BlockEntity? = ModBlocks.DUNGEON_NEXUS_ENTITY.create(p0, p1)
 	
-	companion object : IObjectData {
-		override val id get() = "dungeon_nexus"
+	companion object {
+		const val id = "dungeon_nexus"
 		
 //		override fun BlockStateProvider.buildModelsAndStates() {
 //			simpleBlockWithItem(ModBlocks.DUNGEON_NEXUS, cubeAll(ModBlocks.DUNGEON_NEXUS))

@@ -14,7 +14,6 @@ import btpos.mcmods.devutil.common.ext.vanilla.plus
 import btpos.mcmods.devutil.common.ext.vanilla.sendSystemMessage
 import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
 import btpos.mcmods.devutil.common.macros.ChatUtils.toComponent
-import btpos.mcmods.devutil.common.structure.blocks.IObjectData
 import btpos.mcmods.dungeondesigner.registry.ModItemComponents
 import com.mojang.serialization.Codec
 import com.mojang.serialization.codecs.RecordCodecBuilder
@@ -38,7 +37,7 @@ import kotlin.jvm.optionals.getOrNull
  * Use a chest on top of it like usual
  */
 class ItemRemoteLinker(props: Properties) : Item(props) {
-    companion object : IObjectData {
+    companion object {
         fun getData(stack: ItemStack): InternalData? {
             return stack.get(ModItemComponents.REMOTE_LINKER)
         }
@@ -53,8 +52,7 @@ class ItemRemoteLinker(props: Properties) : Item(props) {
 //            basicItem()
 //        }
         
-        override val id: String
-            get() = "remote_linker"
+        const val id = "remote_linker"
     }
     
     @JvmInline

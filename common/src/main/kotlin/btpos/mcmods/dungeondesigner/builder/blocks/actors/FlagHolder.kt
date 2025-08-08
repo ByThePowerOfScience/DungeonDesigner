@@ -12,7 +12,6 @@ import btpos.mcmods.devutil.common.ext.vanilla.world.dropItemAboveBlock
 import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
 import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServerLevel
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
-import btpos.mcmods.devutil.common.structure.blocks.IObjectData
 import btpos.mcmods.devutil.common.structure.composition.IOnChange
 import btpos.mcmods.devutil.common.util.serialization.ICodecSerializableMutable
 import btpos.mcmods.devutil.common.util.serialization.putCodecSerializable
@@ -107,9 +106,8 @@ abstract class AbstractFlagHolderBlock(props: Properties) : Block(props), Entity
 }
 
 class BlockFlagReader(props: Properties) : AbstractFlagHolderBlock(props), IPlatformConnectRedstone {
-	companion object : IObjectData {
-		override val id: String
-			get() = "flag_reader"
+	companion object  {
+		const val id = "flag_reader"
 		
 		private const val TXT_SIDES = "logic_programmer_side"
 		private const val TXT_SIDES_ON = "logic_programmer_side_on"

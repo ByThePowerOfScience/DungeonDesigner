@@ -19,7 +19,6 @@ import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.kfflib.forge.vectorutil.v3d.toVec3
 import btpos.mcmods.devutil.common.macros.ChatUtils.toComponent
-import btpos.mcmods.devutil.common.structure.blocks.IObjectData
 import btpos.mcmods.devutil.common.structure.composition.IOnChange
 import btpos.mcmods.devutil.common.structure.program.IReverseCloneable
 import btpos.mcmods.devutil.common.util.serialization.ICodecSerializableMutable
@@ -72,8 +71,8 @@ class BlockTriggerHolder(
 		registerDefaultState(stateDefinition.any().with(POWERED, false))
 	}
 	
-	companion object : IObjectData {
-		override val id get() = "trigger_holder"
+	companion object{
+		const val id = "trigger_holder"
 		
 		// TODO: Replace dev textures with something we actually own
 		private const val TEXTURE_TOP_BOTTOM = "logic_programmer_top"

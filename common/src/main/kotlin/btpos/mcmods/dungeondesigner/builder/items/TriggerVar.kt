@@ -11,7 +11,6 @@ import btpos.mcmods.devutil.common.ext.vanilla.plus
 import btpos.mcmods.devutil.common.ext.vanilla.sendSystemMessage
 import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
 import btpos.mcmods.devutil.common.macros.ChatUtils.toComponent
-import btpos.mcmods.devutil.common.structure.blocks.IObjectData
 import btpos.mcmods.dungeondesigner.registry.ModItemComponents
 import com.mojang.serialization.Codec
 import com.mojang.serialization.codecs.RecordCodecBuilder
@@ -36,9 +35,8 @@ import kotlin.jvm.optionals.getOrNull
  * }
  */
 class ItemTriggerVariable(props: Properties) : Item(props) {
-	companion object : IObjectData {
-		override val id: String
-			get() = "trigger_variable"
+	companion object {
+		const val id = "trigger_variable"
 		
 		// NBT Tag Keys
 		const val TAGKEY_STATE = "trigger_brush"

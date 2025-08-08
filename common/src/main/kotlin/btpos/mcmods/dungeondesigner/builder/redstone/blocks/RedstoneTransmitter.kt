@@ -11,7 +11,6 @@ import btpos.mcmods.devutil.common.ext.vanilla.world.get
 import btpos.mcmods.devutil.common.ext.vanilla.world.sidedSuccess
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.structure.blocks.BlockWithEntity
-import btpos.mcmods.devutil.common.structure.blocks.IObjectData
 import btpos.mcmods.devutil.common.util.serialization.putCodecSerializable
 import btpos.mcmods.devutil.common.util.serialization.readCodecSerializableToExisting
 import btpos.mcmods.devutil.multiplatform.api.IPlatformConnectRedstone
@@ -58,9 +57,8 @@ import java.util.function.Consumer
  * When compiled, this is literally just a block that can be powered, and the wireless emitter powers it directly.
  */
 class BlockRedstoneTransmitter(props: Properties) : Block(props), BlockWithEntity<TileRedstoneTransmitter>, WirelessRedstoneBlock, IPlatformConnectRedstone {
-	companion object : IObjectData {
-		override val id: String
-			get() = "redstone_transmitter"
+	companion object {
+		const val id = "redstone_transmitter"
 		/*
 		@Suppress("DuplicatedCode")
 		override fun BlockStateProvider.buildModelsAndStates() {

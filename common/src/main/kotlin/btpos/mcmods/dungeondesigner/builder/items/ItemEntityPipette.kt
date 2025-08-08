@@ -10,7 +10,6 @@ import btpos.mcmods.devutil.common.ext.vanilla.sendSystemMessage
 import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
 import btpos.mcmods.devutil.common.ext.vanilla.world.sidedSuccess
 import btpos.mcmods.devutil.common.macros.ChatUtils.toComponent
-import btpos.mcmods.devutil.common.structure.blocks.IObjectData
 import btpos.mcmods.devutil.common.util.EntityUtils.getTargetedEntity
 import btpos.mcmods.dungeondesigner.builder.nbt.IEntitySpawnData
 import btpos.mcmods.dungeondesigner.registry.ModItemComponents
@@ -39,9 +38,8 @@ import java.util.function.Consumer
  * @see IEntitySpawnData.AsTag
  */
 class ItemEntityPipette(pProps: Properties) : Item(pProps) {
-	companion object : IObjectData {
-		override val id: String
-			get() = "entity_pipette"
+	companion object {
+		const val id = "entity_pipette"
 //
 //		override fun ItemModelProvider.buildModels() {
 //			basicItem()
