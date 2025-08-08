@@ -21,6 +21,7 @@ import btpos.mcmods.devutil.multiplatform.api.IPlatformConnectRedstone
 import btpos.mcmods.devutil.parts.IItemRepresentable
 import btpos.mcmods.dungeondesigner.POWERED
 import btpos.mcmods.dungeondesigner.builder.world.dungeonBuilderData
+import btpos.mcmods.dungeondesigner.common.nbtadapters.getDisplayName
 import btpos.mcmods.dungeondesigner.common.nbtadapters.setDisplayName
 import btpos.mcmods.dungeondesigner.compiled.saveddata.FlagName
 import btpos.mcmods.dungeondesigner.registry.ModBlocks
@@ -77,6 +78,7 @@ abstract class AbstractFlagHolderBlock(props: Properties) : Block(props), Entity
 		if (pPlayer.isShiftKeyDown && ourEnt.hasFlag()) {
 			return pLevel.runOnServerLevel {
 				dropItemAboveBlock(ourEnt.flagItem, pPos)
+				ourEnt.flagItem = ItemStack.EMPTY
 			}.sidedSuccess
 		}
 		
@@ -272,7 +274,13 @@ class TileFlagHolder(pPos: BlockPos, pState: BlockState) : BlockEntity(ModBlocks
 			}
 			
 			override fun setFromItem(stack: ItemStack): Boolean {
-				TODO("Not yet implemented")
+				value = getDisplayName(stack) ?: return false
+				return true
+			}
+			
+			override fun onEmptyItemStack(): Boolean {
+				value = null
+				return true
 			}
 			
 			override fun acceptsItem(stack: ItemStack): Boolean {
