@@ -123,8 +123,10 @@ subprojects {
 		
 		tasks.withType<Test> {
 			useJUnitPlatform()
-			testClassesDirs += zipTree(transformedCommonTest.resolve().first())
+			val testJarTransformed = transformedCommonTest.resolve().first()
+			testClassesDirs += zipTree(testJarTransformed)
 			this@withType.classpath += transformedCommonMain
+			this@withType.classpath += transformedCommonTest
 		}
 	}
 	

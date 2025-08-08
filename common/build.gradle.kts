@@ -15,6 +15,7 @@ fun File.createEmptyJar() {
 val testJar = tasks.register("testJar", Jar::class) {
 	group = "build"
 	dependsOn(tasks.testClasses)
+	// testClasses doesn't have outputs for some reason??? so we do it manually
 	from(project.layout.buildDirectory.file("classes/kotlin/test/"), project.layout.buildDirectory.file("classes/java/test/"))
 	archiveClassifier = "testJar"
 }
@@ -60,27 +61,6 @@ architectury {
 			project.artifacts.add("transformProduction${loader.titledId}Test", transformProductionTask)
 			
 			transformProductionTask.get().archiveFile.get().asFile.takeUnless { it.exists() }?.createEmptyJar()
-//
-//			// Unpack classes after transformation is applied to the jar
-//			val unpackTransformedTestClasses = tasks.register("unpackTransformedTestClasses${loader.titledId}") {
-//				dependsOn("transformProduction${loader.titledId}Test")
-//
-//				val destFile = layout.buildDirectory.file("btpostransformedunzip/testclasses/")
-//				outputs.file(destFile)
-//
-//				doLast {
-//					val destDir = destFile.get().asFile
-//					destDir.mkdirs()
-//
-//					project.copy {
-//						from( zipTree( jarTask.get().outputs ) ) {
-//							into(destDir)
-//						}
-//					}
-//				}
-//			}
-//			artifacts.add("transformedTestClasses${loader.titledId}", unpackTransformedTestClasses)
-//
 		}
 	}
 }

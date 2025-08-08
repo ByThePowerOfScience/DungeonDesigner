@@ -8,6 +8,7 @@ import com.mojang.authlib.yggdrasil.ServicesKeySet
 import com.mojang.logging.LogUtils
 import com.mojang.serialization.Lifecycle
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
+import net.minecraft.SharedConstants
 import net.minecraft.SystemReport
 import net.minecraft.Util
 import net.minecraft.commands.Commands
@@ -90,6 +91,7 @@ class EphemeralTestServerProvider : ParameterResolver, Extension {
 		if (IN_CONSTRUCTION.compareAndSet(false, true)) {
 			try {
 				val tempDir = Files.createTempDirectory("test-mc-server-")
+				SharedConstants.tryDetectVersion()
 				val storage = LevelStorageSource.createDefault(tempDir.resolve("world"))
 				val storageAccess = storage.validateAndCreateAccess("main")
 				val packrepository = ServerPacksSource.createPackRepository(storageAccess)

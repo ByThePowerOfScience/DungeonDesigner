@@ -9,8 +9,9 @@ import btpos.mcmods.dungeondesigner.builder.items.ItemTriggerVariable
 import btpos.mcmods.dungeondesigner.common.nbtadapters.getDisplayName
 import btpos.mcmods.dungeondesigner.common.nbtadapters.setDisplayName
 import btpos.mcmods.dungeondesigner.registry.ModItems
-import btpos.unittest.dungeondesigner.PlatformTestRunner
+import btpos.unittest.PlatformTestRunner
 import net.minecraft.core.BlockPos
+import net.minecraft.server.MinecraftServer
 import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.reflect.KMutableProperty
@@ -22,17 +23,17 @@ import kotlin.test.assertNotNull
 @ExtendWith(PlatformTestRunner::class)
 class TriggerVarItemConverterTest {
 	/**
-	 * access the private setter
+	 * access the private setter, which was actually inlined by K2 to direct field access
 	 */
-	private val nameSetter = (TriggerVarItemConverter::name as KMutableProperty<*>).setter.apply {
+	private val nameSetter = TriggerVarItemConverter::class.java.getDeclaredField("name").apply {
 		isAccessible = true
 	}
 	private fun TriggerVarItemConverter.setName(name: String) {
-		nameSetter.call(this, name)
+		nameSetter.set(this, name)
 	}
 	
     @Test
-    fun `Able to read values from an incoming item`() {
+    fun `Able to read values from an incoming item`(server: MinecraftServer) {
         // Expected values
         val testName = "bob marley"
         val firstPos = BlockPos(1, 2, 3); val secondPos = BlockPos(4, 5, 6)
@@ -57,7 +58,7 @@ class TriggerVarItemConverterTest {
     }
 
     @Test
-    fun `Able to write values to an outgoing item`() {
+    fun `Able to write values to an outgoing item`(server: MinecraftServer) {
         // Constants
         val testName = "bob marley"
         val firstPos = BlockPos(1,2,3); val secondPos = BlockPos(4,5,6)
