@@ -5,14 +5,12 @@ package btpos.mcmods.dungeondesigner.builder.redstone.items
 import btpos.mcmods.devutil.common.ext.java.invoke
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
 import btpos.mcmods.devutil.common.ext.vanilla.data.getBlockPos
-import btpos.mcmods.devutil.common.ext.vanilla.data.getCompoundOrNull
 import btpos.mcmods.devutil.common.ext.vanilla.data.nullSafeFieldOf
 import btpos.mcmods.devutil.common.ext.vanilla.data.setOrRemove
 import btpos.mcmods.devutil.common.ext.vanilla.data.toCompoundTag
-import btpos.mcmods.devutil.common.ext.vanilla.isClientSide
 import btpos.mcmods.devutil.common.ext.vanilla.plus
 import btpos.mcmods.devutil.common.ext.vanilla.sendSystemMessage
-import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
+import btpos.mcmods.devutil.common.ext.vanilla.world.actOnServer
 import btpos.mcmods.devutil.common.macros.ChatUtils.toComponent
 import btpos.mcmods.dungeondesigner.registry.ModItemComponents
 import com.mojang.serialization.Codec
@@ -26,7 +24,6 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.TooltipFlag
 import net.minecraft.world.item.component.TooltipDisplay
 import net.minecraft.world.item.context.UseOnContext
-import net.minecraft.world.level.Level
 import java.util.function.Consumer
 import kotlin.jvm.optionals.getOrNull
 
@@ -66,7 +63,7 @@ class ItemRemoteLinker(props: Properties) : Item(props) {
         val player = pContext.player ?: return InteractionResult.PASS
         
         // Add target pos
-        return pContext.level.runOnServer {
+        return pContext.level.actOnServer {
             val targetPos = pContext.clickedPos
             modifyOrCreateData(pContext.itemInHand) {
                 target = targetPos

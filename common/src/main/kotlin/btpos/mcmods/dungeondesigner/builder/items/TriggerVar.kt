@@ -4,19 +4,16 @@ package btpos.mcmods.dungeondesigner.builder.items
 
 import btpos.mcmods.devutil.common.ext.java.invoke
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
-import btpos.mcmods.devutil.common.ext.vanilla.data.getCompoundOrNull
-import btpos.mcmods.devutil.common.ext.vanilla.data.getOrCreateCompound
 import btpos.mcmods.devutil.common.ext.vanilla.data.nullSafeFieldOf
 import btpos.mcmods.devutil.common.ext.vanilla.plus
 import btpos.mcmods.devutil.common.ext.vanilla.sendSystemMessage
-import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
+import btpos.mcmods.devutil.common.ext.vanilla.world.actOnServer
 import btpos.mcmods.devutil.common.macros.ChatUtils.toComponent
 import btpos.mcmods.dungeondesigner.registry.ModItemComponents
 import com.mojang.serialization.Codec
 import com.mojang.serialization.codecs.RecordCodecBuilder
 import net.minecraft.ChatFormatting
 import net.minecraft.core.BlockPos
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.chat.Component
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.item.Item
@@ -70,7 +67,7 @@ class ItemTriggerVariable(props: Properties) : Item(props) {
 	fun whenUsedOnBlock(ctx: UseOnContext): InteractionResult {
 		val player = ctx.player ?: return InteractionResult.FAIL
 		
-		return ctx.level.runOnServer {
+		return ctx.level.actOnServer {
 			if (!player.isShiftKeyDown) {
 				modifyOrCreateData(ctx.itemInHand) {
 					first = ctx.clickedPos

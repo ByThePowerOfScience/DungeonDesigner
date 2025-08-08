@@ -2,6 +2,7 @@ package btpos.mcmods.dungeondesigner
 
 import btpos.mcmods.dungeondesigner.debugging.DebugCommands
 import btpos.mcmods.dungeondesigner.registry.ModBlocks
+import btpos.mcmods.dungeondesigner.registry.ModCreativeTabs
 import btpos.mcmods.dungeondesigner.registry.ModItemComponents
 import btpos.mcmods.dungeondesigner.registry.ModItems
 import com.mojang.brigadier.CommandDispatcher
@@ -24,6 +25,7 @@ object CommonEntry {
         ModBlocks.register()
         ModItems.register()
         ModItemComponents.register()
+        ModCreativeTabs.register()
     }
     
     fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>, registry: CommandBuildContext, selection: Commands.CommandSelection) {

@@ -15,7 +15,7 @@ import btpos.mcmods.devutil.common.ext.vanilla.world.BlockInclusiveAABB
 import btpos.mcmods.devutil.common.ext.vanilla.world.BlockInclusiveAABB.Companion.toBlockInclusive
 import btpos.mcmods.devutil.common.ext.vanilla.world.blockEntity
 import btpos.mcmods.devutil.common.ext.vanilla.world.dropItemAboveBlock
-import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
+import btpos.mcmods.devutil.common.ext.vanilla.world.actOnServer
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.kfflib.forge.vectorutil.v3d.toVec3
 import btpos.mcmods.devutil.common.macros.ChatUtils.toComponent
@@ -152,7 +152,7 @@ class BlockTriggerHolder(
 		
 		// Pop out trigger item into world if it exists
 		if (pPlayer.isShiftKeyDown) {
-			return pLevel.runOnServer {
+			return pLevel.actOnServer {
 				ourEnt.dropItem()
 				ourEnt.triggerItem = ItemStack.EMPTY
 			}.sidedSuccess
@@ -160,7 +160,7 @@ class BlockTriggerHolder(
 		
 		// Else add it to the block
 		if (itemInHand.`is`(ModItems.TRIGGER_ITEM) && !ourEnt.hasTrigger()) {
-			return pLevel.runOnServer {
+			return pLevel.actOnServer {
 				if (ourEnt.setItemWithFeedback(itemInHand)) {
 					itemInHand.shrink(1)
 				}
@@ -168,7 +168,7 @@ class BlockTriggerHolder(
 		}
 		
 		// Finally, if no other action has occurred, show the bounds.
-		return pLevel.runOnServer {
+		return pLevel.actOnServer {
 			if (!ourEnt.hasTrigger()) {
 				pPlayer.sendSystemMessage("No bbox".asComponent())
 			} else {

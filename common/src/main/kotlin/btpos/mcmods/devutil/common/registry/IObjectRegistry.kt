@@ -121,7 +121,6 @@ interface IBlockRegistry : IItemRegistry {
 		ENTITIES.register()
 	}
 	
-	
 	fun <B : Block> blockItem(bprop: KProperty0<B>, props: () -> Item.Properties = Item::Properties): ObjectHolderDelegate<BlockItem> {
 		return item(bprop, props) { BlockItem(bprop.get(), it) }
 	}

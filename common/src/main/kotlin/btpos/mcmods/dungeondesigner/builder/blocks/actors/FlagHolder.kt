@@ -9,8 +9,8 @@ import btpos.mcmods.devutil.common.ext.vanilla.sendSystemMessage
 import btpos.mcmods.devutil.common.ext.vanilla.stack
 import btpos.mcmods.devutil.common.ext.vanilla.world.blockEntity
 import btpos.mcmods.devutil.common.ext.vanilla.world.dropItemAboveBlock
-import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
-import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServerLevel
+import btpos.mcmods.devutil.common.ext.vanilla.world.actOnServer
+import btpos.mcmods.devutil.common.ext.vanilla.world.actOnServerLevel
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.structure.composition.IOnChange
 import btpos.mcmods.devutil.common.util.serialization.ICodecSerializableMutable
@@ -75,7 +75,7 @@ abstract class AbstractFlagHolderBlock(props: Properties) : Block(props), Entity
 		
 		// Pop out trigger item into world if it exists
 		if (pPlayer.isShiftKeyDown && ourEnt.hasFlag()) {
-			return pLevel.runOnServerLevel {
+			return pLevel.actOnServerLevel {
 				dropItemAboveBlock(ourEnt.flagItem, pPos)
 				ourEnt.flagItem = ItemStack.EMPTY
 			}.sidedSuccess
@@ -83,7 +83,7 @@ abstract class AbstractFlagHolderBlock(props: Properties) : Block(props), Entity
 		
 		// Else add it to the block
 		if (itemInHand.`is`(ModItems.FLAG_ITEM) && !ourEnt.hasFlag()) {
-			return pLevel.runOnServer {
+			return pLevel.actOnServer {
 				ourEnt.flagItem = itemInHand
 				if (ourEnt.hasFlag())
 					itemInHand.shrink(1)
@@ -92,7 +92,7 @@ abstract class AbstractFlagHolderBlock(props: Properties) : Block(props), Entity
 		
 		
 		// Finally, if no other action has occurred, show the name of the flag.
-		return pLevel.runOnServer {
+		return pLevel.actOnServer {
 			if (!ourEnt.hasFlag()) {
 				pPlayer.sendSystemMessage("No flag set".asComponent())
 			} else {
@@ -108,34 +108,6 @@ abstract class AbstractFlagHolderBlock(props: Properties) : Block(props), Entity
 class BlockFlagReader(props: Properties) : AbstractFlagHolderBlock(props), IPlatformConnectRedstone {
 	companion object  {
 		const val id = "flag_reader"
-		
-		private const val TXT_SIDES = "logic_programmer_side"
-		private const val TXT_SIDES_ON = "logic_programmer_side_on"
-		private const val TXT_TOP = "logic_programmer_top"
-		private const val TXT_TOP_ON = "logic_programmer_top_on"
-//
-//		override fun BlockStateProvider.buildModelsAndStates() {
-//			val off = models().cubeColumn(id, blockLoc(TXT_SIDES), blockLoc(TXT_TOP))
-//			val on = models().cubeColumn("${id}_on", blockLoc(TXT_SIDES_ON), blockLoc(TXT_TOP_ON))
-//
-//			variantDsl(ModBlocks.FLAG_READER) {
-//				POWERED {
-//					false {
-//						model {
-//							modelFile(off)
-//						}
-//					}
-//					true {
-//						model {
-//							modelFile(on)
-//						}
-//					}
-//				}
-//			}
-//
-//			simpleBlockItem(ModBlocks.FLAG_READER, off)
-//		}
-//
 	}
 	
 	

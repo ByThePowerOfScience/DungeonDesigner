@@ -7,7 +7,7 @@ import btpos.mcmods.devutil.common.ext.java.invoke
 import btpos.mcmods.devutil.common.ext.vanilla.asComponent
 import btpos.mcmods.devutil.common.ext.vanilla.plus
 import btpos.mcmods.devutil.common.ext.vanilla.sendSystemMessage
-import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
+import btpos.mcmods.devutil.common.ext.vanilla.world.actOnServer
 import btpos.mcmods.devutil.common.ext.vanilla.world.sidedSuccess
 import btpos.mcmods.devutil.common.macros.ChatUtils.toComponent
 import btpos.mcmods.devutil.common.util.EntityUtils.getTargetedEntity
@@ -116,7 +116,7 @@ class ItemEntityPipette(pProps: Properties) : Item(pProps) {
 		if (lookedAtEntity !is LivingEntity)
 			return InteractionResult.PASS
 		
-		return pLevel.runOnServer {
+		return pLevel.actOnServer {
 			val tag = TagValueOutput.createWithoutContext(ProblemReporter.DISCARDING).also {
 				lookedAtEntity.saveWithoutId(it)
 				it.apply {

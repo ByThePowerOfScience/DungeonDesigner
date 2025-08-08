@@ -6,7 +6,8 @@ import btpos.mcmods.devutil.common.ext.java.invoke
 import btpos.mcmods.devutil.common.ext.vanilla.isClientSide
 import btpos.mcmods.devutil.common.ext.vanilla.targetBlockEntity
 import btpos.mcmods.devutil.common.ext.vanilla.world.get
-import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServerLevel
+import btpos.mcmods.devutil.common.ext.vanilla.world.actOnServerLevel
+import btpos.mcmods.devutil.common.ext.vanilla.world.runOnServer
 import btpos.mcmods.devutil.common.ext.vanilla.world.sidedSuccess
 import btpos.mcmods.devutil.common.ext.vanilla.world.with
 import btpos.mcmods.devutil.common.structure.blocks.BlockWithEntity
@@ -24,7 +25,6 @@ import net.minecraft.core.Direction
 import net.minecraft.core.component.DataComponentGetter
 import net.minecraft.core.component.DataComponentMap
 import net.minecraft.network.chat.Component
-import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
@@ -37,7 +37,6 @@ import net.minecraft.world.item.context.BlockPlaceContext
 import net.minecraft.world.item.context.UseOnContext
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.Level
-import net.minecraft.world.level.LevelReader
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
@@ -128,9 +127,12 @@ class TileRedstoneReceiver(pPos: BlockPos, pState: BlockState, val redstone: IWi
     
     override fun applyImplicitComponents(componentGetter: DataComponentGetter) {
         super.applyImplicitComponents(componentGetter)
-        val channel = componentGetter.get(ModItemComponents.WIRELESS_REDSTONE)?.channel ?: (level as? ServerLevel)?.run {
-            dataStorage.dungeonBuilderData.redstoneHandler.makeNewChannel()
-        } ?: throw IllegalStateException("applying components on client!")
+        val channel = level?.runOnServer {
+             componentGetter.get(ModItemComponents.WIRELESS_REDSTONE)?.channel
+                ?: dataStorage.dungeonBuilderData.redstoneHandler.makeNewChannel()
+        }
+        if (channel == null)
+            return
         
         redstone.channel = channel
     }
@@ -142,7 +144,7 @@ class TileRedstoneReceiver(pPos: BlockPos, pState: BlockState, val redstone: IWi
     
     override fun preRemoveSideEffects(pos: BlockPos, state: BlockState) {
         super.preRemoveSideEffects(pos, state)
-        level?.runOnServerLevel {
+        level?.actOnServerLevel {
             dataStorage.dungeonBuilderData.redstoneHandler.unregisterWirelessReceiver(channel, pos)
         }
     }

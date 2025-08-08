@@ -10,6 +10,7 @@ import net.minecraft.world.item.BlockItem
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 
+@Suppress("unused")
 object ModCreativeTabs : IObjectRegistry {
 	val REGISTRY = createRegistry(Registries.CREATIVE_MODE_TAB)
 	
@@ -23,6 +24,7 @@ object ModCreativeTabs : IObjectRegistry {
 				.title(Component.translatable("btpos.dungeondesigner.category"))
 				.displayItems { itemDisplayParameters, output ->
 					output.acceptAll(ModBlocks.BLOCKS.map { ItemStack(it.get()) })
+					output.acceptAll(ModItems.ITEMS.map { ItemStack(it.get()) })
 				}
 		}
 	}

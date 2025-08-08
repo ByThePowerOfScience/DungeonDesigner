@@ -1,6 +1,6 @@
 @file:Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 
-package btpos.mcmods.dungeondesigner.neoforge.datagen
+package btpos.mcmods.dungeondesigner.neoforge.datagen.models
 
 import btpos.mcmods.devutil.common.ext.java.invoke
 import btpos.mcmods.dungeondesigner.MODID
@@ -14,7 +14,6 @@ import btpos.mcmods.dungeondesigner.builder.redstone.blocks.BlockRedstoneTransmi
 import btpos.mcmods.dungeondesigner.registry.ModBlocks
 import btpos.mcmods.dungeondesigner.registry.ModItems
 import net.minecraft.client.data.models.BlockModelGenerators
-import net.minecraft.client.data.models.BlockModelGenerators.plainVariant
 import net.minecraft.client.data.models.ItemModelGenerators
 import net.minecraft.client.data.models.ModelProvider
 import net.minecraft.client.data.models.MultiVariant
@@ -30,24 +29,18 @@ import net.minecraft.data.PackOutput
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.block.state.properties.BlockStateProperties
 import net.minecraft.world.level.block.state.properties.Property
-import net.neoforged.api.distmarker.Dist
-import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.fml.common.EventBusSubscriber
-import net.neoforged.neoforge.data.event.GatherDataEvent
 
-
-@EventBusSubscriber(modid=MODID, value=[Dist.CLIENT])
-object DataGenConstants {
-	@SubscribeEvent
-	fun gatherDataEvent(evt: GatherDataEvent.Client) {
-		evt.createProvider(::MyModelProvider)
-	}
-}
-
-class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
+class ModelDataGen(output: PackOutput) : ModelProvider(output, MODID) {
 	override fun registerModels(blockModels: BlockModelGenerators, itemModels: ItemModelGenerators) {
 		blockModels.registerBlockModels()
 		itemModels.registerItemModels()
+	}
+	
+	private fun ItemModelGenerators.registerItemModels() {
+		this.generateFlatItem(ModItems.REMOTE_LINKER, ModelTemplates.FLAT_ITEM)
+		this.generateFlatItem(ModItems.FLAG_ITEM, ModelTemplates.FLAT_ITEM)
+		this.generateFlatItem(ModItems.PIPETTE_ITEM, ModelTemplates.FLAT_ITEM)
+		this.generateFlatItem(ModItems.TRIGGER_ITEM, ModelTemplates.FLAT_ITEM)
 	}
 	
 /*	private val EXAMPLE_TEMPLATE: ModelTemplate = ModelTemplate( // The parent model location
@@ -96,8 +89,8 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 		val TEXTURE_TOP_BOTTOM_ON = "logic_programmer_top_on"
 		val TEXTURE_SIDES_ON = "logic_programmer_side_on"
 		
-		val off = columnModel(BlockTriggerHolder.id.powered(false), blockLoc(TEXTURE_SIDES), blockLoc(TEXTURE_TOP_BOTTOM))
-		val on = columnModel(BlockTriggerHolder.id.powered(true), blockLoc(TEXTURE_SIDES_ON), blockLoc(TEXTURE_TOP_BOTTOM_ON))
+		val off = columnModel(BlockTriggerHolder.Companion.id.powered(false), blockLoc(TEXTURE_SIDES), blockLoc(TEXTURE_TOP_BOTTOM))
+		val on = columnModel(BlockTriggerHolder.Companion.id.powered(true), blockLoc(TEXTURE_SIDES_ON), blockLoc(TEXTURE_TOP_BOTTOM_ON))
 		
 		MultiVariantGenerator.dispatch(ModBlocks.TRIGGER_BLOCK)
 			.with(poweredInitialVariants(off, on))
@@ -107,7 +100,7 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 	}
 	
 	private fun BlockModelGenerators.makeFightController() {
-		val id = BlockFightController.id
+		val id = BlockFightController.Companion.id
 		val t_off = blockLoc("fight_controller/${id}_inactive")
 		val out_off = blockLoc("fight_controller/${id}_inactive_out")
 		
@@ -122,10 +115,11 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 		val in_progress = sidedBlock(id + "_ip", t_ip, t_ip, out_ip, t_ip, t_ip, t_ip)
 		
 		MultiVariantGenerator.dispatch(ModBlocks.FIGHT_CONTROLLER)
-			.with(BlockFightController.STATUS(
-					FightStatus.INACTIVE to plainVariant(off),
-					FightStatus.IN_PROGRESS to plainVariant(in_progress),
-					FightStatus.COMPLETE to plainVariant(com)
+			.with(
+					BlockFightController.STATUS(
+							FightStatus.INACTIVE to BlockModelGenerators.plainVariant(off),
+							FightStatus.IN_PROGRESS to BlockModelGenerators.plainVariant(in_progress),
+							FightStatus.COMPLETE to BlockModelGenerators.plainVariant(com)
 			)).with(ROTATION_HORIZONTAL_FACING).submit()
 		
 		registerSimpleItemModel(ModBlocks.FIGHT_CONTROLLER, off)
@@ -137,8 +131,8 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 		val TXT_TOP = "logic_programmer_top"
 		val TXT_TOP_ON = "logic_programmer_top_on"
 		
-		val off = columnModel(BlockFlagReader.id.powered(false), blockLoc(TXT_SIDES), blockLoc(TXT_TOP))
-		val on = columnModel(BlockFlagReader.id.powered(true), blockLoc(TXT_SIDES_ON), blockLoc(TXT_TOP_ON))
+		val off = columnModel(BlockFlagReader.Companion.id.powered(false), blockLoc(TXT_SIDES), blockLoc(TXT_TOP))
+		val on = columnModel(BlockFlagReader.Companion.id.powered(true), blockLoc(TXT_SIDES_ON), blockLoc(TXT_TOP_ON))
 		
 		MultiVariantGenerator.dispatch(ModBlocks.FLAG_READER)
 			.with(poweredInitialVariants(off, on))
@@ -149,6 +143,7 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 	
 	@Suppress("DuplicatedCode")
 	private object FlagWriters {
+		//region Textures
 		private const val TEXTURE_SIDES = "logic_programmer_side"
 		private const val TEXTURE_ON_SIDES = "logic_programmer_side_on"
 
@@ -160,9 +155,10 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 
 		private const val TXT_RESETTER_TOP = "logic_programmer_top_resetter"
 		private const val TXT_RESETTER_TOP_ON = "logic_programmer_top_on_resetter"
+		//endregion
 		
 		fun BlockModelGenerators.forSetter() {
-			val setterLoc = BlockFlagWriter.id_setter
+			val setterLoc = BlockFlagWriter.Companion.id_setter
 			val tx_caps_off = blockLoc(TXT_SETTER_TOP)
 			val tx_caps_on = blockLoc(TXT_SETTER_TOP_ON)
 			val tx_side_off = blockLoc(TEXTURE_SIDES)
@@ -182,7 +178,7 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 		}
 
 		fun BlockModelGenerators.forResetter() {
-			val setterLoc = BlockFlagWriter.id_resetter
+			val setterLoc = BlockFlagWriter.Companion.id_resetter
 			val tx_caps_off = blockLoc(TXT_RESETTER_TOP)
 			val tx_caps_on = blockLoc(TXT_RESETTER_TOP_ON)
 			val tx_side_off = blockLoc(TEXTURE_SIDES)
@@ -203,12 +199,12 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 	}
 	
 	private object WirelessRedstone {
-		const val txBase = "redstone/transmitter/"
+		const val txBase = "redstone/"
 		
 		fun BlockModelGenerators.forTransmitter() {
-			val txSpecific = txBase + "transmitter"
-			val off = columnModel(BlockRedstoneTransmitter.id.powered(false), blockLoc("${txSpecific}_sides").powered(false), blockLoc("${txSpecific}_top").powered(false))
-			val on = columnModel(BlockRedstoneTransmitter.id.powered(true), blockLoc("${txSpecific}_sides").powered(true), blockLoc("${txSpecific}_top").powered(true))
+			val txSpecific = txBase + "transmitter/transmitter"
+			val off = columnModel(BlockRedstoneTransmitter.Companion.id.powered(false), blockLoc("${txSpecific}_sides").powered(false), blockLoc("${txSpecific}_top").powered(false))
+			val on = columnModel(BlockRedstoneTransmitter.Companion.id.powered(true), blockLoc("${txSpecific}_sides").powered(true), blockLoc("${txSpecific}_top").powered(true))
 			
 			MultiVariantGenerator.dispatch(ModBlocks.REDSTONE_TRANSMITTER)
 				.with(poweredInitialVariants(off, on))
@@ -218,9 +214,9 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 		}
 		
 		fun BlockModelGenerators.forReceiver() {
-			val txSpecific = txBase + "receiver"
-			val off = columnModel(BlockRedstoneReceiver.id.powered(false), blockLoc("${txSpecific}_sides").powered(false), blockLoc("${txSpecific}_top").powered(false))
-			val on = columnModel(BlockRedstoneReceiver.id.powered(true), blockLoc("${txSpecific}_sides").powered(true), blockLoc("${txSpecific}_top").powered(true))
+			val txSpecific = txBase + "receiver/receiver"
+			val off = columnModel(BlockRedstoneReceiver.Companion.id.powered(false), blockLoc("${txSpecific}_sides").powered(false), blockLoc("${txSpecific}_top").powered(false))
+			val on = columnModel(BlockRedstoneReceiver.Companion.id.powered(true), blockLoc("${txSpecific}_sides").powered(true), blockLoc("${txSpecific}_top").powered(true))
 			
 			MultiVariantGenerator.dispatch(ModBlocks.REDSTONE_RECEIVER)
 				.with(poweredInitialVariants(off, on))
@@ -232,28 +228,8 @@ class MyModelProvider(output: PackOutput) : ModelProvider(output, MODID) {
 	}
 	//endregion
 	
-	private fun ItemModelGenerators.registerItemModels() {
-		this.generateFlatItem(ModItems.REMOTE_LINKER, ModelTemplates.FLAT_ITEM)
-		this.generateFlatItem(ModItems.FLAG_ITEM, ModelTemplates.FLAT_ITEM)
-		this.generateFlatItem(ModItems.PIPETTE_ITEM, ModelTemplates.FLAT_ITEM)
-		this.generateFlatItem(ModItems.TRIGGER_ITEM, ModelTemplates.FLAT_ITEM)
-	}
+	
 }
-
-
-//class ItemDataGen(output: PackOutput, efh: ExistingFileHelper) : ItemModelProvider(output, MODID, efh) {
-//	override fun registerModels() {
-//		listOf(
-//			ItemTriggerVariable,
-//			ItemFlagVariable,
-//			ItemEntityPipette
-//		).forEach {
-//			it.getModels(this)
-//		}
-//	}
-//}
-
-
 
 
 private fun blockLoc(path: String): ResourceLocation {
@@ -274,7 +250,6 @@ private fun blockFaces(top: ResourceLocation, bottom: ResourceLocation, north: R
 		.put(TextureSlot.SOUTH, south)
 		.put(TextureSlot.WEST, west)
 }
-//endregion
 
 
 //region Model Instantiation
@@ -296,14 +271,13 @@ private fun sidedBlock(id: String, rest: ResourceLocation, top: ResourceLocation
 private fun BlockModelGenerators.columnModel(id: String, side: ResourceLocation, updown: ResourceLocation): ResourceLocation {
 	return ModelTemplates.CUBE_COLUMN.create(blockLoc(id), TextureMapping.column(side, updown), modelOutput)
 }
-//endregion
 
 
 //region Variant Building
 private fun poweredInitialVariants(off: ResourceLocation, on: ResourceLocation): PropertyDispatch.C1<MultiVariant?, Boolean> {
 	return PropertyDispatch.initial(BlockStateProperties.POWERED)
-		.select(true, plainVariant(on))
-		.select(false, plainVariant(off))
+		.select(true, BlockModelGenerators.plainVariant(on))
+		.select(false, BlockModelGenerators.plainVariant(off))
 }
 
 private operator fun <T : Comparable<T>> Property<T>.invoke(vararg pairs: Pair<T, MultiVariant>): PropertyDispatch.C1<MultiVariant, T> {
@@ -335,7 +309,6 @@ private val ROTATION_HORIZONTAL_FACING: PropertyDispatch<VariantMutator?> = Prop
 	.select(Direction.SOUTH, BlockModelGenerators.Y_ROT_180)
 	.select(Direction.WEST, BlockModelGenerators.Y_ROT_270)
 	.select(Direction.NORTH, BlockModelGenerators.NOP)
-//endregion
 
 
 private fun ResourceLocation.powered(isPowered: Boolean): ResourceLocation {
