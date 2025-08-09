@@ -13,7 +13,15 @@ import net.minecraft.world.level.block.entity.BlockEntity
  *
  * God why did KMP have to stop supporting multi-JVM targets
  */
-object MultiplatformHooks : IPlatformSpecificStuff by getPlatformSpecificStuff()
+object MultiplatformHooks : IPlatformSpecificStuff {
+	override fun getItemHandler(level: Level, pos: BlockPos, direction: Direction?): IItemHandler? {
+		throw IllegalStateException("Transformer not merged")
+	}
+	
+	override fun BlockEntity.getItemHandler(direction: Direction?): IItemHandler? {
+		throw IllegalStateException("Transformer not merged")
+	}
+}
 
 object MultiPlatformHooksHooks {
 	@JvmStatic @ExpectPlatform

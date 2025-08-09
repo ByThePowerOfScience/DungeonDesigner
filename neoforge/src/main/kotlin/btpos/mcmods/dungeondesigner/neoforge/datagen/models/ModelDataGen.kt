@@ -14,6 +14,7 @@ import btpos.mcmods.dungeondesigner.builder.redstone.blocks.BlockRedstoneTransmi
 import btpos.mcmods.dungeondesigner.registry.ModBlocks
 import btpos.mcmods.dungeondesigner.registry.ModItems
 import net.minecraft.client.data.models.BlockModelGenerators
+import net.minecraft.client.data.models.BlockModelGenerators.plainVariant
 import net.minecraft.client.data.models.ItemModelGenerators
 import net.minecraft.client.data.models.ModelProvider
 import net.minecraft.client.data.models.MultiVariant
@@ -160,17 +161,17 @@ class ModelDataGen(output: PackOutput) : ModelProvider(output, MODID) {
 		fun BlockModelGenerators.forSetter() {
 			val setterLoc = BlockFlagWriter.Companion.id_setter
 			val tx_caps_off = blockLoc(TXT_SETTER_TOP)
-			val tx_caps_on = blockLoc(TXT_SETTER_TOP_ON)
+//			val tx_caps_on = blockLoc(TXT_SETTER_TOP_ON)
 			val tx_side_off = blockLoc(TEXTURE_SIDES)
-			val tx_side_on = blockLoc(TEXTURE_ON_SIDES)
+//			val tx_side_on = blockLoc(TEXTURE_ON_SIDES)
 			val tx_side_off_input = blockLoc(TEXTURE_SIDES_INPUT)
-			val tx_side_on_input = blockLoc(TEXTURE_ON_SIDES_INPUT)
+//			val tx_side_on_input = blockLoc(TEXTURE_ON_SIDES_INPUT)
 			
 			val setter_off = sidedBlock(setterLoc.powered(false), top=tx_caps_off, bottom=tx_caps_off, north=tx_side_off_input, rest=tx_side_off)
-			val setter_on = sidedBlock(setterLoc.powered(true), top=tx_caps_on, bottom=tx_caps_on, north=tx_side_on_input, rest=tx_side_on)
+//			val setter_on = sidedBlock(setterLoc.powered(true), top=tx_caps_on, bottom=tx_caps_on, north=tx_side_on_input, rest=tx_side_on)
 			
-			MultiVariantGenerator.dispatch(ModBlocks.FLAG_SETTER)
-				.with(poweredInitialVariants(setter_off, setter_on))
+			MultiVariantGenerator.dispatch(ModBlocks.FLAG_SETTER, plainVariant(setter_off))
+//				.with(poweredInitialVariants(setter_off, setter_on))
 				.with(ROTATION_HORIZONTAL_FACING)
 				.submit()
 			
@@ -180,17 +181,17 @@ class ModelDataGen(output: PackOutput) : ModelProvider(output, MODID) {
 		fun BlockModelGenerators.forResetter() {
 			val setterLoc = BlockFlagWriter.Companion.id_resetter
 			val tx_caps_off = blockLoc(TXT_RESETTER_TOP)
-			val tx_caps_on = blockLoc(TXT_RESETTER_TOP_ON)
+//			val tx_caps_on = blockLoc(TXT_RESETTER_TOP_ON)
 			val tx_side_off = blockLoc(TEXTURE_SIDES)
-			val tx_side_on = blockLoc(TEXTURE_ON_SIDES)
+//			val tx_side_on = blockLoc(TEXTURE_ON_SIDES)
 			val tx_side_off_input = blockLoc(TEXTURE_SIDES_INPUT)
-			val tx_side_on_input = blockLoc(TEXTURE_ON_SIDES_INPUT)
+//			val tx_side_on_input = blockLoc(TEXTURE_ON_SIDES_INPUT)
 			
 			val setter_off = sidedBlock(setterLoc.powered(false), top=tx_caps_off, bottom=tx_caps_off, north=tx_side_off_input, rest=tx_side_off)
-			val setter_on = sidedBlock(setterLoc.powered(true), top=tx_caps_on, bottom=tx_caps_on, north=tx_side_on_input, rest=tx_side_on)
+//			val setter_on = sidedBlock(setterLoc.powered(true), top=tx_caps_on, bottom=tx_caps_on, north=tx_side_on_input, rest=tx_side_on)
+//				.with(poweredInitialVariants(setter_off, setter_on))
 			
-			MultiVariantGenerator.dispatch(ModBlocks.FLAG_RESETTER)
-				.with(poweredInitialVariants(setter_off, setter_on))
+			MultiVariantGenerator.dispatch(ModBlocks.FLAG_RESETTER, plainVariant(setter_off))
 				.with(ROTATION_HORIZONTAL_FACING)
 				.submit()
 			
@@ -255,7 +256,7 @@ private fun blockFaces(top: ResourceLocation, bottom: ResourceLocation, north: R
 //region Model Instantiation
 context(BlockModelGenerators)
 private fun sidedBlock(id: String, top: ResourceLocation, bottom: ResourceLocation, north: ResourceLocation, south: ResourceLocation, east: ResourceLocation, west: ResourceLocation, particle: ResourceLocation = south): ResourceLocation {
-	return ModelTemplates.CUBE_DIRECTIONAL.create(id, blockFaces(top, bottom, north, south, east, west).put(TextureSlot.PARTICLE, particle))
+	return ModelTemplates.CUBE.create(id, blockFaces(top, bottom, north, south, east, west).put(TextureSlot.PARTICLE, particle))
 }
 
 /**

@@ -1,5 +1,5 @@
 {
-  "parent": "minecraft:block/cube_directional",
+  "parent": "minecraft:block/cube",
   "textures": {
     "down": "dungeondesigner:block/fight_controller/fight_controller_inactive",
     "east": "dungeondesigner:block/fight_controller/fight_controller_inactive",

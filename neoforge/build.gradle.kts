@@ -1,3 +1,5 @@
+import btpos.gradle.preprocessor.getForgeTransformers
+
 plugins {
 	id("com.github.johnrengelman.shadow")
 }
@@ -44,7 +46,7 @@ dependencies {
 	
 	testImplementation("net.neoforged:testframework:${rootProject.properties["neoforge_version"]}")
 	
-	"common"(project(path = ":common", configuration = "transformProductionNeoForge")) { isTransitive = false }
+	"common"(project(path = ":common", configuration = "transformMainForDev_NeoForge")) { isTransitive = false }
 	"shadowBundle"(project(path = ":common", configuration = "transformProductionNeoForge"))
 }
 

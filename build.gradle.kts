@@ -101,15 +101,8 @@ subprojects {
 		val transformedCommonTest by configurations.creating {
 			isCanBeConsumed = false
 			isCanBeResolved = true
-			attributes {
-				attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named("${project.name}-test"))
-			}
 		}
 		
-		val transformedCommonMain by configurations.creating {
-			isCanBeConsumed = false
-			isCanBeResolved = true
-		}
 		
 		val loaderId = when (project.name) {
 			"neoforge" -> "NeoForge"
@@ -117,15 +110,17 @@ subprojects {
 		}
 		
 		dependencies {
-			add("transformedCommonTest", project(":common"))
-			add("transformedCommonMain", project(path=":common", configuration="transformProduction$loaderId"))
+			add("transformedCommonTest", project(path=":common", configuration="transformTestForDev_$loaderId"))
 		}
 		
 		tasks.withType<Test> {
 			useJUnitPlatform()
 			val testJarTransformed = transformedCommonTest.resolve().first()
 			testClassesDirs += zipTree(testJarTransformed)
-			this@withType.classpath += transformedCommonMain
+			this@withType.classpath += project.configurations.compileClasspath.get()
+			this@withType.classpath += project.configurations.runtimeClasspath.get()
+			this@withType.classpath += project.configurations.testCompileClasspath.get()
+			this@withType.classpath += project.configurations.testRuntimeClasspath.get()
 			this@withType.classpath += transformedCommonTest
 		}
 	}

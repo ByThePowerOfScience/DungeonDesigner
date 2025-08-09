@@ -3,6 +3,7 @@ package btpos.gradle.preprocessor
 import btpos.gradle.preprocessor.transformers.forge.TConnectRedstoneForge
 import btpos.gradle.preprocessor.transformers.testing.JUnitExtendWithFabric
 import btpos.gradle.preprocessor.transformers.testing.JUnitExtendWithNeo
+import dev.architectury.transformer.Transformer
 import dev.architectury.transformer.transformers.base.ClassEditTransformer
 import org.gradle.internal.cc.base.logger
 
@@ -25,6 +26,14 @@ class MultiplatformPreTransformer_Fabric : ClassEditTransformer {
 //		JUnitExtendWithFabric(node)
 		return node
 	}
+}
+
+fun getForgeTransformers(): List<ClassEditTransformer> {
+	return listOf(MultiplatformPreTransformer_Forge())
+}
+
+fun getFabricTransformers(): List<ClassEditTransformer> {
+	return listOf(MultiplatformPreTransformer_Fabric())
 }
 
 /*

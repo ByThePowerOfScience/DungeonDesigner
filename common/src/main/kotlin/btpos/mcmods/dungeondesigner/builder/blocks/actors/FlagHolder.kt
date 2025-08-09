@@ -55,15 +55,7 @@ import net.minecraft.world.phys.BlockHitResult
 import kotlin.jvm.optionals.getOrNull
 
 abstract class AbstractFlagHolderBlock(props: Properties) : Block(props), EntityBlock {
-	init {
-		registerDefaultState(stateDefinition.any().with(POWERED, false))
-	}
-	
 	//region Configuration
-	override fun createBlockStateDefinition(pBuilder: StateDefinition.Builder<Block, BlockState>) {
-		super.createBlockStateDefinition(pBuilder)
-		pBuilder.add(POWERED)
-	}
 	
 	override fun newBlockEntity(pPos: BlockPos, pState: BlockState): BlockEntity? = ModBlocks.FLAG_BLOCK_ENTITY.create(pPos, pState)
 	//endregion
@@ -110,6 +102,14 @@ class BlockFlagReader(props: Properties) : AbstractFlagHolderBlock(props), IPlat
 		const val id = "flag_reader"
 	}
 	
+	init {
+		registerDefaultState(stateDefinition.any().with(POWERED, false))
+	}
+	
+	override fun createBlockStateDefinition(builder: StateDefinition.Builder<Block, BlockState>) {
+		super.createBlockStateDefinition(builder)
+		builder.add(POWERED)
+	}
 	
 	override fun canConnectRedstone(state: BlockState, level: BlockGetter, pos: BlockPos, direction: Direction?): Boolean = true
 	

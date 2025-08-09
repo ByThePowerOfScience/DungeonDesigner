@@ -1,8 +1,6 @@
-import btpos.gradle.preprocessor.MultiplatformPreTransformer_Fabric
-import btpos.gradle.preprocessor.MultiplatformPreTransformer_Forge
-import dev.architectury.plugin.ModLoader.Companion.applyNeoForgeForgeLikeProd
+import btpos.gradle.preprocessor.getForgeTransformers
+import btpos.gradle.preprocessor.getFabricTransformers
 import dev.architectury.plugin.TransformingTask
-import dev.architectury.plugin.loom.LoomInterface
 import org.gradle.kotlin.dsl.withType
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
@@ -28,48 +26,55 @@ architectury {
 		// It's also almost entirely copied one-to-one from ArchitecturyPluginExtension#common
 		
 		val settings = this
-		val loom = LoomInterface.get(project)
-		
 		
 		for (loader in settings.loaders) {
-			project.configurations.maybeCreate("transformProduction${loader.titledId}Test")
-			// CUSTOM: Define variant with name so I can resolve it in the platform-specific test task
-			project.configurations.getByName("transformProduction${loader.titledId}Test") {
-				isCanBeConsumed = true
-				isCanBeResolved = false
-				attributes {
-					attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named("${loader.id}-test"))
-				}
-			}
-			val transformProductionTask =
-				project.tasks.register("transformProduction${loader.titledId}Test", TransformingTask::class.java) {
-					val it = this@register
-					it.group = "Architectury"
-					it.platform = loader.id
-					loader.transformProduction(it, loom, settings)
-					
-					if (settings.isForgeLike && loader.id == "neoforge") {
-						it.addPost(applyNeoForgeForgeLikeProd(loom, settings))
-					}
-					
-					it.archiveClassifier.set("transformProduction${loader.titledId}Test")
-					it.input.set(testJar.get().archiveFile)
-					
-					it.dependsOn(testJar)
-//					buildTask.dependsOn(it)
-				}
-			project.artifacts.add("transformProduction${loader.titledId}Test", transformProductionTask)
-			
-			transformProductionTask.get().archiveFile.get().asFile.takeUnless { it.exists() }?.createEmptyJar()
+			// register our "transform for dev" task
+			val platform = loader.titledId
+			makeTransformingTask(platform, "transformMainForDev_$platform", tasks.jar.get())
+			makeTransformingTask(platform, "transformTestForDev_$platform", testJar.get())
 		}
 	}
 }
 
-tasks.withType<TransformingTask> {
-	if (platform?.contains("forge") == true) {
-		add(MultiplatformPreTransformer_Forge()) {_, _ ->}
-	} else if (platform == "fabric") {
-		add(MultiplatformPreTransformer_Fabric()) { _, _ ->}
+fun makeTransformingTask(platform: String, configName: String, jarTask: Jar) {
+	project.configurations.maybeCreate(configName).run {
+		isCanBeConsumed = true
+		isCanBeResolved = false
+	}
+	
+	// Register a transformingtask with no transformers,
+	//  because the below tasks.withType thing will add it to ALL transforming tasks including this!
+	val transformerTask = project.tasks.register<TransformingTask>("jar_$configName") {
+		dependsOn(jarTask)
+		
+		input = jarTask.archiveFile
+		val id = platform.lowercase()
+		
+		this.platform = id
+		
+		archiveClassifier = configName
+	}
+	
+	transformerTask.get().archiveFile.get().asFile.takeIf { !it.exists() }?.createEmptyJar()
+	
+	project.artifacts.add(configName, transformerTask)
+}
+
+// Add my transformers to the prod variants
+project.afterEvaluate {
+	tasks.withType<TransformingTask> {
+		val id = platform?.lowercase() ?: return@withType
+		val customTransformers = when (id) {
+			"neoforge" -> getForgeTransformers()
+			"fabric" -> getFabricTransformers()
+			else -> throw IllegalStateException("Platform \"$platform\" not specified! If it doesn't have transformers, it needs an empty list!")
+		}
+		
+		inputs.property("transformers", customTransformers.joinToString(",") { it.javaClass.toString() })
+		
+		customTransformers.forEach {
+			add(it, { _, _ -> })
+		}
 	}
 }
 

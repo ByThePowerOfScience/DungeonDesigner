@@ -16,13 +16,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(Entity.class)
 public abstract class MArenaDespawnOnUnload {
+    @Shadow public abstract boolean isRemoved();
+    
+    @SuppressWarnings("ConstantValue")
     @Inject(
             method="getEncodeId",
             at=@At("HEAD"),
             cancellable = true
     )
     private void checkForNoSaveNbt(CallbackInfoReturnable<String> cir) {
-        if (IEntitySpawnDataKt.isMobTemporary(((Entity)(Object)this))) {
+        if (isRemoved() && IEntitySpawnDataKt.isMobTemporary(((Entity)(Object)this))) {
             cir.setReturnValue(null);
         }
     }

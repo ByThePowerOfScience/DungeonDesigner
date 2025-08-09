@@ -1,4 +1,5 @@
 import btpos.gradle.preprocessor.MultiplatformPreTransformer_Fabric
+import btpos.gradle.preprocessor.getFabricTransformers
 import dev.architectury.transformer.Transform
 
 plugins {
@@ -34,12 +35,12 @@ dependencies {
 	
 	modImplementation ("net.fabricmc.fabric-api:fabric-api:${rootProject.properties["fabric_api_version"]}")
 	
-	modImplementation ("dev.architectury:architectury-fabric:${rootProject.properties["architectury_api_version"]}")
+	modImplementation("dev.architectury:architectury-fabric:${rootProject.properties["architectury_api_version"]}")
 	
 	modImplementation("net.fabricmc:fabric-language-kotlin:1.13.3+kotlin.2.1.21")
 	
-	"common"(project(path= ":common", configuration= "transformProductionFabric")) { isTransitive = false }
-	"shadowBundle" (project(path= ":common", configuration= "transformProductionFabric"))
+	"common"(project(path= ":common", configuration= "transformMainForDev_Fabric")) { isTransitive = false }
+	"shadowBundle"(project(path= ":common", configuration= "transformProductionFabric"))
 }
 
 tasks.processResources {

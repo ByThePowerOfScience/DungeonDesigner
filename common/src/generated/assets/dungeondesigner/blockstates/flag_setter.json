@@ -1,33 +1,18 @@
 {
   "variants": {
-    "facing=east,powered=false": {
+    "facing=east": {
       "model": "dungeondesigner:block/flag_setter_unpowered",
       "y": 90
     },
-    "facing=east,powered=true": {
-      "model": "dungeondesigner:block/flag_setter_powered",
-      "y": 90
-    },
-    "facing=north,powered=false": {
+    "facing=north": {
       "model": "dungeondesigner:block/flag_setter_unpowered"
     },
-    "facing=north,powered=true": {
-      "model": "dungeondesigner:block/flag_setter_powered"
-    },
-    "facing=south,powered=false": {
+    "facing=south": {
       "model": "dungeondesigner:block/flag_setter_unpowered",
       "y": 180
     },
-    "facing=south,powered=true": {
-      "model": "dungeondesigner:block/flag_setter_powered",
-      "y": 180
-    },
-    "facing=west,powered=false": {
+    "facing=west": {
       "model": "dungeondesigner:block/flag_setter_unpowered",
-      "y": 270
-    },
-    "facing=west,powered=true": {
-      "model": "dungeondesigner:block/flag_setter_powered",
       "y": 270
     }
   }

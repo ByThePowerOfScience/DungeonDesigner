@@ -14,6 +14,7 @@ import btpos.mcmods.devutil.common.util.EntityUtils.getTargetedEntity
 import btpos.mcmods.dungeondesigner.builder.nbt.IEntitySpawnData
 import btpos.mcmods.dungeondesigner.registry.ModItemComponents
 import btpos.mcmods.dungeondesigner.registry.ModItems
+import net.minecraft.ChatFormatting
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.chat.Component
 import net.minecraft.util.ProblemReporter
@@ -88,12 +89,12 @@ class ItemEntityPipette(pProps: Properties) : Item(pProps) {
 			// split one off
 			val shouldSplitOff = heldStack.count > 1
 			val newStack = if (shouldSplitOff) heldStack.split(1) else heldStack
-//			getOrCreateData(newStack).run {
-//				pos = pContext.clickedPos
-//				rotation = -(pContext.player?.yRot ?: 0f)
-//
-//				pContext.player?.sendSystemMessage("Spawn position: ".asComponent() + pos.toComponent().withStyle(ChatFormatting.YELLOW) + " with rotation $rotation degrees.")
-//			}
+			modifyOrSetData(newStack) {
+				pos = pContext.clickedPos
+				rotation = -(pContext.player?.yRot ?: 0f)
+				
+				pContext.player?.sendSystemMessage("Spawn position: ".asComponent() + pos.toComponent().withStyle(ChatFormatting.YELLOW) + " with rotation $rotation degrees.")
+			}
 			if (shouldSplitOff) {
 				pContext.player?.addItem(newStack)
 			}
