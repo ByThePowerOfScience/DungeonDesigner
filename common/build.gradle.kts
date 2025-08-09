@@ -25,7 +25,7 @@ val testJar = tasks.register("testJar", Jar::class) {
 architectury {
 	/**
 	 * The standard `common` method registers the tasks `transformProductionFabric` and `transformProductionNeoForge`,
-	 * which have transformers made for the obfuscated prod environment.  These will break the deobfuscated dev runs.
+	 * which have transformers made for the obfuscated prod environment.  These will break the deobf dev runs.
 	 *
 	 * Problem is, I still need to run transformers on my common module before merging it into the platform-specific ones.
 	 *

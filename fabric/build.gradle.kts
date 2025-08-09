@@ -26,7 +26,7 @@ configurations {
 	}
 	
 	
-	compileClasspath.get().extendsFrom(common)
+	//compileClasspath.get().extendsFrom(common)
 	runtimeClasspath.get().extendsFrom(common)
 	getByName("developmentFabric").extendsFrom(common) // This is a hardcoded requirement of the transformer toolchain. No, I don't know why there are two configurations for this.
 	
@@ -48,7 +48,19 @@ dependencies {
 	
 	// This was originally in the template as `common(project(path=":common", configuration="namedElements"))`,
 	// but I needed my own transformers to exist in the dev runs, so I changed it to variant-aware.
-	"common"(project(":common")) { isTransitive = false }
+	
+	// compile against the live stuff
+	compileOnly(project(path=":common", configuration="namedElements")) {
+		isTransitive = false
+	}
+	// run with the dev-transformed stuff
+	project(path=":common", configuration="transformMainForDev_Fabric").let {
+		"developmentFabric"(it) { isTransitive = false }
+		runtimeOnly(it) { isTransitive = false }
+		"common"(it) { isTransitive = false }
+	}
+	
+	// shadow the prod stuff
 	"shadowBundle"(project(path= ":common", configuration= "transformProductionFabric"))
 }
 

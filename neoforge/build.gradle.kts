@@ -10,24 +10,14 @@ architectury {
 	neoForge()
 }
 
-val common by configurations.creating {
-	isCanBeResolved = true
-	isCanBeConsumed = false
-	attributes {
-		attribute(ArchAttributes.SOURCES_TYPE, "main")
-		attribute(ArchAttributes.PLATFORM, "neoforge")
-	}
-}
 configurations {
+	val common by configurations.creating {
+		isCanBeResolved = true
+		isCanBeConsumed = false
+	}
 	compileClasspath.get().extendsFrom(common)
 	runtimeClasspath.get().extendsFrom(common)
-	getByName("developmentNeoForge"){
-		extendsFrom(common)
-		attributes {
-			attribute(ArchAttributes.SOURCES_TYPE, "main")
-			attribute(ArchAttributes.PLATFORM, "neoforge")
-		}
-	}
+	getByName("developmentNeoForge").extendsFrom(common)
 	
 	// Files in this configuration will be bundled into your mod using the Shadow plugin.
 	// Don"t use the `shadow` configuration from the plugin itself as it"s meant for excluding files.
@@ -57,8 +47,19 @@ dependencies {
 	
 	testImplementation("net.neoforged:testframework:${rootProject.properties["neoforge_version"]}")
 	
-	common(project(":common")) { isTransitive = false }
-	"shadowBundle"(project(path = ":common", configuration = "transformProductionNeoForge"))
+	// compile against the live stuff
+	compileOnly(project(path=":common", configuration="namedElements")) {
+		isTransitive = false
+	}
+	// run with the dev-transformed stuff
+	project(path=":common", configuration="transformMainForDev_NeoForge").let {
+		"developmentNeoForge"(it) { isTransitive = false }
+		runtimeOnly(it) { isTransitive = false }
+		"common"(it) { isTransitive = false }
+	}
+	
+	// shadow the prod stuff
+	"shadowBundle"(project(path= ":common", configuration= "transformProductionNeoForge"))
 }
 
 tasks.processResources {
