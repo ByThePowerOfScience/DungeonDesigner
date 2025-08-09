@@ -16,7 +16,7 @@ class MixinConfigPlugin : IMixinConfigPlugin {
 	
 	override fun getMixins(): List<String>? {
 		if (Platform.isFabric()) {
-			return listOf("btpos.mcmods.dungeondesigner.mixin.api.MConnectRedstone")
+			return listOf("api.MConnectRedstone")
 		}
 		return null
 	}

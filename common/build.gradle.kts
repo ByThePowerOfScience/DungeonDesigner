@@ -1,3 +1,4 @@
+import btpos.gradle.architectury.ArchAttributes
 import btpos.gradle.preprocessor.getForgeTransformers
 import btpos.gradle.preprocessor.getFabricTransformers
 import dev.architectury.plugin.TransformingTask
@@ -30,16 +31,22 @@ architectury {
 		for (loader in settings.loaders) {
 			// register our "transform for dev" task
 			val platform = loader.titledId
-			makeTransformingTask(platform, "transformMainForDev_$platform", tasks.jar.get())
-			makeTransformingTask(platform, "transformTestForDev_$platform", testJar.get())
+			makeTransformingTask(platform, "transformMainForDev_$platform", tasks.jar.get(), "main")
+			makeTransformingTask(platform, "transformTestForDev_$platform", testJar.get(), "test")
 		}
 	}
 }
 
-fun makeTransformingTask(platform: String, configName: String, jarTask: Jar) {
-	project.configurations.maybeCreate(configName).run {
+fun makeTransformingTask(platform: String, configName: String, jarTask: Jar, sourceSet: String) {
+	val id = platform.lowercase()
+	
+	project.configurations.maybeCreate(configName).apply {
 		isCanBeConsumed = true
 		isCanBeResolved = false
+		attributes {
+			attribute(ArchAttributes.SOURCES_TYPE, sourceSet)
+			attribute(ArchAttributes.PLATFORM, id)
+		}
 	}
 	
 	// Register a transformingtask with no transformers,
@@ -48,7 +55,6 @@ fun makeTransformingTask(platform: String, configName: String, jarTask: Jar) {
 		dependsOn(jarTask)
 		
 		input = jarTask.archiveFile
-		val id = platform.lowercase()
 		
 		this.platform = id
 		
@@ -69,6 +75,8 @@ project.afterEvaluate {
 			"fabric" -> getFabricTransformers()
 			else -> throw IllegalStateException("Platform \"$platform\" not specified! If it doesn't have transformers, it needs an empty list!")
 		}
+		
+		inputs.file(this.input)
 		
 		inputs.property("transformers", customTransformers.joinToString(",") { it.javaClass.toString() })
 		

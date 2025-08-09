@@ -1,4 +1,5 @@
 
+import btpos.gradle.architectury.ArchAttributes
 import btpos.gradle.architectury.loom
 import btpos.gradle.preprocessor.MultiplatformPreTransformer_Fabric
 import btpos.gradle.preprocessor.MultiplatformPreTransformer_Forge
@@ -101,16 +102,14 @@ subprojects {
 		val transformedCommonTest by configurations.creating {
 			isCanBeConsumed = false
 			isCanBeResolved = true
-		}
-		
-		
-		val loaderId = when (project.name) {
-			"neoforge" -> "NeoForge"
-			else -> project.name.capitalize()
+			attributes {
+				attribute(ArchAttributes.SOURCES_TYPE, "test")
+				attribute(ArchAttributes.PLATFORM, project.name)
+			}
 		}
 		
 		dependencies {
-			add("transformedCommonTest", project(path=":common", configuration="transformTestForDev_$loaderId"))
+			add("transformedCommonTest", project(":common"))
 		}
 		
 		tasks.withType<Test> {

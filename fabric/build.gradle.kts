@@ -1,3 +1,4 @@
+import btpos.gradle.architectury.ArchAttributes
 import btpos.gradle.preprocessor.MultiplatformPreTransformer_Fabric
 import btpos.gradle.preprocessor.getFabricTransformers
 import dev.architectury.transformer.Transform
@@ -15,6 +16,10 @@ configurations {
 	val common by creating {
 		isCanBeResolved = true
 		isCanBeConsumed = false
+		attributes {
+			attribute(ArchAttributes.SOURCES_TYPE, "main")
+			attribute(ArchAttributes.PLATFORM, "fabric")
+		}
 	}
 	compileClasspath.get().extendsFrom(common)
 	runtimeClasspath.get().extendsFrom(common)
@@ -39,7 +44,7 @@ dependencies {
 	
 	modImplementation("net.fabricmc:fabric-language-kotlin:1.13.3+kotlin.2.1.21")
 	
-	"common"(project(path= ":common", configuration= "transformMainForDev_Fabric")) { isTransitive = false }
+	"common"(project(":common")) { isTransitive = false }
 	"shadowBundle"(project(path= ":common", configuration= "transformProductionFabric"))
 }
 

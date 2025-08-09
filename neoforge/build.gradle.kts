@@ -1,4 +1,4 @@
-import btpos.gradle.preprocessor.getForgeTransformers
+import btpos.gradle.architectury.ArchAttributes
 
 plugins {
 	id("com.github.johnrengelman.shadow")
@@ -13,6 +13,10 @@ configurations {
 	val common by creating {
 		isCanBeResolved = true
 		isCanBeConsumed = false
+		attributes {
+			attribute(ArchAttributes.SOURCES_TYPE, "main")
+			attribute(ArchAttributes.PLATFORM, "neoforge")
+		}
 	}
 	compileClasspath.get().extendsFrom(common)
 	runtimeClasspath.get().extendsFrom(common)
@@ -46,7 +50,7 @@ dependencies {
 	
 	testImplementation("net.neoforged:testframework:${rootProject.properties["neoforge_version"]}")
 	
-	"common"(project(path = ":common", configuration = "transformMainForDev_NeoForge")) { isTransitive = false }
+	"common"(project(":common")) { isTransitive = false }
 	"shadowBundle"(project(path = ":common", configuration = "transformProductionNeoForge"))
 }
 

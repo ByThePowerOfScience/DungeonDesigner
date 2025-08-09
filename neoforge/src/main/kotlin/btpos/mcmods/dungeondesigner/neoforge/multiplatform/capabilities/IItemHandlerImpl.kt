@@ -6,8 +6,9 @@ import btpos.mcmods.dungeondesigner.multiplatform.capabilities.IItemHandler as D
 
 @JvmInline
 value class IItemHandlerImpl(val wrapped: IItemHandler) : DDHandler {
-	override val numSlots: Int
-		get() = wrapped.slots
+	override fun iterSlots(): Sequence<ItemStack> {
+		return (0..<this.numSlots).asSequence().map(this::getStackInSlot)
+	}
 	
 	override fun getStackInSlot(slot: Int): ItemStack {
 		return wrapped.getStackInSlot(slot)
