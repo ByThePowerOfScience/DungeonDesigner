@@ -18,14 +18,6 @@ val testJar = tasks.register("testJar", Jar::class) {
 	from(project.layout.buildDirectory.file("classes/kotlin/test/"), project.layout.buildDirectory.file("classes/java/test/"))
 	archiveClassifier = "testJar"
 }
-// copying bc I'm lazy
-val jarNoRemap by tasks.registering(Jar::class) {
-	group = "build"
-	dependsOn(tasks.classes)
-	// testClasses doesn't have outputs for some reason??? so we do it manually
-	from(project.layout.buildDirectory.file("classes/kotlin/main/"), project.layout.buildDirectory.file("classes/java/main/"))
-	archiveClassifier = "noRemap"
-}
 
 architectury {
 	common((rootProject.properties["enabled_platforms"] as String).split(",")) {
@@ -39,7 +31,7 @@ architectury {
 		for (loader in settings.loaders) {
 			// register our "transform for dev" task
 			val platform = loader.titledId
-			makeTransformingTask(platform, "transformMainForDev_$platform", jarNoRemap.get(), "main")
+			makeTransformingTask(platform, "transformMainForDev_$platform", tasks.jar.get(), "main")
 			makeTransformingTask(platform, "transformTestForDev_$platform", testJar.get(), "test")
 		}
 	}

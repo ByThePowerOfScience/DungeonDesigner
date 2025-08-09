@@ -26,10 +26,10 @@ configurations {
 	runtimeClasspath.get().extendsFrom(common)
 	getByName("developmentFabric") {
 		extendsFrom(common)
-		attributes {
-			attribute(ArchAttributes.SOURCES_TYPE, "main")
-			attribute(ArchAttributes.PLATFORM, "fabric")
-		}
+//		attributes {
+//			attribute(ArchAttributes.SOURCES_TYPE, "main")
+//			attribute(ArchAttributes.PLATFORM, "fabric")
+//		}
 	}
 	
 	testCompileClasspath.get().extendsFrom(common)
@@ -51,7 +51,7 @@ dependencies {
 	
 	modImplementation("net.fabricmc:fabric-language-kotlin:1.13.3+kotlin.2.1.21")
 	
-	common(project(":common")) { isTransitive = false }
+	common(project(path=":common", configuration="transformMainForDev_Fabric")) { isTransitive = false }
 	"shadowBundle"(project(path= ":common", configuration= "transformProductionFabric"))
 }
 
