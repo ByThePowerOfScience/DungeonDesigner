@@ -1,5 +1,6 @@
 package btpos.mcmods.dungeondesigner.builder.redstone
 
+import btpos.mcmods.devutil.common.structure.composition.IOnChange
 import btpos.mcmods.devutil.common.util.serialization.ICodecSerializableMutable
 import btpos.mcmods.dungeondesigner.builder.world.dungeonBuilderData
 import btpos.mcmods.dungeondesigner.registry.ModItemComponents
@@ -24,8 +25,10 @@ interface IWirelessRedstone {
     /**
      * Mutable variant for tile entities.
      */
-    data class Mutable(override var channel: Int) : ICodecSerializableMutable<Mutable>, IWirelessRedstone {
+    class Mutable(pChannel: Int, override var onChange: () -> Unit = {}) : ICodecSerializableMutable<Mutable>, IWirelessRedstone, IOnChange {
         constructor(immutable: IWirelessRedstone) : this(immutable.channel)
+        
+        override var channel: Int by notify(pChannel)
         
         companion object {
             @JvmField
@@ -35,7 +38,7 @@ interface IWirelessRedstone {
         override fun codec() = MUTABLE_CODEC
         
         override fun copyFrom(other: Mutable) {
-            this.channel = channel
+            this.channel = other.channel
         }
     }
     

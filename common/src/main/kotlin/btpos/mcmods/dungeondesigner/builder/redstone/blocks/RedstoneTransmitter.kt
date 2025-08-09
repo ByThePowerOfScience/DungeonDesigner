@@ -184,6 +184,10 @@ class BlockRedstoneTransmitter(props: Properties) : Block(props), BlockWithEntit
 
 class TileRedstoneTransmitter(pPos: BlockPos, pState: BlockState, val redstone: IWirelessRedstone.Mutable = IWirelessRedstone.Mutable(NO_CHANNEL))
 	: BlockEntity(ModBlocks.REDSTONE_TRANSMITTER_ENTITY, pPos, pState), IWirelessRedstoneTransmitter, IWirelessRedstone by redstone {
+	init {
+		redstone.onChange = this::setChanged
+	}
+	
 	override fun applyImplicitComponents(componentGetter: DataComponentGetter) {
 		super.applyImplicitComponents(componentGetter)
 		if (level!!.isClientSide) {
@@ -244,20 +248,6 @@ class ItemBlockRedstoneTransmitter(props: Properties) : BlockItem(ModBlocks.REDS
  *  namely hover text and assigning channels to the block entity you click on.
  */
 object WirelessRedstoneItem {
-//    companion object {
-//        fun ItemStack.getOrCreateData(): IWirelessRedstone {
-//            return IWirelessRedstone.getFromStack(this) ?: IWirelessRedstone.make(NO_CHANNEL).also {
-//                IWirelessRedstone.setOnStack(this, it)
-//            }
-////	        return NbtAdapter(this.getOrCreateTagElement("dungeondesigner"))
-//
-//        }
-//        fun ItemStack.getData(): IWirelessRedstone? {
-//            return IWirelessRedstone.getFromStack(this)
-////	        return this.tag?.getCompoundOrNull("dungeondesigner")?.let(::NbtAdapter)
-//        }
-//    }
-	
 	inline fun appendHoverText(pStack: ItemStack, addTooltip: (Component) -> Unit) {
 		IWirelessRedstone.getFromStack(pStack)?.channel?.takeIf { it != NO_CHANNEL }?.let {
 			addTooltip("Channel: $it".asComponent())

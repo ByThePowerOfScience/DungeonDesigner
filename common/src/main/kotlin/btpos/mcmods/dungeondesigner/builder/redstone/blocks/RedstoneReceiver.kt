@@ -14,6 +14,7 @@ import btpos.mcmods.devutil.common.structure.blocks.BlockWithEntity
 import btpos.mcmods.devutil.common.util.serialization.putCodecSerializable
 import btpos.mcmods.devutil.common.util.serialization.readCodecSerializableToExisting
 import btpos.mcmods.devutil.multiplatform.api.IPlatformConnectRedstone
+import btpos.mcmods.dungeondesigner.MOD_LOGGER
 import btpos.mcmods.dungeondesigner.POWERED
 import btpos.mcmods.dungeondesigner.builder.redstone.IWirelessRedstone
 import btpos.mcmods.dungeondesigner.builder.redstone.IWirelessRedstone.Companion.NO_CHANNEL
@@ -25,6 +26,7 @@ import net.minecraft.core.Direction
 import net.minecraft.core.component.DataComponentGetter
 import net.minecraft.core.component.DataComponentMap
 import net.minecraft.network.chat.Component
+import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
@@ -81,16 +83,16 @@ class BlockRedstoneReceiver(props: Properties) : Block(props), BlockWithEntity<T
         if (pStack.item !== ModBlocks.REDSTONE_RECEIVER_ITEM)
             return
         
-//        if (!pLevel.isClientSide) {
-//            pLevel.getOurEntity(pPos)?.let {
-//                val redstoneHandler = (pLevel as ServerLevel).dataStorage.dungeonBuilderData.redstoneHandler
-//                it.channel = redstoneHandler.registerWirelessReceiver(pStack.getData()?.channel ?: NO_CHANNEL, pPos)
-//                if (redstoneHandler.isChannelPowered(it.channel)) {
-//                    pLevel.setBlockAndUpdate(pPos, pState.with(POWERED, true))
-//                }
-//            } ?: return MOD_LOGGER.error("No block entity found at pos $pPos!", Throwable())
-//
-//        }
+        if (!pLevel.isClientSide) {
+            pLevel.getOurEntity(pPos)?.let {
+                val redstoneHandler = (pLevel as ServerLevel).dataStorage.dungeonBuilderData.redstoneHandler
+                it.setChannel(redstoneHandler.registerWirelessReceiver(IWirelessRedstone.getFromStack(pStack)?.channel ?: NO_CHANNEL, pPos))
+                if (redstoneHandler.isChannelPowered(it.channel)) {
+                    pLevel.setBlockAndUpdate(pPos, pState.with(POWERED, true))
+                }
+            } ?: return MOD_LOGGER.error("No block entity found at pos $pPos!", Throwable())
+
+        }
     }
     
     override fun useWithoutItem(pState: BlockState, pLevel: Level, pPos: BlockPos, pPlayer: Player, pHit: BlockHitResult): InteractionResult {
@@ -147,6 +149,11 @@ class TileRedstoneReceiver(pPos: BlockPos, pState: BlockState, val redstone: IWi
         level?.actOnServerLevel {
             dataStorage.dungeonBuilderData.redstoneHandler.unregisterWirelessReceiver(channel, pos)
         }
+    }
+    
+    fun setChannel(channel: Int) {
+        this.redstone.channel = channel
+        setChanged()
     }
 }
 
