@@ -12,20 +12,23 @@ architectury {
 	fabric()
 }
 
+// the below is straight from the template
 configurations {
 	val common by configurations.creating {
 		isCanBeResolved = true
 		isCanBeConsumed = false
+		
+		// this part is the only custom bit
 		attributes {
 			attribute(ArchAttributes.SOURCES_TYPE, "main")
 			attribute(ArchAttributes.PLATFORM, "fabric")
 		}
 	}
 	
-	// the below is straight from the template
+	
 	compileClasspath.get().extendsFrom(common)
 	runtimeClasspath.get().extendsFrom(common)
-	getByName("developmentFabric").extendsFrom(common)
+	getByName("developmentFabric").extendsFrom(common) // This is a hardcoded requirement of the transformer toolchain. No, I don't know why there are two configurations for this.
 	
 	testCompileClasspath.get().extendsFrom(common)
 	testRuntimeClasspath.get().extendsFrom(common)
@@ -44,7 +47,7 @@ dependencies {
 	modImplementation("net.fabricmc:fabric-language-kotlin:1.13.3+kotlin.2.1.21")
 	
 	// This was originally in the template as `common(project(path=":common", configuration="namedElements"))`,
-	// but I needed my own transformers to exist in the dev runs.
+	// but I needed my own transformers to exist in the dev runs, so I changed it to variant-aware.
 	"common"(project(":common")) { isTransitive = false }
 	"shadowBundle"(project(path= ":common", configuration= "transformProductionFabric"))
 }
