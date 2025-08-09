@@ -12,25 +12,20 @@ architectury {
 	fabric()
 }
 
-val common by configurations.creating {
-	isCanBeResolved = true
-	isCanBeConsumed = false
-	attributes {
-		attribute(ArchAttributes.SOURCES_TYPE, "main")
-		attribute(ArchAttributes.PLATFORM, "fabric")
-	}
-}
 configurations {
+	val common by configurations.creating {
+		isCanBeResolved = true
+		isCanBeConsumed = false
+		attributes {
+			attribute(ArchAttributes.SOURCES_TYPE, "main")
+			attribute(ArchAttributes.PLATFORM, "fabric")
+		}
+	}
 	
+	// the below is straight from the template
 	compileClasspath.get().extendsFrom(common)
 	runtimeClasspath.get().extendsFrom(common)
-	getByName("developmentFabric") {
-		extendsFrom(common)
-//		attributes {
-//			attribute(ArchAttributes.SOURCES_TYPE, "main")
-//			attribute(ArchAttributes.PLATFORM, "fabric")
-//		}
-	}
+	getByName("developmentFabric").extendsFrom(common)
 	
 	testCompileClasspath.get().extendsFrom(common)
 	testRuntimeClasspath.get().extendsFrom(common)
@@ -44,21 +39,14 @@ configurations {
 
 dependencies {
 	modImplementation ("net.fabricmc:fabric-loader:${rootProject.properties["fabric_loader_version"]}")
-	
 	modImplementation ("net.fabricmc.fabric-api:fabric-api:${rootProject.properties["fabric_api_version"]}")
-	
 	modImplementation("dev.architectury:architectury-fabric:${rootProject.properties["architectury_api_version"]}")
-	
 	modImplementation("net.fabricmc:fabric-language-kotlin:1.13.3+kotlin.2.1.21")
 	
-	common(project(path=":common", configuration="transformMainForDev_Fabric")) { isTransitive = false }
+	// This was originally in the template as `common(project(path=":common", configuration="namedElements"))`,
+	// but I needed my own transformers to exist in the dev runs.
+	"common"(project(":common")) { isTransitive = false }
 	"shadowBundle"(project(path= ":common", configuration= "transformProductionFabric"))
-}
-
-project.afterEvaluate {
-	configurations.getByName("developmentFabric").resolve().forEach {
-		println("file: ${it.path}")
-	}
 }
 
 tasks.processResources {
