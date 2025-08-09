@@ -1,7 +1,12 @@
 {
-  "parent": "minecraft:block/cube_column",
+  "parent": "minecraft:block/cube",
   "textures": {
-    "end": "dungeondesigner:block/logic_programmer_top",
-    "side": "dungeondesigner:block/logic_programmer_side"
+    "down": "dungeondesigner:block/flag/flag_reader_unpowered",
+    "east": "dungeondesigner:block/flag/flag_reader_unpowered",
+    "north": "dungeondesigner:block/flag/flag_reader_unpowered",
+    "particle": "dungeondesigner:block/flag/flag_reader_unpowered",
+    "south": "dungeondesigner:block/flag/flag_reader_unpowered",
+    "up": "dungeondesigner:block/flag/flag_reader_unpowered",
+    "west": "dungeondesigner:block/flag/flag_reader_unpowered"
   }
 }

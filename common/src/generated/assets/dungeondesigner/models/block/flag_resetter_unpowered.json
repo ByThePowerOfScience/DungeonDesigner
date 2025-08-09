@@ -1,12 +1,12 @@
 {
   "parent": "minecraft:block/cube",
   "textures": {
-    "down": "dungeondesigner:block/logic_programmer_top_resetter",
-    "east": "dungeondesigner:block/logic_programmer_side",
-    "north": "dungeondesigner:block/logic_programmer_side_input",
-    "particle": "dungeondesigner:block/logic_programmer_side",
-    "south": "dungeondesigner:block/logic_programmer_side",
-    "up": "dungeondesigner:block/logic_programmer_top_resetter",
-    "west": "dungeondesigner:block/logic_programmer_side"
+    "down": "dungeondesigner:block/flag/flag_resetter_unpowered",
+    "east": "dungeondesigner:block/flag/flag_resetter_unpowered",
+    "north": "dungeondesigner:block/flag/flag_resetter_unpowered_input",
+    "particle": "dungeondesigner:block/flag/flag_resetter_unpowered",
+    "south": "dungeondesigner:block/flag/flag_resetter_unpowered",
+    "up": "dungeondesigner:block/flag/flag_resetter_unpowered",
+    "west": "dungeondesigner:block/flag/flag_resetter_unpowered"
   }
 }

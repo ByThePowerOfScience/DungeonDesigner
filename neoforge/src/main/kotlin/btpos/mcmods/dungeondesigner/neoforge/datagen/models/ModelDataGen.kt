@@ -90,8 +90,8 @@ class ModelDataGen(output: PackOutput) : ModelProvider(output, MODID) {
 		val TEXTURE_TOP_BOTTOM_ON = "logic_programmer_top_on"
 		val TEXTURE_SIDES_ON = "logic_programmer_side_on"
 		
-		val off = columnModel(BlockTriggerHolder.Companion.id.powered(false), blockLoc(TEXTURE_SIDES), blockLoc(TEXTURE_TOP_BOTTOM))
-		val on = columnModel(BlockTriggerHolder.Companion.id.powered(true), blockLoc(TEXTURE_SIDES_ON), blockLoc(TEXTURE_TOP_BOTTOM_ON))
+		val off = columnModel(BlockTriggerHolder.id.powered(false), blockLoc(TEXTURE_SIDES), blockLoc(TEXTURE_TOP_BOTTOM))
+		val on = columnModel(BlockTriggerHolder.id.powered(true), blockLoc(TEXTURE_SIDES_ON), blockLoc(TEXTURE_TOP_BOTTOM_ON))
 		
 		MultiVariantGenerator.dispatch(ModBlocks.TRIGGER_BLOCK)
 			.with(poweredInitialVariants(off, on))
@@ -118,22 +118,17 @@ class ModelDataGen(output: PackOutput) : ModelProvider(output, MODID) {
 		MultiVariantGenerator.dispatch(ModBlocks.FIGHT_CONTROLLER)
 			.with(
 					BlockFightController.STATUS(
-							FightStatus.INACTIVE to BlockModelGenerators.plainVariant(off),
-							FightStatus.IN_PROGRESS to BlockModelGenerators.plainVariant(in_progress),
-							FightStatus.COMPLETE to BlockModelGenerators.plainVariant(com)
+							FightStatus.INACTIVE to plainVariant(off),
+							FightStatus.IN_PROGRESS to plainVariant(in_progress),
+							FightStatus.COMPLETE to plainVariant(com)
 			)).with(ROTATION_HORIZONTAL_FACING).submit()
 		
 		registerSimpleItemModel(ModBlocks.FIGHT_CONTROLLER, off)
 	}
 	
 	private fun BlockModelGenerators.makeFlagReader() {
-		val TXT_SIDES = "logic_programmer_side"
-		val TXT_SIDES_ON = "logic_programmer_side_on"
-		val TXT_TOP = "logic_programmer_top"
-		val TXT_TOP_ON = "logic_programmer_top_on"
-		
-		val off = columnModel(BlockFlagReader.Companion.id.powered(false), blockLoc(TXT_SIDES), blockLoc(TXT_TOP))
-		val on = columnModel(BlockFlagReader.Companion.id.powered(true), blockLoc(TXT_SIDES_ON), blockLoc(TXT_TOP_ON))
+		val off = sidedBlock(BlockFlagReader.id.powered(false), rest=blockLoc("flag/${BlockFlagReader.id.powered(false)}"))
+		val on = sidedBlock(BlockFlagReader.id.powered(true), rest=blockLoc("flag/${BlockFlagReader.id.powered(true)}"))
 		
 		MultiVariantGenerator.dispatch(ModBlocks.FLAG_READER)
 			.with(poweredInitialVariants(off, on))
@@ -144,34 +139,17 @@ class ModelDataGen(output: PackOutput) : ModelProvider(output, MODID) {
 	
 	@Suppress("DuplicatedCode")
 	private object FlagWriters {
-		//region Textures
-		private const val TEXTURE_SIDES = "logic_programmer_side"
-		private const val TEXTURE_ON_SIDES = "logic_programmer_side_on"
-
-		private const val TEXTURE_SIDES_INPUT = "logic_programmer_side_input"
-		private const val TEXTURE_ON_SIDES_INPUT = "logic_programmer_side_input_on"
-
-		private const val TXT_SETTER_TOP = "logic_programmer_top_setter"
-		private const val TXT_SETTER_TOP_ON = "logic_programmer_top_on_setter"
-
-		private const val TXT_RESETTER_TOP = "logic_programmer_top_resetter"
-		private const val TXT_RESETTER_TOP_ON = "logic_programmer_top_on_resetter"
-		//endregion
+		fun getTexture(id: String, powered: Boolean, input: Boolean = false): ResourceLocation {
+			return blockLoc("flag/$id".powered(powered) + (if (input) "_input" else ""))
+		}
+		
 		
 		fun BlockModelGenerators.forSetter() {
-			val setterLoc = BlockFlagWriter.Companion.id_setter
-			val tx_caps_off = blockLoc(TXT_SETTER_TOP)
-//			val tx_caps_on = blockLoc(TXT_SETTER_TOP_ON)
-			val tx_side_off = blockLoc(TEXTURE_SIDES)
-//			val tx_side_on = blockLoc(TEXTURE_ON_SIDES)
-			val tx_side_off_input = blockLoc(TEXTURE_SIDES_INPUT)
-//			val tx_side_on_input = blockLoc(TEXTURE_ON_SIDES_INPUT)
+			val setterLoc = BlockFlagWriter.id_setter
 			
-			val setter_off = sidedBlock(setterLoc.powered(false), top=tx_caps_off, bottom=tx_caps_off, north=tx_side_off_input, rest=tx_side_off)
-//			val setter_on = sidedBlock(setterLoc.powered(true), top=tx_caps_on, bottom=tx_caps_on, north=tx_side_on_input, rest=tx_side_on)
+			val setter_off = sidedBlock(setterLoc.powered(false), north=getTexture(setterLoc, false, input=true), rest=getTexture(setterLoc, false))
 			
 			MultiVariantGenerator.dispatch(ModBlocks.FLAG_SETTER, plainVariant(setter_off))
-//				.with(poweredInitialVariants(setter_off, setter_on))
 				.with(ROTATION_HORIZONTAL_FACING)
 				.submit()
 			
@@ -179,17 +157,9 @@ class ModelDataGen(output: PackOutput) : ModelProvider(output, MODID) {
 		}
 
 		fun BlockModelGenerators.forResetter() {
-			val setterLoc = BlockFlagWriter.Companion.id_resetter
-			val tx_caps_off = blockLoc(TXT_RESETTER_TOP)
-//			val tx_caps_on = blockLoc(TXT_RESETTER_TOP_ON)
-			val tx_side_off = blockLoc(TEXTURE_SIDES)
-//			val tx_side_on = blockLoc(TEXTURE_ON_SIDES)
-			val tx_side_off_input = blockLoc(TEXTURE_SIDES_INPUT)
-//			val tx_side_on_input = blockLoc(TEXTURE_ON_SIDES_INPUT)
+			val setterLoc = BlockFlagWriter.id_resetter
 			
-			val setter_off = sidedBlock(setterLoc.powered(false), top=tx_caps_off, bottom=tx_caps_off, north=tx_side_off_input, rest=tx_side_off)
-//			val setter_on = sidedBlock(setterLoc.powered(true), top=tx_caps_on, bottom=tx_caps_on, north=tx_side_on_input, rest=tx_side_on)
-//				.with(poweredInitialVariants(setter_off, setter_on))
+			val setter_off = sidedBlock(setterLoc.powered(false), north=getTexture(setterLoc, false, input=true), rest=getTexture(setterLoc, false))
 			
 			MultiVariantGenerator.dispatch(ModBlocks.FLAG_RESETTER, plainVariant(setter_off))
 				.with(ROTATION_HORIZONTAL_FACING)
@@ -277,8 +247,8 @@ private fun BlockModelGenerators.columnModel(id: String, side: ResourceLocation,
 //region Variant Building
 private fun poweredInitialVariants(off: ResourceLocation, on: ResourceLocation): PropertyDispatch.C1<MultiVariant?, Boolean> {
 	return PropertyDispatch.initial(BlockStateProperties.POWERED)
-		.select(true, BlockModelGenerators.plainVariant(on))
-		.select(false, BlockModelGenerators.plainVariant(off))
+		.select(true, plainVariant(on))
+		.select(false, plainVariant(off))
 }
 
 private operator fun <T : Comparable<T>> Property<T>.invoke(vararg pairs: Pair<T, MultiVariant>): PropertyDispatch.C1<MultiVariant, T> {
