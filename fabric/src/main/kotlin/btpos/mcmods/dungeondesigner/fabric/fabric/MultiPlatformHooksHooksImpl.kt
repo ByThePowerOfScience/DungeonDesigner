@@ -12,20 +12,21 @@ import net.minecraft.core.Direction
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.entity.BlockEntity
 
-object MultiPlatformHooksHooks {
+@Suppress("unused")
+object MultiPlatformHooksHooksImpl {
 	@JvmStatic
 	fun getPlatformSpecificStuff() : IPlatformSpecificStuff {
-		return Impl
+		return PlatformSpecificStuffFabric
 	}
 }
 
-object Impl : IPlatformSpecificStuff {
+object PlatformSpecificStuffFabric : IPlatformSpecificStuff {
 	val ITEM_LOOKUP: BlockApiLookup<Storage<ItemVariant>, Direction?> = ItemStorage.SIDED
 	override fun getItemHandler(level: Level, pos: BlockPos, direction: Direction?): IItemHandler? {
 		return ITEM_LOOKUP.find(level, pos, direction)?.let(::IItemHandlerImpl)
 	}
 	
 	override fun BlockEntity.getItemHandler(direction: Direction?): IItemHandler? {
-	
+		return ITEM_LOOKUP.find(level, blockPos, blockState, this, direction)?.let(::IItemHandlerImpl)
 	}
 }

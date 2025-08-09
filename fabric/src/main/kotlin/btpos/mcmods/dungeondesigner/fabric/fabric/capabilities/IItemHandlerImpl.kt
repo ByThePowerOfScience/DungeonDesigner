@@ -7,8 +7,7 @@ import net.minecraft.world.item.ItemStack
 
 @JvmInline
 value class IItemHandlerImpl(val storage: Storage<ItemVariant>) : IItemHandler {
-	
 	override fun iterSlots(): Sequence<ItemStack> {
-		TODO("Not yet implemented")
+		return storage.nonEmptyIterator().asSequence().map { it.resource.toStack(it.amount.toInt()) }
 	}
 }
