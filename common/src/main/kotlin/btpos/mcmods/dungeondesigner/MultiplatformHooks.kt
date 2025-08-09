@@ -14,16 +14,21 @@ import net.minecraft.world.level.block.entity.BlockEntity
  * God why did KMP have to stop supporting multi-JVM targets
  */
 object MultiplatformHooks : IPlatformSpecificStuff {
+	// perform manual delegation so IDEA actually gives me suggestions as though these were static methods
+	// ...yes I know at this point it would be better to just use @JvmStatic @ExpectPlatform for all of these...
+	// On the other hand, I'd need an interface anyway to make sure I didn't miss any
+	private val delegate = getPlatformSpecificStuff()
+	
 	override fun getItemHandler(level: Level, pos: BlockPos, direction: Direction?): IItemHandler? {
-		throw IllegalStateException("Transformer not merged")
+		return delegate.getItemHandler(level, pos, direction)
 	}
 	
 	override fun BlockEntity.getItemHandler(direction: Direction?): IItemHandler? {
-		throw IllegalStateException("Transformer not merged")
+		return with (delegate) { this@getItemHandler.getItemHandler(direction) }
 	}
 }
 
-object MultiPlatformHooksHooks {
+private object MultiPlatformHooksHooks {
 	@JvmStatic @ExpectPlatform
 	fun getPlatformSpecificStuff() : IPlatformSpecificStuff {
 		throw IllegalStateException("Transformer not merged")
