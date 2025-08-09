@@ -123,3 +123,5 @@ runs/
 gradlew*
 
 /common/src/generated/.cache/**
+
+.kotlin/
