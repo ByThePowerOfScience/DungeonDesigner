@@ -44,26 +44,6 @@ class ModelDataGen(output: PackOutput) : ModelProvider(output, MODID) {
 		this.generateFlatItem(ModItems.TRIGGER_ITEM, ModelTemplates.FLAT_ITEM)
 	}
 	
-/*	private val EXAMPLE_TEMPLATE: ModelTemplate = ModelTemplate( // The parent model location
-			Optional.of(
-					ModelLocationUtils.decorateBlockModelLocation("examplemod:example_template")
-			),  // The suffix to apply to the end of any model that uses this template
-			Optional.of("_example"),  // All texture slots that must be defined
-			// Should be as specific as possible based on what's undefined in the parent model
-			TextureSlot.PARTICLE,
-			TextureSlot.SOUTH
-	)
-
-	private val test = TexturedModel.createDefault( // Block to texture mapping
-			{ block: Block ->
-				TextureMapping()
-					.put(TextureSlot.PARTICLE, TextureMapping.getBlockTexture(block))
-					.put(TextureSlot.TOP, TextureMapping.getBlockTexture(block, "_base"))
-			},  // The template to generate from
-			EXAMPLE_TEMPLATE
-	);*/
-	
-	
 	private fun BlockModelGenerators.registerBlockModels() {
 		makeDungeonNexus()
 		makeTriggerBlock()
