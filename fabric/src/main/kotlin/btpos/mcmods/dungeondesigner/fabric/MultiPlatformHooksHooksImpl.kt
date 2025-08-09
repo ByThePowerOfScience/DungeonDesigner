@@ -1,7 +1,7 @@
-package btpos.mcmods.dungeondesigner.fabric.fabric
+package btpos.mcmods.dungeondesigner.fabric
 
 import btpos.mcmods.dungeondesigner.IPlatformSpecificStuff
-import btpos.mcmods.dungeondesigner.fabric.fabric.capabilities.IItemHandlerImpl
+import btpos.mcmods.dungeondesigner.fabric.multiplatform.capabilities.IItemHandlerImpl
 import btpos.mcmods.dungeondesigner.multiplatform.capabilities.IItemHandler
 import net.fabricmc.fabric.api.lookup.v1.block.BlockApiLookup
 import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage
@@ -12,7 +12,6 @@ import net.minecraft.core.Direction
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.entity.BlockEntity
 
-@Suppress("unused")
 object MultiPlatformHooksHooksImpl {
 	@JvmStatic
 	fun getPlatformSpecificStuff() : IPlatformSpecificStuff {

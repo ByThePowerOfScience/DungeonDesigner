@@ -1,4 +1,4 @@
-package btpos.mcmods.dungeondesigner.fabric.fabric.capabilities
+package btpos.mcmods.dungeondesigner.fabric.multiplatform.capabilities
 
 import btpos.mcmods.dungeondesigner.multiplatform.capabilities.IItemHandler
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant

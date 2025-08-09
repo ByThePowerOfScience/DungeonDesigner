@@ -2,6 +2,7 @@ import btpos.gradle.architectury.ArchAttributes
 
 plugins {
 	id("com.github.johnrengelman.shadow")
+	id("com.dorongold.task-tree") version "4.0.1"
 }
 
 architectury {
@@ -9,18 +10,24 @@ architectury {
 	neoForge()
 }
 
+val common by configurations.creating {
+	isCanBeResolved = true
+	isCanBeConsumed = false
+	attributes {
+		attribute(ArchAttributes.SOURCES_TYPE, "main")
+		attribute(ArchAttributes.PLATFORM, "neoforge")
+	}
+}
 configurations {
-	val common by creating {
-		isCanBeResolved = true
-		isCanBeConsumed = false
+	compileClasspath.get().extendsFrom(common)
+	runtimeClasspath.get().extendsFrom(common)
+	getByName("developmentNeoForge"){
+		extendsFrom(common)
 		attributes {
 			attribute(ArchAttributes.SOURCES_TYPE, "main")
 			attribute(ArchAttributes.PLATFORM, "neoforge")
 		}
 	}
-	compileClasspath.get().extendsFrom(common)
-	runtimeClasspath.get().extendsFrom(common)
-	getByName("developmentNeoForge").extendsFrom(common)
 	
 	// Files in this configuration will be bundled into your mod using the Shadow plugin.
 	// Don"t use the `shadow` configuration from the plugin itself as it"s meant for excluding files.
@@ -50,7 +57,7 @@ dependencies {
 	
 	testImplementation("net.neoforged:testframework:${rootProject.properties["neoforge_version"]}")
 	
-	"common"(project(":common")) { isTransitive = false }
+	common(project(":common")) { isTransitive = false }
 	"shadowBundle"(project(path = ":common", configuration = "transformProductionNeoForge"))
 }
 
